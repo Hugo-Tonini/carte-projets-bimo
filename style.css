@@ -1,0 +1,25 @@
+body{
+  font-family: Arial;
+  margin:0;
+}
+
+h1{
+  padding:10px;
+}
+
+#map{
+  height: 80vh;
+  width: 100%;
+}
+
+#panel{
+  position: fixed;
+  right:0;
+  top:60px;
+  width:320px;
+  height:80vh;
+  overflow:auto;
+  background:#ffffff;
+  border-left:1px solid #ccc;
+  padding:10px;
+}
