@@ -7,6 +7,10 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 const clusters = L.markerClusterGroup();
 let allProjects = [];
 
+/* --- Départements (GeoJSON) --- */
+let deptLayer = null;
+let selectedDeptCode = null; // optionnel : filtre par clic dept (voir plus bas)
+
 /* --- Couleur pins selon type --- */
 function colorByType(t){
   if(!t) return "blue";
@@ -68,7 +72,129 @@ function matchesFilters(p){
     if(!blob.includes(q)) return false;
   }
 
+  // optionnel : filtre sur département sélectionné
+  if(selectedDeptCode){
+    const dep = normalizeDeptCode(getDeptCodeFromProject(p));
+    if(dep !== selectedDeptCode) return false;
+  }
+
   return true;
+}
+
+/* --- Département depuis projet --- */
+function getDeptCodeFromProject(p){
+  // adapte si besoin : c'est ici que tu relies tes projets à un code département
+  return String(p["Département"] || p.departement || "").trim();
+}
+
+function normalizeDeptCode(code){
+  // Harmonise "1" -> "01", garde "2A/2B" etc.
+  const c = String(code || "").trim().toUpperCase();
+  if(!c) return "";
+  if(c === "2A" || c === "2B") return c;
+  // si numérique sur 1 ou 2 chiffres -> pad à 2
+  if(/^\d{1,2}$/.test(c)) return c.padStart(2, "0");
+  // si déjà 3 chiffres (DOM) : 971, 972...
+  if(/^\d{3}$/.test(c)) return c;
+  return c;
+}
+
+/* --- Comptage projets par département (après filtres) --- */
+function buildDeptCounts(){
+  const counts = {};
+  allProjects.forEach(p => {
+    if(!matchesFilters(p)) return;
+    const dep = normalizeDeptCode(getDeptCodeFromProject(p));
+    if(!dep) return;
+    counts[dep] = (counts[dep] || 0) + 1;
+  });
+  return counts;
+}
+
+function colorByCount(n){
+  if(!n) return "#ffffff";
+  if(n <= 2) return "#e8f0fe";
+  if(n <= 5) return "#c6dafc";
+  if(n <= 10) return "#8ab4f8";
+  return "#1a73e8";
+}
+
+function styleDept(feature){
+  const props = feature.properties || {};
+  const codeRaw = props.code || props.CODE || props.dep || props.DEP || props.insee || props.INSEE;
+  const code = normalizeDeptCode(codeRaw);
+
+  const counts = buildDeptCounts();
+  const n = counts[code] || 0;
+
+  return {
+    weight: (selectedDeptCode && code === selectedDeptCode) ? 2 : 1,
+    color: (selectedDeptCode && code === selectedDeptCode) ? "#111" : "#666",
+    fillColor: colorByCount(n),
+    fillOpacity: 0.55
+  };
+}
+
+function highlightDept(e){
+  const layer = e.target;
+  layer.setStyle({ weight: 2, color: "#111", fillOpacity: 0.75 });
+  if(!L.Browser.ie && !L.Browser.opera && !L.Browser.edge){
+    layer.bringToFront();
+  }
+}
+
+function resetHighlight(e){
+  if(!deptLayer) return;
+  deptLayer.resetStyle(e.target);
+}
+
+function onEachDept(feature, layer){
+  const props = feature.properties || {};
+  const name = props.nom || props.NOM || props.name || props.NAME || "";
+  const code = normalizeDeptCode(props.code || props.CODE || props.dep || props.DEP || "");
+
+  layer.on({
+    mouseover: highlightDept,
+    mouseout: resetHighlight,
+    click: () => {
+      // zoom sur le département
+      map.fitBounds(layer.getBounds());
+
+      // Optionnel : activer filtre par département au clic (toggle)
+      // Décommente les 3 lignes ci-dessous si tu veux que cliquer un département filtre les pins.
+      // selectedDeptCode = (selectedDeptCode === code) ? null : code;
+      // closePanel();
+      // renderProjects();
+
+      // tooltip
+      if(name && code){
+        layer.bindTooltip(name + " (" + code + ")", { sticky: true }).openTooltip();
+      }
+    }
+  });
+}
+
+function loadDepartements(){
+  fetch("departements.geojson")
+    .then(r => {
+      if(!r.ok) throw new Error("HTTP " + r.status + " sur departements.geojson");
+      return r.json();
+    })
+    .then(geo => {
+      deptLayer = L.geoJSON(geo, {
+        style: styleDept,
+        onEachFeature: onEachDept
+      }).addTo(map);
+
+      // Départements derrière les pins
+      deptLayer.bringToBack();
+    })
+    .catch(err => console.error("Erreur chargement GeoJSON départements:", err));
+}
+
+function updateDeptStyle(){
+  if(!deptLayer) return;
+  deptLayer.setStyle(styleDept);
 }
 
 /* --- Rendu pins selon filtres --- */
@@ -103,6 +229,9 @@ function renderProjects(){
   });
 
   if(!map.hasLayer(clusters)) map.addLayer(clusters);
+
+  // MAJ couleurs départements selon filtres
+  updateDeptStyle();
 }
 
 /* --- Fiche projet (sans lat/lon) --- */
@@ -169,10 +298,14 @@ if(clearBtn){
   clearBtn.addEventListener("click", () => {
     if(q) q.value = "";
     document.querySelectorAll(".typeFilter").forEach(cb => cb.checked = true);
+    selectedDeptCode = null; // reset filtre dept optionnel
     closePanel();
     renderProjects();
   });
 }
+
+/* Charger la couche départements */
+loadDepartements();
 
 /* panneau fermé au chargement */
 closePanel();
