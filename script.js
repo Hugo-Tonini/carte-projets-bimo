@@ -15,50 +15,58 @@ function colorByType(t){
   return "orange";
 }
 
-// --- Panneau : ouvrir / fermer ---
+/* --- panneau --- */
 function openPanel(html){
   const panel = document.getElementById("panel");
+  if(!panel) return;
   panel.innerHTML = html;
   panel.classList.add("open");
 }
 
 function closePanel(){
   const panel = document.getElementById("panel");
+  if(!panel) return;
   panel.classList.remove("open");
   panel.innerHTML = "";
 }
 
-// Fermer en cliquant sur la carte
+// Fermer quand on clique sur la carte (hors pin)
 map.on("click", () => closePanel());
 
-// Charger les projets
 fetch("export_projets_web.json")
   .then(r => r.json())
   .then(data => {
-
     (data.projets || []).forEach(p => {
       if(!p.latitude || !p.longitude) return;
 
-      const icon = L.circleMarker(
-        [parseFloat(p.latitude), parseFloat(p.longitude)],
-        { radius: 8, color: colorByType(p.type || p["Type de projet"] || "") }
-      );
+      const lat = parseFloat(p.latitude);
+      const lon = parseFloat(p.longitude);
+      if(Number.isNaN(lat) || Number.isNaN(lon)) return;
 
-      // Ouvrir panneau au clic pin
-      icon.on("click", (e) => {
-        // Empêche le clic sur la carte de fermer immédiatement
-        if (e && e.originalEvent) e.originalEvent.stopPropagation();
+      const col = colorByType(p.type || p["Type de projet"] || "");
+
+      // Marker (plus fiable avec markercluster que circleMarker)
+      const marker = L.marker([lat, lon], {
+        icon: L.divIcon({
+          className: "pin-dot",
+          html: `<div class="pin-dot-inner" style="border-color:${col}"></div>`,
+          iconSize: [18, 18],
+          iconAnchor: [9, 9]
+        })
+      });
+
+      marker.on("click", (e) => {
+        // Empêche le clic de remonter à la carte (sinon fermeture immédiate)
+        L.DomEvent.stopPropagation(e);
         showPanel(p);
       });
 
-      clusters.addLayer(icon);
+      clusters.addLayer(marker);
     });
 
     map.addLayer(clusters);
   })
-  .catch(err => {
-    console.error("Erreur chargement JSON:", err);
-  });
+  .catch(err => console.error("Erreur chargement JSON:", err));
 
 function showPanel(p){
   const title = p.nom || p["Nom de projet"] || "Projet";
@@ -79,18 +87,17 @@ function showPanel(p){
   openPanel(html);
 
   const btn = document.getElementById("panelClose");
-  if (btn) btn.onclick = closePanel;
+  if(btn) btn.onclick = closePanel;
 }
 
-// Petite sécurité pour éviter d'injecter du HTML si un champ contient < >
 function escapeHtml(s){
   return String(s)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
-// Au chargement, s'assurer que le panneau est fermé
+// Au chargement : panneau fermé
 closePanel();
