@@ -40,9 +40,10 @@
   }).addTo(map);
 
   const clusters = L.markerClusterGroup({
-    chunkedLoading: true,
-    chunkInterval: 50,
-    spiderfyOnMaxZoom: true
+  chunkedLoading: true,
+  chunkInterval: 50,
+  spiderfyOnMaxZoom: true,
+  maxClusterRadius: 40
   });
 
   map.addLayer(clusters);
