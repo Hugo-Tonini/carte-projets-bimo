@@ -1,21 +1,26 @@
-/* panneau caché par défaut */
-#panel{
-  display: none;
-}
-#panel.open{
-  display: block;
-}
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Carte Projets</title>
 
-/* styles pins (divIcon) */
-.pin-dot{
-  background: transparent;
-  border: none;
-}
-.pin-dot-inner{
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: rgba(0,0,255,0.15);
-  border: 3px solid blue; /* surchargé inline par JS */
-  box-sizing: border-box;
-}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1>Carte des projets</h1>
+
+  <div id="layout">
+    <div id="map"></div>
+    <div id="panel"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <script src="script.js"></script>
+
+</body>
+</html>
