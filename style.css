@@ -8,26 +8,24 @@ h1{
   margin: 0;
 }
 
-/* Layout carte + panneau */
 #layout{
   display: flex;
   width: 100%;
   height: 80vh;
 }
 
-/* Carte */
 #map{
   flex: 1;
   height: 100%;
   min-width: 0;
 }
 
-/* Panneau à droite */
+/* panneau à droite */
 #panel{
   width: 320px;
   height: 100%;
   overflow: auto;
-  background: #ffffff;
+  background: #fff;
   border-left: 1px solid #ccc;
   padding: 10px;
   box-shadow: -4px 0 12px rgba(0,0,0,0.15);
@@ -35,20 +33,18 @@ h1{
   /* caché par défaut */
   display: none;
 }
+
 #panel.open{
   display: block;
 }
 
-/* Pins (divIcon) */
-.pin-dot{
-  background: transparent;
-  border: none;
-}
+/* pins */
+.pin-dot{ background: transparent; border: none; }
 .pin-dot-inner{
   width: 14px;
   height: 14px;
   border-radius: 50%;
   background: rgba(0,0,255,0.15);
-  border: 3px solid blue; /* surchargé inline par JS */
+  border: 3px solid blue;
   box-sizing: border-box;
 }
