@@ -155,8 +155,9 @@
 
   const clusters = L.markerClusterGroup({
     chunkedLoading: true,
-    chunkInterval: 50,
+    chunkInterval: 40,
     spiderfyOnMaxZoom: true
+    maxClusterRadius: 20
   });
 
   map.addLayer(clusters);
