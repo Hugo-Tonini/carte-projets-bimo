@@ -77,3 +77,15 @@ h1{
   border: 3px solid blue; /* surchargé inline par JS */
   box-sizing: border-box;
 }
+
+/* Légende départements (optionnel mais utile) */
+#legend{
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  background: rgba(255,255,255,0.95);
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  font-size: 12px;
+  z-index: 1000;
+}
