@@ -34,18 +34,18 @@ function closePanel(){
 map.on("click", () => closePanel());
 
 fetch("export_projets_web.json")
-  .then(r => r.json())
+  .then(r => {
+    if(!r.ok) throw new Error("HTTP " + r.status + " sur export_projets_web.json");
+    return r.json();
+  })
   .then(data => {
     (data.projets || []).forEach(p => {
-      if(!p.latitude || !p.longitude) return;
-
       const lat = parseFloat(p.latitude);
       const lon = parseFloat(p.longitude);
       if(Number.isNaN(lat) || Number.isNaN(lon)) return;
 
       const col = colorByType(p.type || p["Type de projet"] || "");
 
-      // Marker (plus fiable avec markercluster que circleMarker)
       const marker = L.marker([lat, lon], {
         icon: L.divIcon({
           className: "pin-dot",
@@ -66,7 +66,9 @@ fetch("export_projets_web.json")
 
     map.addLayer(clusters);
   })
-  .catch(err => console.error("Erreur chargement JSON:", err));
+  .catch(err => {
+    console.error("Erreur chargement JSON:", err);
+  });
 
 function showPanel(p){
   const title = p.nom || p["Nom de projet"] || "Projet";
