@@ -51,10 +51,16 @@ function showPanel(p){
   html += '</div>';
   html += '<hr/>';
 
-  Object.keys(p).forEach(function(k){
-    const v = (p[k] ?? "");
-    html += '<div><b>' + escapeHtml(k) + '</b> : ' + escapeHtml(String(v)) + '</div>';
-  });
+const hidden = new Set(["latitude", "longitude"]);
+
+Object.keys(p).forEach(k => {
+  if (hidden.has(k)) return;
+
+  const v = (p[k] ?? "");
+  if (String(v).trim() === "") return;
+
+  html += `<div><b>${escapeHtml(k)}</b> : ${escapeHtml(String(v))}</div>`;
+});
 
   openPanel(html);
 
