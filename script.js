@@ -43,7 +43,7 @@
   chunkedLoading: true,
   chunkInterval: 50,
   spiderfyOnMaxZoom: true,
-  maxClusterRadius: 40
+  maxClusterRadius: 20
   });
 
   map.addLayer(clusters);
