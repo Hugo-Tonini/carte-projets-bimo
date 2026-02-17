@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Carte des projets</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <header class="topbar">
+    <h1>Carte des projets</h1>
+
+    <div id="toolbar" class="toolbar" role="region" aria-label="Filtres">
+      <label class="search">
+        <span class="sr-only">Recherche</span>
+        <input id="q" type="search" placeholder="Rechercher (nom, ville, client, thématique…)" autocomplete="off" />
+      </label>
+
+      <fieldset class="types" aria-label="Type de projet">
+        <label><input class="typeFilter" type="checkbox" value="MOM" checked /> MOM</label>
+        <label><input class="typeFilter" type="checkbox" value="AMO" checked /> AMO</label>
+        <label><input class="typeFilter" type="checkbox" value="EXP" checked /> EXP</label>
+      </fieldset>
+
+      <label class="deptToggle" title="Quand activé, un clic sur un département filtre les projets">
+        <input id="deptClickFilter" type="checkbox" />
+        Filtrer par département (clic)
+      </label>
+
+      <button id="clear" type="button">Réinitialiser</button>
+
+      <div class="stats" aria-live="polite">
+        <span id="statCount">0</span> projet(s)
+        <span id="statDept" class="statDept"></span>
+      </div>
+    </div>
+  </header>
+
+  <main id="layout" class="layout">
+    <div id="map" class="map" role="application" aria-label="Carte"></div>
+
+    <aside id="panel" class="panel" aria-label="Détails du projet"></aside>
+
+    <div id="legend" class="legend" aria-label="Légende antennes" hidden>
+      <div class="legend-title">Antenne (départements)</div>
+      <div class="legend-row"><span class="swatch sw-ago"></span><span>Atlantique Grand-Ouest</span></div>
+      <div class="legend-row"><span class="swatch sw-ne"></span><span>Nord-Est</span></div>
+      <div class="legend-row"><span class="swatch sw-gso"></span><span>Grand Sud-Ouest</span></div>
+      <div class="legend-row"><span class="swatch sw-ace"></span><span>Alpes Centre-Est</span></div>
+      <div class="legend-row"><span class="swatch sw-mgs"></span><span>Méditerranée Grand-Sud</span></div>
+      <div class="legend-row"><span class="swatch sw-noidf"></span><span>Nord-Ouest Île-de-France</span></div>
+    </div>
+
+    <div id="status" class="status" aria-live="polite" hidden></div>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+  <script src="script.js"></script>
+</body>
+</html>
