@@ -29,3 +29,13 @@ h1{
   padding: 10px;
   box-shadow: -4px 0 12px rgba(0,0,0,0.15);
 }
+
+/* Panneau caché par défaut */
+#panel{
+  display: none;   /* ✅ caché tant qu'il n'y a pas de projet sélectionné */
+}
+
+/* Quand on l'ouvre */
+#panel.open{
+  display: block;
+}
