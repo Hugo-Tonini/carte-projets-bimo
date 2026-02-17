@@ -7,11 +7,15 @@ h1{
   padding:10px;
 }
 
+/* Carte */
 #map{
   height: 80vh;
   width: 100%;
+  position: relative;   /* important */
+  z-index: 1;           /* carte en dessous */
 }
 
+/* Panneau d'information */
 #panel{
   position: fixed;
   right:0;
@@ -22,4 +26,7 @@ h1{
   background:#ffffff;
   border-left:1px solid #ccc;
   padding:10px;
+
+  z-index: 9999;         /* ✅ au-dessus de la carte */
+  box-shadow: -4px 0 12px rgba(0,0,0,0.15); /* optionnel mais plus propre */
 }
