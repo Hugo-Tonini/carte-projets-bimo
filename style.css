@@ -285,3 +285,15 @@ font-weight: 700;}
 
 
 .toggle{ display:inline-flex; align-items:center; gap:6px; margin-left:10px; }
+
+/* ---- Clusters (Leaflet.markercluster) : réduire la taille ---- */
+.marker-cluster div{
+  width: 26px;
+  height: 26px;
+  line-height: 26px;   /* important : doit = height */
+  font-size: 12px;
+}
+
+.marker-cluster-small div{ width: 24px; height: 24px; line-height: 24px; }
+.marker-cluster-medium div{ width: 28px; height: 28px; line-height: 28px; }
+.marker-cluster-large div{ width: 32px; height: 32px; line-height: 32px; }
