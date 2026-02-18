@@ -242,4 +242,4 @@ font-weight: 700;}
 
 /* Pin sélectionné : agrandissement pour repérer le projet lu */
 .pin-dot-inner{ transition: transform 120ms ease; transform-origin: center; }
-.pin-dot.selected .pin-dot-inner{ transform: scale(2.5); }
+.pin-dot.selected .pin-dot-inner{ transform: scale(3.5); }
