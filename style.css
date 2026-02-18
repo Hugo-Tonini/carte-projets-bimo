@@ -297,3 +297,6 @@ font-weight: 700;}
 .marker-cluster-small div{ width: 24px; height: 24px; line-height: 24px; }
 .marker-cluster-medium div{ width: 28px; height: 28px; line-height: 28px; }
 .marker-cluster-large div{ width: 32px; height: 32px; line-height: 32px; }
+
+.marker-cluster{ background: transparent !important; }
+.marker-cluster div{ margin: 0 !important; }
