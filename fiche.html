@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Fiche projet (A4)</title>
+
+  <!--
+    Cache-busting:
+    - Change ASSET_VERSION below when you publish new fiche.css / fiche.js
+    - Or pass ?v=xxxx in the URL to override (ex: fiche.html?code=28&v=2026-02-23b)
+  -->
+  <script>
+    (function () {
+      const params = new URLSearchParams(location.search);
+      const ASSET_VERSION_DEFAULT = "2026-02-23a";
+      window.ASSET_VERSION = params.get("v") || ASSET_VERSION_DEFAULT;
+
+      // Inject stylesheet with version
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "fiche.css?v=" + encodeURIComponent(window.ASSET_VERSION);
+      document.head.appendChild(link);
+    })();
+  </script>
+</head>
+
+<body>
+  <div class="toolbar">
+    <button id="btnPrint" type="button">Imprimer</button>
+    <a class="backlink" href="./">Retour à la carte</a>
+    <span class="small" id="assetVersion"></span>
+  </div>
+
+  <main class="page" id="page">
+    <!-- Top area -->
+    <section class="top">
+      <div>
+        <div class="brand">
+          <div class="brandMark" aria-hidden="true"></div>
+          <div>
+            <div class="brandLine1">BIMO</div>
+            <div class="brandLine2">Fiche projet</div>
+          </div>
+        </div>
+
+        <h1 id="title">—</h1>
+        <div class="meta"><span id="maj">Maj : —</span></div>
+
+        <div class="quick" id="quick">
+          <div><span class="k">Adresse :</span> <span id="adresse">—</span></div>
+          <div><span class="k">Équipe projet :</span> <span id="equipe">—</span></div>
+          <div><span class="k">Processus :</span> <span id="processus">—</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="resume" id="resume">—</div>
+      </div>
+    </section>
+
+    <!-- Timeline -->
+    <section class="timeline" id="timeline" aria-label="Étapes du projet"></section>
+
+    <!-- 3 columns -->
+    <section class="cols">
+      <article class="card cardPink">
+        <h2>Fiche identité</h2>
+        <div class="cardBody">
+          <div class="sectionTitle">Dates clés</div>
+          <ul class="list" id="datesCles"></ul>
+
+          <div class="sectionTitle">Montage / Budget</div>
+          <div class="kv" id="identiteKv"></div>
+        </div>
+      </article>
+
+      <article class="card cardGreen">
+        <h2>Actualités</h2>
+        <div class="cardBody">
+          <div id="actus">—</div>
+
+          <div class="sectionTitle">Points de vigilance</div>
+          <div class="bullets" id="vigilance"></div>
+        </div>
+      </article>
+
+      <article class="card cardGray">
+        <h2>Contacts</h2>
+        <div class="cardBody">
+          <div class="kv" id="contactsKv"></div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    // Inject fiche.js with version (after CSS is loaded)
+    (function () {
+      const s = document.createElement("script");
+      s.src = "fiche.js?v=" + encodeURIComponent(window.ASSET_VERSION || "2026-02-23a");
+      document.body.appendChild(s);
+
+      // Optional: show version in toolbar
+      const el = document.getElementById("assetVersion");
+      if (el) el.textContent = "v=" + (window.ASSET_VERSION || "");
+    })();
+  </script>
+</body>
+</html>
