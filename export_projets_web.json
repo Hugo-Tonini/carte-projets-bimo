@@ -948,8 +948,8 @@
       "Classe énergie - objectif": "",
       "Classe GES - éxistant": "",
       "Classe GES - objectif": "",
-      "latitude": "50.725",
-      "longitude": "3.159",
+      "latitude": "50.72565",
+      "longitude": "3.150636",
       "photos": ["assets/photos/28/PHOTO_28_1.png", "assets/photos/28/PHOTO_28_2.png", "assets/photos/28/PHOTO_28_3.png"]
     },
     {
@@ -4931,4 +4931,5 @@
       "photos": []
     }
   ]
+
 }
