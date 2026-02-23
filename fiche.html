@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fiche projet</title>
+  <link rel="stylesheet" href="fiche.css" />
+</head>
+<body>
+  <div class="toolbar">
+    <button id="btnPrint" type="button">Imprimer</button>
+    <a class="backlink" href="./index.html">← Retour à la carte</a>
+  </div>
+
+  <main class="page" id="page">
+    <header class="top">
+      <div class="topLeft">
+        <div class="brand">
+          <div class="brandMark" aria-hidden="true"></div>
+          <div class="brandText">
+            <div class="brandLine1">Carte Projets</div>
+            <div class="brandLine2">BIMO</div>
+          </div>
+        </div>
+
+        <h1 id="title">—</h1>
+        <div class="meta">
+          <span>Maj : </span><span id="maj">—</span>
+        </div>
+
+        <div class="quick">
+          <div><span class="k">Adresse :</span> <span id="adresse">—</span></div>
+          <div><span class="k">Équipe projet :</span> <span id="equipe">—</span></div>
+          <div><span class="k">Processus :</span> <span id="processus">—</span></div>
+        </div>
+      </div>
+
+      <div class="topRight">
+        <div class="resume" id="resume">—</div>
+      </div>
+    </header>
+
+    <section class="timeline" id="timeline" aria-label="Avancement du projet"></section>
+
+    <section class="cols">
+      <article class="card cardPink">
+        <h2>Fiche identité</h2>
+        <div class="cardBody" id="identite"></div>
+      </article>
+
+      <article class="card cardGreen">
+        <h2>Actualités</h2>
+        <div class="cardBody" id="actus"></div>
+      </article>
+
+      <article class="card cardGray">
+        <h2>Contacts</h2>
+        <div class="cardBody" id="contacts"></div>
+      </article>
+    </section>
+  </main>
+
+  <script src="fiche.js"></script>
+</body>
+</html>
