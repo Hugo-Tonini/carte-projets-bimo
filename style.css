@@ -100,7 +100,7 @@ h1{
 
 /* Panel */
 .panel{
-  width: 340px;
+  width: 540px;
   height: 100%;
   overflow: auto;
   background: var(--bg);
