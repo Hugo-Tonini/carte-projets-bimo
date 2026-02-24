@@ -629,3 +629,24 @@ opacity: 1; }
   margin-top: 4px;
   font-weight: 800;
 }
+
+/* Photo 1 (grand format) dans le panneau projet */
+.projHero{
+  margin: 10px 0 8px;
+}
+.projHeroBtn{
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.projHeroPhoto{
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: 14px;
+}
