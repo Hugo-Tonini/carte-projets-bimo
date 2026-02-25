@@ -1,3 +1,21 @@
+/* ===== Marianne (global) ===== */
+@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Thin.woff2") format("woff2");font-weight:100;font-style:normal;font-display:swap;}
+@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Light.woff2") format("woff2");font-weight:300;font-style:normal;font-display:swap;}
+@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Regular.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap;}
+@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Medium.woff2") format("woff2");font-weight:500;font-style:normal;font-display:swap;}
+@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Bold.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap;}
+@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-ExtraBold.woff2") format("woff2");font-weight:800;font-style:normal;font-display:swap;}
+
+@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Thin_Italic.woff2") format("woff2");font-weight:100;font-style:italic;font-display:swap;}
+@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Light_Italic.woff2") format("woff2");font-weight:300;font-style:italic;font-display:swap;}
+@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Regular_Italic.woff2") format("woff2");font-weight:400;font-style:italic;font-display:swap;}
+@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Medium_Italic.woff2") format("woff2");font-weight:500;font-style:italic;font-display:swap;}
+@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Bold_Italic.woff2") format("woff2");font-weight:700;font-style:italic;font-display:swap;}
+@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-ExtraBold_Italic.woff2") format("woff2");font-weight:800;font-style:italic;font-display:swap;}
+
+/* Appliquer partout */
+html, body { font-family:"Marianne", Marianne, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+
 /* Base */
 :root{
   --border: #d0d0d0;
@@ -10,7 +28,7 @@
 html, body{ height: 100%; }
 body{
   margin: 0;
-  font-family: Arial, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-family: Marianne, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   color: #111;
   background: #f6f6f6;
 }
