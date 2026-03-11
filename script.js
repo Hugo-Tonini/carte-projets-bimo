@@ -814,10 +814,10 @@ marker.on("click", (e) => {
     const resumeTxt = (resumeVal === undefined || resumeVal === null) ? "" : String(resumeVal).trim();
     if (resumeTxt) {
       const safe = escapeHtml(resumeTxt).replace(/\n/g, "<br>");
-      html += `<div class="panelSummary" style="margin:14px 0 12px;padding:10px 12px;border:1px solid rgba(0,0,0,0.08);border-radius:12px;background:rgba(255,255,255,0.75);">
-                <div style="font-weight:800;font-size:18px;margin-bottom:6px;">Résumé</div>
-                <div style="line-height:1.25;">${safe}</div>
-              </div>`;
+      html += `
+        <div class="panelSectionTitle">Résumé</div>
+        <div class="panelResumeText">${safe}</div>
+      `;
     }
 
     html += `<div class="panelSubTitle" style="margin-top:18px;font-weight:800;font-size:18px;letter-spacing:.02em;">Infos générales</div>`;
