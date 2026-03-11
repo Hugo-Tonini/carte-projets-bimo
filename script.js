@@ -815,7 +815,7 @@ marker.on("click", (e) => {
     if (resumeTxt) {
       const safe = escapeHtml(resumeTxt).replace(/\n/g, "<br>");
       html += `
-        <div class="panelSectionTitle">Résumé</div>
+        <div class="panelSubTitle" style="margin-top:12px;font-weight:800;font-size:18px;letter-spacing:.02em;">Résumé</div>
         <div class="panelResumeText">${safe}</div>
       `;
     }
