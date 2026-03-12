@@ -200,7 +200,7 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
 }
 
 /* Pin sélectionné : agrandissement */
-.pin-dot.selected .pin-dot-inner{ transform: scale(2.2); }
+.pin-dot.selected .pin-dot-inner{ transform: scale(1.5); }
 
 /* ===== Clusters (divIcon) : même taille que pins 1 projet ===== */
 .pin-dot-cluster-wrap{ background: transparent; border: none; }
