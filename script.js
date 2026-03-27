@@ -223,7 +223,7 @@
     chunkInterval: 10,
     spiderfyOnMaxZoom: true,
     maxClusterRadius: 10,
-    spiderfyDistanceMultiplier: 1.3,
+    spiderfyDistanceMultiplier: 2.5,
     showCoverageOnHover: false,
     zoomToBoundsOnClick: true,
     iconCreateFunction: (cluster) => {
