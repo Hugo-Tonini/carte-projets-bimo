@@ -222,7 +222,7 @@
     chunkedLoading: true,
     chunkInterval: 10,
     spiderfyOnMaxZoom: true,
-    maxClusterRadius: 45,
+    maxClusterRadius: 30,
     spiderfyDistanceMultiplier: 1.3,
     showCoverageOnHover: false,
     zoomToBoundsOnClick: true,
