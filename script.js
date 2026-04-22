@@ -1324,7 +1324,7 @@ marker.on("click", (e) => {
     return `
       <div class="dpeCard dpeCard--${escapeAttr(theme)}">
         <div class="dpeCardTitle">${escapeHtml(title)}</div>
-        <div class="dpeCardHint">${escapeHtml(hint)}</div>
+        ${hint ? `<div class="dpeCardHint">${escapeHtml(hint)}</div>` : ""}
 
         <div class="dpeScale" role="img" aria-label="${escapeAttr(title)}">
           ${bands.map((band) => {
@@ -1384,7 +1384,7 @@ marker.on("click", (e) => {
     const energyCard = renderOfficialDpeCard({
       theme: "energy",
       title: "Consommations énergétiques",
-      hint: "Logement économe",
+      hint: "",
       unit: "kWhEP/m².an",
       bounds: thresholds.energy,
       beforeValue: energyBefore,
@@ -1394,7 +1394,7 @@ marker.on("click", (e) => {
     const gesCard = renderOfficialDpeCard({
       theme: "ges",
       title: "Émissions de gaz à effet de serre",
-      hint: "Faible émission de GES",
+      hint: "",
       unit: "kgCO2eq/m².an",
       bounds: thresholds.ges,
       beforeValue: gesBefore,
