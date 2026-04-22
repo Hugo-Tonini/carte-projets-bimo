@@ -1286,28 +1286,23 @@ marker.on("click", (e) => {
     ];
   }
 
-  function renderScaleMarker(kind, letter) {
-    if (!letter) return "";
-    return `<span class="dpeMarker dpeMarker--${escapeAttr(kind)}">${escapeHtml(letter)}</span>`;
+  function formatMarkerValue(value) {
+    if (!Number.isFinite(value)) return "";
+    return new Intl.NumberFormat("fr-FR", {
+      maximumFractionDigits: 1
+    }).format(value);
   }
 
-  function renderLegendItem(kind, label, value, unit) {
+  function renderScaleMarker(kind, value) {
     if (!Number.isFinite(value)) return "";
-    return `
-      <div class="dpeLegendItem">
-        <span class="dpeLegendSwatch dpeLegendSwatch--${escapeAttr(kind)}" aria-hidden="true"></span>
-        <span class="dpeLegendLabel">${escapeHtml(label)}</span>
-        <span class="dpeLegendValue">${escapeHtml(formatMetricValue(value))} ${escapeHtml(unit)}</span>
-      </div>
-    `;
+    return `<span class="dpeMarker dpeMarker--${escapeAttr(kind)}">${escapeHtml(formatMarkerValue(value))}</span>`;
   }
 
   function renderOfficialDpeCard(options) {
     const {
       theme,
       title,
-      hint,
-      unit,
+      unitLine,
       bounds,
       beforeValue,
       afterValue
@@ -1324,12 +1319,11 @@ marker.on("click", (e) => {
     return `
       <div class="dpeCard dpeCard--${escapeAttr(theme)}">
         <div class="dpeCardTitle">${escapeHtml(title)}</div>
-        ${hint ? `<div class="dpeCardHint">${escapeHtml(hint)}</div>` : ""}
 
         <div class="dpeScale" role="img" aria-label="${escapeAttr(title)}">
           ${bands.map((band) => {
-            const beforeMarker = beforeLetter === band.letter ? renderScaleMarker("before", beforeLetter) : "";
-            const afterMarker = afterLetter === band.letter ? renderScaleMarker("after", afterLetter) : "";
+            const beforeMarker = beforeLetter === band.letter ? renderScaleMarker("before", beforeValue) : "";
+            const afterMarker = afterLetter === band.letter ? renderScaleMarker("after", afterValue) : "";
 
             return `
               <div class="dpeRow dpeRow--${escapeAttr(theme)} dpeRow--${escapeAttr(band.letter)}">
@@ -1346,10 +1340,7 @@ marker.on("click", (e) => {
           }).join("")}
         </div>
 
-        <div class="dpeLegend">
-          ${renderLegendItem("before", "Avant travaux", beforeValue, unit)}
-          ${renderLegendItem("after", "Après travaux", afterValue, unit)}
-        </div>
+        <div class="dpeUnitLine">${escapeHtml(unitLine)}</div>
       </div>
     `;
   }
@@ -1384,8 +1375,7 @@ marker.on("click", (e) => {
     const energyCard = renderOfficialDpeCard({
       theme: "energy",
       title: "Consommations énergétiques",
-      hint: "",
-      unit: "kWhEP/m².an",
+      unitLine: "Unité de mesure exprimée en kWhEP/ m².an",
       bounds: thresholds.energy,
       beforeValue: energyBefore,
       afterValue: energyAfter
@@ -1394,8 +1384,7 @@ marker.on("click", (e) => {
     const gesCard = renderOfficialDpeCard({
       theme: "ges",
       title: "Émissions de gaz à effet de serre",
-      hint: "",
-      unit: "kgCO2eq/m².an",
+      unitLine: "Unité de mesure exprimée en kgeqCO2/ m².An",
       bounds: thresholds.ges,
       beforeValue: gesBefore,
       afterValue: gesAfter
