@@ -1397,6 +1397,16 @@ marker.on("click", (e) => {
         <div class="panelSubTitle panelSectionTitle panelSectionTitle--energy" style="margin-top:20px;font-weight:800;font-size:18px;letter-spacing:.02em;">
           <span class="screenOnlyInline">Infos énergétiques</span><span class="printOnlyInline">Informations énergétiques</span>
         </div>
+        <div class="energyLegendInline" aria-label="Légende des repères">
+          <span class="energyLegendInlineItem">
+            <span class="energyLegendMiniMarker energyLegendMiniMarker--before" aria-hidden="true"></span>
+            <span class="energyLegendInlineText">Avant travaux</span>
+          </span>
+          <span class="energyLegendInlineItem">
+            <span class="energyLegendMiniMarker energyLegendMiniMarker--after" aria-hidden="true"></span>
+            <span class="energyLegendInlineText">Après travaux</span>
+          </span>
+        </div>
         <div class="dpeCards">
           ${energyCard}
           ${gesCard}
