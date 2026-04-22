@@ -79,12 +79,12 @@
 
   // ---- Antennes / Couleurs ----
   const ANTENNA_COLORS = {
-    "Atlantique Grand-Ouest": "#9ED3FF",
-    "Nord-Est": "#D6B48C",
-    "Grand Sud-Ouest": "#FFB099",
-    "Alpes Centre-Est": "#C0A3FF",
-    "Méditerranée Grand-Sud": "#76D6E8",
-    "Nord-Ouest Île-de-France": "#FF9FD6"
+    "Atlantique Grand-Ouest": "#3B82F6",
+    "Nord-Est": "#F59E0B",
+    "Grand Sud-Ouest": "#10B981",
+    "Alpes Centre-Est": "#8B5CF6",
+    "Méditerranée Grand-Sud": "#14B8A6",
+    "Nord-Ouest Île-de-France": "#EF4444"
 };
 
   // Table “corrigée” : département (nom) -> antenne
