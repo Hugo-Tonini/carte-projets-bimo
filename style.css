@@ -1156,12 +1156,33 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
   }
 
   .panelSection--energy .dpeCards{
-    gap:3mm !important;
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    align-items:start !important;
+    gap:4mm !important;
   }
 
   .panelSection--energy .dpeCard{
     padding-top:2mm !important;
   }
+
+  .panelSection--energy .dpeCard{
+    min-width:0 !important;
+  }
+
+  .panelSection--energy .dpeRow{
+    grid-template-columns:1fr auto !important;
+    column-gap:3mm !important;
+  }
+
+  .panelSection--energy .dpeScale{
+    width:100% !important;
+  }
+
+  .panelSection--energy .dpeRowShape{
+    max-width:100% !important;
+  }
+
 
   .panelSection--energy .panelSectionTitle{
     margin-bottom:2mm !important;
