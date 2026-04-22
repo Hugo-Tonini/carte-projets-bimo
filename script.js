@@ -1399,11 +1399,11 @@ marker.on("click", (e) => {
         </div>
         <div class="energyLegendInline" aria-label="Légende des repères">
           <span class="energyLegendInlineItem">
-            <span class="energyLegendMiniMarker energyLegendMiniMarker--before" aria-hidden="true"></span>
+            <span class="energyLegendMiniMarker energyLegendMiniMarker--before" aria-hidden="true"><svg class="energyLegendMiniMarkerSvg" viewBox="0 0 28 14" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true"><polygon points="7,0 28,0 28,14 7,14 0,7" fill="#111"/></svg></span>
             <span class="energyLegendInlineText">Avant travaux</span>
           </span>
           <span class="energyLegendInlineItem">
-            <span class="energyLegendMiniMarker energyLegendMiniMarker--after" aria-hidden="true"></span>
+            <span class="energyLegendMiniMarker energyLegendMiniMarker--after" aria-hidden="true"><svg class="energyLegendMiniMarkerSvg" viewBox="0 0 28 14" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true"><polygon points="7,0 28,0 28,14 7,14 0,7" fill="#111"/><polygon points="7,1 27,1 27,13 7,13 1,7" fill="#fff"/></svg></span>
             <span class="energyLegendInlineText">Après travaux</span>
           </span>
         </div>
