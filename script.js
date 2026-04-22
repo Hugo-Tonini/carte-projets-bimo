@@ -83,7 +83,7 @@
     "Nord-Est": "#F59E0B",
     "Grand Sud-Ouest": "#10B981",
     "Alpes Centre-Est": "#8B5CF6",
-    "Méditerranée Grand-Sud": "#0EA5E9",
+    "Méditerranée Grand-Sud": "#0284C7",
     "Nord-Ouest Île-de-France": "#EF4444"
 };
 
