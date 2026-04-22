@@ -253,13 +253,13 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
   color:#111;
 }
 
-.dpeRow--A .dpeRowShape{ width:34%; }
-.dpeRow--B .dpeRowShape{ width:43%; }
-.dpeRow--C .dpeRowShape{ width:52%; }
-.dpeRow--D .dpeRowShape{ width:61%; }
-.dpeRow--E .dpeRowShape{ width:72%; }
-.dpeRow--F .dpeRowShape{ width:83%; }
-.dpeRow--G .dpeRowShape{ width:94%; }
+.dpeRow--A .dpeRowShape{ width:30%; }
+.dpeRow--B .dpeRowShape{ width:38%; }
+.dpeRow--C .dpeRowShape{ width:46%; }
+.dpeRow--D .dpeRowShape{ width:54%; }
+.dpeRow--E .dpeRowShape{ width:62%; }
+.dpeRow--F .dpeRowShape{ width:70%; }
+.dpeRow--G .dpeRowShape{ width:78%; }
 
 .dpeRowRange{
   font-size:12px;
@@ -280,17 +280,29 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
 }
 
 .dpeMarker{
+  position:relative;
   min-width:44px;
   height:28px;
   padding:0 11px 0 13px;
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  clip-path:polygon(14px 0, 100% 0, 100% 100%, 14px 100%, 0 50%);
   font-size:16px;
   line-height:1;
   font-weight:900;
   border:1px solid #111;
+  box-sizing:border-box;
+}
+
+.dpeMarker::before,
+.dpeMarker::after{
+  content:"";
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  width:0;
+  height:0;
+  pointer-events:none;
 }
 
 .dpeMarker--before{
@@ -298,9 +310,30 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
   color:#fff;
 }
 
+.dpeMarker--before::before{
+  left:-14px;
+  border-top:14px solid transparent;
+  border-bottom:14px solid transparent;
+  border-right:14px solid #111;
+}
+
 .dpeMarker--after{
   background:#fff;
   color:#111;
+}
+
+.dpeMarker--after::before{
+  left:-15px;
+  border-top:15px solid transparent;
+  border-bottom:15px solid transparent;
+  border-right:15px solid #111;
+}
+
+.dpeMarker--after::after{
+  left:-13px;
+  border-top:13px solid transparent;
+  border-bottom:13px solid transparent;
+  border-right:13px solid #fff;
 }
 
 .dpeLegend{
@@ -1022,13 +1055,13 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
     min-width:14mm !important;
   }
 
-  .dpeRow--A .dpeRowShape{ width:34% !important; }
-  .dpeRow--B .dpeRowShape{ width:43% !important; }
-  .dpeRow--C .dpeRowShape{ width:52% !important; }
-  .dpeRow--D .dpeRowShape{ width:61% !important; }
-  .dpeRow--E .dpeRowShape{ width:72% !important; }
-  .dpeRow--F .dpeRowShape{ width:83% !important; }
-  .dpeRow--G .dpeRowShape{ width:94% !important; }
+  .dpeRow--A .dpeRowShape{ width:30% !important; }
+  .dpeRow--B .dpeRowShape{ width:38% !important; }
+  .dpeRow--C .dpeRowShape{ width:46% !important; }
+  .dpeRow--D .dpeRowShape{ width:54% !important; }
+  .dpeRow--E .dpeRowShape{ width:62% !important; }
+  .dpeRow--F .dpeRowShape{ width:70% !important; }
+  .dpeRow--G .dpeRowShape{ width:78% !important; }
 
   .dpeCard,
   .dpeRowShape,
