@@ -302,9 +302,7 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
   min-width:var(--marker-width);
   height:var(--marker-height);
   padding:0;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
+  display:block;
   font-size:14px;
   line-height:1;
   font-weight:900;
@@ -312,7 +310,7 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
   white-space:nowrap;
   border:none;
   background:none;
-  isolation:isolate;
+  overflow:hidden;
 }
 
 .dpeMarker::before,
@@ -328,9 +326,15 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
   z-index:0;
 }
 
-.dpeMarker span,
-.dpeMarker{
-  z-index:1;
+.dpeMarkerLabel{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%, -50%);
+  z-index:2;
+  display:block;
+  text-align:center;
+  min-width:0;
 }
 
 .dpeMarker--before{
@@ -353,7 +357,7 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
   inset:var(--marker-border);
   clip-path:polygon(calc(var(--marker-tip) - var(--marker-border)) 0, 100% 0, 100% 100%, calc(var(--marker-tip) - var(--marker-border)) 100%, 0 50%);
   background:#fff;
-  z-index:0;
+  z-index:1;
 }
 
 .dpeUnitLine{
