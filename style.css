@@ -228,42 +228,19 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
 }
 
 .energyLegendMiniMarker{
-  --legend-marker-width: 28px;
-  --legend-marker-height: 14px;
-  --legend-marker-tip: 7px;
-  --legend-marker-border: 1px;
-  position:relative;
-  display:inline-block;
-  width:var(--legend-marker-width);
-  height:var(--legend-marker-height);
-  flex:0 0 var(--legend-marker-width);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:28px;
+  height:14px;
+  flex:0 0 28px;
   vertical-align:middle;
 }
 
-.energyLegendMiniMarker::before,
-.energyLegendMiniMarker::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-}
-
-.energyLegendMiniMarker::before{
-  clip-path:polygon(var(--legend-marker-tip) 0, 100% 0, 100% 100%, var(--legend-marker-tip) 100%, 0 50%);
-}
-
-.energyLegendMiniMarker--before::before{
-  background:#111;
-}
-
-.energyLegendMiniMarker--after::before{
-  background:#111;
-}
-
-.energyLegendMiniMarker--after::after{
-  inset:var(--legend-marker-border);
-  clip-path:polygon(calc(var(--legend-marker-tip) - var(--legend-marker-border)) 0, 100% 0, 100% 100%, calc(var(--legend-marker-tip) - var(--legend-marker-border)) 100%, 0 50%);
-  background:#fff;
+.energyLegendMiniMarkerSvg{
+  display:block;
+  width:100%;
+  height:100%;
 }
 
 @media (max-width: 700px){
@@ -1192,6 +1169,13 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
     margin:1mm 0 3mm 0 !important;
     font-size:9pt !important;
   }
+
+  .energyLegendMiniMarker,
+  .energyLegendMiniMarkerSvg{
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+  }
+
 
   .panelSection--energy .dpeCardTitle{
     font-size:12pt !important;
