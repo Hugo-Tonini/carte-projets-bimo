@@ -1295,7 +1295,7 @@ marker.on("click", (e) => {
 
   function renderScaleMarker(kind, value) {
     if (!Number.isFinite(value)) return "";
-    return `<span class="dpeMarker dpeMarker--${escapeAttr(kind)}">${escapeHtml(formatMarkerValue(value))}</span>`;
+    return `<span class="dpeMarker dpeMarker--${escapeAttr(kind)}"><span class="dpeMarkerLabel">${escapeHtml(formatMarkerValue(value))}</span></span>`;
   }
 
   function renderOfficialDpeCard(options) {
