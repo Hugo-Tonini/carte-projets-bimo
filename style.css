@@ -253,13 +253,18 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
   color:#111;
 }
 
-.dpeRow--A .dpeRowShape{ width:30%; }
-.dpeRow--B .dpeRowShape{ width:38%; }
-.dpeRow--C .dpeRowShape{ width:46%; }
-.dpeRow--D .dpeRowShape{ width:54%; }
-.dpeRow--E .dpeRowShape{ width:62%; }
-.dpeRow--F .dpeRowShape{ width:70%; }
-.dpeRow--G .dpeRowShape{ width:78%; }
+.dpeScale{
+  --dpe-base-width: 28%;
+  --dpe-width-step: 8%;
+}
+
+.dpeRow--A .dpeRowShape{ width:calc(var(--dpe-base-width) + 0 * var(--dpe-width-step)); }
+.dpeRow--B .dpeRowShape{ width:calc(var(--dpe-base-width) + 1 * var(--dpe-width-step)); }
+.dpeRow--C .dpeRowShape{ width:calc(var(--dpe-base-width) + 2 * var(--dpe-width-step)); }
+.dpeRow--D .dpeRowShape{ width:calc(var(--dpe-base-width) + 3 * var(--dpe-width-step)); }
+.dpeRow--E .dpeRowShape{ width:calc(var(--dpe-base-width) + 4 * var(--dpe-width-step)); }
+.dpeRow--F .dpeRowShape{ width:calc(var(--dpe-base-width) + 5 * var(--dpe-width-step)); }
+.dpeRow--G .dpeRowShape{ width:calc(var(--dpe-base-width) + 6 * var(--dpe-width-step)); }
 
 .dpeRowRange{
   font-size:12px;
@@ -1055,13 +1060,13 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
     min-width:14mm !important;
   }
 
-  .dpeRow--A .dpeRowShape{ width:30% !important; }
-  .dpeRow--B .dpeRowShape{ width:38% !important; }
-  .dpeRow--C .dpeRowShape{ width:46% !important; }
-  .dpeRow--D .dpeRowShape{ width:54% !important; }
-  .dpeRow--E .dpeRowShape{ width:62% !important; }
-  .dpeRow--F .dpeRowShape{ width:70% !important; }
-  .dpeRow--G .dpeRowShape{ width:78% !important; }
+  .dpeRow--A .dpeRowShape{ width:calc(28% + 0 * 8%) !important; }
+  .dpeRow--B .dpeRowShape{ width:calc(28% + 1 * 8%) !important; }
+  .dpeRow--C .dpeRowShape{ width:calc(28% + 2 * 8%) !important; }
+  .dpeRow--D .dpeRowShape{ width:calc(28% + 3 * 8%) !important; }
+  .dpeRow--E .dpeRowShape{ width:calc(28% + 4 * 8%) !important; }
+  .dpeRow--F .dpeRowShape{ width:calc(28% + 5 * 8%) !important; }
+  .dpeRow--G .dpeRowShape{ width:calc(28% + 6 * 8%) !important; }
 
   .dpeCard,
   .dpeRowShape,
