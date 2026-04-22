@@ -1126,15 +1126,7 @@ marker.on("click", (e) => {
       ["Contact MOE", p["Contact MOE"] ?? p.contact_moe]
     ];
 
-    const fieldsEnergy = [
-      ["Consommation énergetique - existant", p["Consommation énergetique - existant"]],
-      ["Consommation énergetique - objectif", p["Consommation énergetique - objectif"]],
-      ["Gain énergétique", p["Gain énergétique"]],
-      ["Classe énergie - existant", p["Classe énergie - existant"]],
-      ["Classe énergie - objectif", p["Classe énergie - objectif"]],
-      ["Classe GES - éxistant", p["Classe GES - éxistant"]],
-      ["Classe GES - objectif", p["Classe GES - objectif"]]
-    ];
+    const energyHtml = renderEnergySection(p);
 
     let html = "";
     html += `<div class="panelHeader" style="position:sticky;top:0;z-index:50;background:rgba(255,255,255,0.95);backdrop-filter:blur(6px);padding:12px 12px 10px;border-bottom:1px solid rgba(0,0,0,0.08);">`;
@@ -1179,15 +1171,8 @@ marker.on("click", (e) => {
       html += `</section>`;
     }
 
-    // Sous-titre "Infos Énergétiques" + infos
-    const hasEnergy = fieldsEnergy.some(([, v]) => v !== undefined && v !== null && String(v).trim() !== "");
-    if (hasEnergy) {
-      html += `<section class="panelSection panelSection--energy">`;
-      html += `<div class="panelSubTitle panelSectionTitle panelSectionTitle--energy" style="margin-top:20px;font-weight:800;font-size:18px;letter-spacing:.02em;">`;
-      html += `<span class="screenOnlyInline">Infos énergétiques</span><span class="printOnlyInline">Informations énergétiques</span>`;
-      html += `</div>`;
-      html += buildKv(fieldsEnergy);
-      html += `</section>`;
+    if (energyHtml) {
+      html += energyHtml;
     }
 
     html += renderPhotosSection(photos.slice(1));
@@ -1218,6 +1203,217 @@ marker.on("click", (e) => {
         }, 100);
       });
     }
+  }
+
+  const TERTIARY_DPE_THRESHOLDS = {
+    "bureaux administration enseignement": {
+      energy: [50, 110, 210, 350, 540, 750],
+      ges: [5, 15, 30, 60, 100, 145]
+    },
+    "commerces": {
+      energy: [50, 120, 230, 380, 570, 800],
+      ges: [5, 15, 30, 60, 100, 145]
+    },
+    "hotels hebergements": {
+      energy: [120, 250, 400, 600, 850, 1150],
+      ges: [10, 25, 50, 90, 140, 200]
+    },
+    "logistique entrepots": {
+      energy: [30, 70, 140, 240, 370, 520],
+      ges: [3, 8, 20, 40, 70, 100]
+    },
+    "sante etablissements medico sociaux": {
+      energy: [150, 300, 480, 700, 950, 1250],
+      ges: [15, 35, 65, 115, 175, 250]
+    }
+  };
+
+  function parseMetricValue(value) {
+    if (value === undefined || value === null) return null;
+    const raw = String(value).trim();
+    if (!raw) return null;
+    const normalized = raw.replace(/\s+/g, "").replace(",", ".");
+    const num = Number(normalized);
+    return Number.isFinite(num) ? num : null;
+  }
+
+  function formatMetricValue(value) {
+    if (!Number.isFinite(value)) return "—";
+    return new Intl.NumberFormat("fr-FR", {
+      maximumFractionDigits: 1
+    }).format(value);
+  }
+
+  function normalizeBuildingType(value) {
+    return normalizeForLookup(value)
+      .replace(/\//g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function getBuildingThresholds(project) {
+    const rawType =
+      project["Type de bâtiment"] ??
+      project["Type de batiment"] ??
+      project.type_batiment ??
+      "";
+    const key = normalizeBuildingType(rawType);
+    return TERTIARY_DPE_THRESHOLDS[key] || null;
+  }
+
+  function getLetterFromThresholds(value, bounds) {
+    if (!Number.isFinite(value) || !Array.isArray(bounds) || bounds.length !== 6) return "";
+    if (value <= bounds[0]) return "A";
+    if (value <= bounds[1]) return "B";
+    if (value <= bounds[2]) return "C";
+    if (value <= bounds[3]) return "D";
+    if (value <= bounds[4]) return "E";
+    if (value <= bounds[5]) return "F";
+    return "G";
+  }
+
+  function buildThresholdBands(bounds) {
+    if (!Array.isArray(bounds) || bounds.length !== 6) return [];
+    const fmt = (n) => new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 }).format(n);
+    return [
+      { letter: "A", label: `≤ ${fmt(bounds[0])}` },
+      { letter: "B", label: `${fmt(bounds[0] + 1)} à ${fmt(bounds[1])}` },
+      { letter: "C", label: `${fmt(bounds[1] + 1)} à ${fmt(bounds[2])}` },
+      { letter: "D", label: `${fmt(bounds[2] + 1)} à ${fmt(bounds[3])}` },
+      { letter: "E", label: `${fmt(bounds[3] + 1)} à ${fmt(bounds[4])}` },
+      { letter: "F", label: `${fmt(bounds[4] + 1)} à ${fmt(bounds[5])}` },
+      { letter: "G", label: `> ${fmt(bounds[5])}` }
+    ];
+  }
+
+  function renderScaleMarker(kind, letter) {
+    if (!letter) return "";
+    return `<span class="dpeMarker dpeMarker--${escapeAttr(kind)}">${escapeHtml(letter)}</span>`;
+  }
+
+  function renderLegendItem(kind, label, value, unit) {
+    if (!Number.isFinite(value)) return "";
+    return `
+      <div class="dpeLegendItem">
+        <span class="dpeLegendSwatch dpeLegendSwatch--${escapeAttr(kind)}" aria-hidden="true"></span>
+        <span class="dpeLegendLabel">${escapeHtml(label)}</span>
+        <span class="dpeLegendValue">${escapeHtml(formatMetricValue(value))} ${escapeHtml(unit)}</span>
+      </div>
+    `;
+  }
+
+  function renderOfficialDpeCard(options) {
+    const {
+      theme,
+      title,
+      hint,
+      unit,
+      bounds,
+      beforeValue,
+      afterValue
+    } = options;
+
+    if (!Array.isArray(bounds) || bounds.length !== 6) return "";
+
+    const beforeLetter = getLetterFromThresholds(beforeValue, bounds);
+    const afterLetter = getLetterFromThresholds(afterValue, bounds);
+    const bands = buildThresholdBands(bounds);
+
+    if (!beforeLetter && !afterLetter) return "";
+
+    return `
+      <div class="dpeCard dpeCard--${escapeAttr(theme)}">
+        <div class="dpeCardTitle">${escapeHtml(title)}</div>
+        <div class="dpeCardHint">${escapeHtml(hint)}</div>
+
+        <div class="dpeScale" role="img" aria-label="${escapeAttr(title)}">
+          ${bands.map((band) => {
+            const beforeMarker = beforeLetter === band.letter ? renderScaleMarker("before", beforeLetter) : "";
+            const afterMarker = afterLetter === band.letter ? renderScaleMarker("after", afterLetter) : "";
+
+            return `
+              <div class="dpeRow dpeRow--${escapeAttr(theme)} dpeRow--${escapeAttr(band.letter)}">
+                <div class="dpeRowShape">
+                  <span class="dpeRowRange">${escapeHtml(band.label)}</span>
+                  <span class="dpeRowLetter">${escapeHtml(band.letter)}</span>
+                </div>
+                <div class="dpeRowMarkers">
+                  ${beforeMarker}
+                  ${afterMarker}
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+
+        <div class="dpeLegend">
+          ${renderLegendItem("before", "Avant travaux", beforeValue, unit)}
+          ${renderLegendItem("after", "Après travaux", afterValue, unit)}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderEnergySection(project) {
+    const thresholds = getBuildingThresholds(project);
+    if (!thresholds) return "";
+
+    const energyBefore = parseMetricValue(
+      project["Consommation énergetique - avant travaux"] ??
+      project["Consommation énergetique - existant"]
+    );
+    const energyAfter = parseMetricValue(
+      project["Consommation énergetique - Après travaux"] ??
+      project["Consommation énergetique - après travaux"] ??
+      project["Consommation énergetique - objectif"]
+    );
+    const gesBefore = parseMetricValue(
+      project["Émission GES - avant travaux"] ??
+      project["Emission GES - avant travaux"] ??
+      project["GES - avant travaux"]
+    );
+    const gesAfter = parseMetricValue(
+      project["Émission GES - Après travaux"] ??
+      project["Émission GES - après travaux"] ??
+      project["Emission GES - Après travaux"] ??
+      project["Emission GES - après travaux"] ??
+      project["GES - Après travaux"] ??
+      project["GES - après travaux"]
+    );
+
+    const energyCard = renderOfficialDpeCard({
+      theme: "energy",
+      title: "Consommations énergétiques",
+      hint: "Logement économe",
+      unit: "kWhEP/m².an",
+      bounds: thresholds.energy,
+      beforeValue: energyBefore,
+      afterValue: energyAfter
+    });
+
+    const gesCard = renderOfficialDpeCard({
+      theme: "ges",
+      title: "Émissions de gaz à effet de serre",
+      hint: "Faible émission de GES",
+      unit: "kgCO2eq/m².an",
+      bounds: thresholds.ges,
+      beforeValue: gesBefore,
+      afterValue: gesAfter
+    });
+
+    if (!energyCard && !gesCard) return "";
+
+    return `
+      <section class="panelSection panelSection--energy">
+        <div class="panelSubTitle panelSectionTitle panelSectionTitle--energy" style="margin-top:20px;font-weight:800;font-size:18px;letter-spacing:.02em;">
+          <span class="screenOnlyInline">Infos énergétiques</span><span class="printOnlyInline">Informations énergétiques</span>
+        </div>
+        <div class="dpeCards">
+          ${energyCard}
+          ${gesCard}
+        </div>
+      </section>
+    `;
   }
 
   // Génère le bloc d'infos du panneau avec les classes attendues par le CSS (kv/kvRow/kvKey/kvVal)
