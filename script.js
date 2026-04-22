@@ -80,8 +80,8 @@
   // ---- Antennes / Couleurs ----
   const ANTENNA_COLORS = {
     "Atlantique Grand-Ouest": "#3B82F6",
-    "Nord-Est": "#F59E0B",
-    "Grand Sud-Ouest": "#10B981",
+    "Nord-Est": "#10B981",
+    "Grand Sud-Ouest": "#F59E0B",
     "Alpes Centre-Est": "#8B5CF6",
     "Méditerranée Grand-Sud": "#1D4ED8",
     "Nord-Ouest Île-de-France": "#EF4444"
