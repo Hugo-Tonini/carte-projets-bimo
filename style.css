@@ -234,20 +234,27 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
 
 .dpeRow{
   display:grid;
-  grid-template-columns:minmax(0, 1fr) auto;
+  grid-template-columns:auto auto;
   gap:10px;
   align-items:center;
+  justify-content:start;
 }
 
 .dpeScale{
-  --dpe-base-width: 200px;
-  --dpe-width-step: 52px;
+  --dpe-base-width: 150px;
+  --dpe-width-step: 34px;
   --dpe-row-height: 30px;
   --dpe-arrow-width: 18px;
+  --dpe-max-width: 354px;
+  justify-items:start;
+  align-items:start;
 }
 
 .dpeRowShape{
-  width:calc(var(--dpe-base-width) + var(--dpe-step, 0) * var(--dpe-width-step));
+  width:min(
+    calc(var(--dpe-base-width) + var(--dpe-step, 0) * var(--dpe-width-step)),
+    var(--dpe-max-width)
+  );
   height:var(--dpe-row-height);
   padding:0 14px 0 12px;
   display:flex;
