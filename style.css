@@ -293,61 +293,67 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
 }
 
 .dpeMarker{
+  --marker-width: 64px;
+  --marker-height: 30px;
+  --marker-tip: 16px;
+  --marker-border: 1px;
   position:relative;
-  min-width:56px;
-  height:28px;
-  padding:0 12px 0 14px;
+  width:var(--marker-width);
+  min-width:var(--marker-width);
+  height:var(--marker-height);
+  padding:0;
   display:inline-flex;
   align-items:center;
   justify-content:center;
   font-size:14px;
   line-height:1;
   font-weight:900;
-  border:1px solid #111;
   box-sizing:border-box;
   white-space:nowrap;
+  border:none;
+  background:none;
+  isolation:isolate;
 }
 
 .dpeMarker::before,
 .dpeMarker::after{
   content:"";
   position:absolute;
-  top:50%;
-  transform:translateY(-50%);
-  width:0;
-  height:0;
+  inset:0;
   pointer-events:none;
 }
 
+.dpeMarker::before{
+  clip-path:polygon(var(--marker-tip) 0, 100% 0, 100% 100%, var(--marker-tip) 100%, 0 50%);
+  z-index:0;
+}
+
+.dpeMarker span,
+.dpeMarker{
+  z-index:1;
+}
+
 .dpeMarker--before{
-  background:#111;
   color:#fff;
 }
 
 .dpeMarker--before::before{
-  left:-14px;
-  border-top:14px solid transparent;
-  border-bottom:14px solid transparent;
-  border-right:14px solid #111;
+  background:#111;
 }
 
 .dpeMarker--after{
-  background:#fff;
   color:#111;
 }
 
 .dpeMarker--after::before{
-  left:-15px;
-  border-top:15px solid transparent;
-  border-bottom:15px solid transparent;
-  border-right:15px solid #111;
+  background:#111;
 }
 
 .dpeMarker--after::after{
-  left:-13px;
-  border-top:13px solid transparent;
-  border-bottom:13px solid transparent;
-  border-right:13px solid #fff;
+  inset:var(--marker-border);
+  clip-path:polygon(calc(var(--marker-tip) - var(--marker-border)) 0, 100% 0, 100% 100%, calc(var(--marker-tip) - var(--marker-border)) 100%, 0 50%);
+  background:#fff;
+  z-index:0;
 }
 
 .dpeUnitLine{
