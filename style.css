@@ -1140,7 +1140,59 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
   .panelSection--energy{
     break-before:page;
     page-break-before:always;
+    break-inside:avoid !important;
+    page-break-inside:avoid !important;
     margin-top:0 !important;
+  }
+
+  .panelSection--energy .energyLegendInline,
+  .panelSection--energy .dpeCards,
+  .panelSection--energy .dpeCard,
+  .panelSection--energy .dpeScale,
+  .panelSection--energy .dpeRow,
+  .panelSection--energy .dpeUnitLine{
+    break-inside:avoid !important;
+    page-break-inside:avoid !important;
+  }
+
+  .panelSection--energy .dpeCards{
+    gap:3mm !important;
+  }
+
+  .panelSection--energy .dpeCard{
+    padding-top:2mm !important;
+  }
+
+  .panelSection--energy .panelSectionTitle{
+    margin-bottom:2mm !important;
+  }
+
+  .panelSection--energy .energyLegendInline{
+    margin:1mm 0 3mm 0 !important;
+    font-size:9pt !important;
+  }
+
+  .panelSection--energy .dpeCardTitle{
+    font-size:12pt !important;
+    margin-bottom:2mm !important;
+  }
+
+  .panelSection--energy .dpeUnitLine,
+  .panelSection--energy .dpeRowRange{
+    font-size:8.5pt !important;
+  }
+
+  .panelSection--energy .dpeScale{
+    gap:1.5mm !important;
+  }
+
+  .panelSection--energy .dpeRowShape{
+    height:9mm !important;
+  }
+
+  .panelSection--energy .dpeMarker{
+    height:7mm !important;
+    min-width:14mm !important;
   }
   .panelSectionTitle{
     margin-top:0 !important;
