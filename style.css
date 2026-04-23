@@ -102,20 +102,12 @@ h1{ margin: 0; font-size: 20px; }
 .types{
   border: 1px solid var(--border);
   border-radius: 10px;
-  min-height: 37px;
-  padding: 0 10px;
+  padding: 6px 10px;
   display: flex;
   gap: 10px;
   align-items: center;
 }
-.types label{
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-}
-.types input[type="checkbox"]{
-  margin-top: 0;
-}
+.types label{ white-space: nowrap; }
 
 .deptToggle{
   border: 1px solid var(--border);
