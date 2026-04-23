@@ -381,7 +381,7 @@ clusters.on("clustermouseout", (a) => {
 
     if (o.type_lieu === "antenne" && o.antenne) {
       const antennaProjects = getProjectsForAntenna(o.antenne);
-      html += `<div class="panelSubTitle" style="margin-top:20px;font-weight:800;font-size:18px;letter-spacing:.02em;">Projets</div>`;
+      html += `<div class="panelSubTitle" style="margin-top:20px;font-weight:800;font-size:22px;letter-spacing:.02em;">Projets</div>`;
 
       if (antennaProjects.length) {
         html += `<div class="officeProjectsList">`;
@@ -1000,7 +1000,7 @@ marker.on("click", (e) => {
     if (!items) return "";
     return `
       <div class="projPhotos" style="margin-top:16px;">
-        <div class="projPhotosTitle" style="font-weight:800;font-size:18px;">Photos</div>
+        <div class="projPhotosTitle" style="font-weight:800;font-size:22px;">Photos</div>
         <div class="projPhotosGrid">
           ${items}
         </div>
@@ -1174,13 +1174,13 @@ marker.on("click", (e) => {
     if (resumeTxt) {
       const safe = escapeHtml(resumeTxt).replace(/\n/g, "<br>");
       html += `
-        <div class="panelSubTitle" style="margin-top:12px;font-weight:800;font-size:18px;letter-spacing:.02em;">Résumé</div>
+        <div class="panelSubTitle" style="margin-top:12px;font-weight:800;font-size:22px;letter-spacing:.02em;">Résumé</div>
         <div class="panelResumeText">${safe}</div>
       `;
     }
 
     html += `<section class="panelSection panelSection--general">`;
-    html += `<div class="panelSubTitle panelSectionTitle panelSectionTitle--general" style="margin-top:18px;font-weight:800;font-size:18px;letter-spacing:.02em;">`;
+    html += `<div class="panelSubTitle panelSectionTitle panelSectionTitle--general" style="margin-top:18px;font-weight:800;font-size:22px;letter-spacing:.02em;">`;
     html += `<span class="screenOnlyInline">Infos générales</span><span class="printOnlyInline">Informations générales</span>`;
     html += `</div>`;
     html += buildKv(fieldsMain);
@@ -1190,7 +1190,7 @@ marker.on("click", (e) => {
     const hasContacts = fieldsContacts.some(([, v]) => v !== undefined && v !== null && String(v).trim() !== "");
     if (hasContacts) {
       html += `<section class="panelSection panelSection--contacts">`;
-      html += `<div class="panelSubTitle panelSectionTitle panelSectionTitle--contacts" style="margin-top:20px;font-weight:800;font-size:18px;letter-spacing:.02em;">Contacts</div>`;
+      html += `<div class="panelSubTitle panelSectionTitle panelSectionTitle--contacts" style="margin-top:20px;font-weight:800;font-size:22px;letter-spacing:.02em;">Contacts</div>`;
       html += buildKv(fieldsContacts);
       html += `</section>`;
     }
@@ -1418,7 +1418,7 @@ marker.on("click", (e) => {
 
     return `
       <section class="panelSection panelSection--energy">
-        <div class="panelSubTitle panelSectionTitle panelSectionTitle--energy" style="margin-top:20px;font-weight:800;font-size:18px;letter-spacing:.02em;">
+        <div class="panelSubTitle panelSectionTitle panelSectionTitle--energy" style="margin-top:20px;font-weight:800;font-size:22px;letter-spacing:.02em;">
           <span class="screenOnlyInline">Infos énergétiques</span><span class="printOnlyInline">Informations énergétiques</span>
         </div>
         <div class="energyLegendInline" aria-label="Légende des repères">
@@ -1481,7 +1481,7 @@ marker.on("click", (e) => {
       .join("");
     return `
       <div class="projPhotos" style="margin-top:16px;">
-        <div class="projPhotosTitle" style="font-weight:800;font-size:18px;">Photos</div>
+        <div class="projPhotosTitle" style="font-weight:800;font-size:22px;">Photos</div>
         <div class="projPhotosGrid">
           ${items}
         </div>
