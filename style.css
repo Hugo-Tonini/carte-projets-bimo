@@ -20,7 +20,6 @@ html, body{ font-family:"Marianne", Arial, system-ui, -apple-system, Segoe UI, R
   --shadow: rgba(0,0,0,0.14);
   --bg: #ffffff;
   --muted: #666;
-  --topbar-height: 62px;
 }
 
 *{ box-sizing: border-box; }
@@ -33,7 +32,7 @@ body{
 }
 
 /* ===== Top bar ===== */
-h1{ margin: 0; padding: 4px 14px 2px 14px; font-size: 20px; line-height: 1.1; }
+h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
 
 .topbar{
   background: #f8f6f2;
@@ -42,7 +41,7 @@ h1{ margin: 0; padding: 4px 14px 2px 14px; font-size: 20px; line-height: 1.1; }
 }
 
 .topbarHeader{ display:flex; align-items:center; justify-content:flex-start; }
-.titleRow{ display:flex; align-items:baseline; gap:10px; padding-top:0; }
+.titleRow{ display:flex; align-items:baseline; gap:10px; padding-top:2px; }
 
 .titleStats{
   color: var(--muted);
@@ -59,13 +58,13 @@ h1{ margin: 0; padding: 4px 14px 2px 14px; font-size: 20px; line-height: 1.1; }
   display: flex;
   gap: 10px;
   align-items: center;
-  padding: 0 14px 2px 14px;
+  padding: 0 14px 4px 14px;
   padding-right: 140px; /* évite de passer sous le logo */
   flex-wrap: wrap;
 }
 
 .search input{
-  padding: 5px 9px;
+  padding: 7px 9px;
   min-width: 280px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -74,7 +73,7 @@ h1{ margin: 0; padding: 4px 14px 2px 14px; font-size: 20px; line-height: 1.1; }
 .types{
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 4px 10px;
+  padding: 6px 10px;
   display: flex;
   gap: 10px;
   align-items: center;
@@ -84,12 +83,12 @@ h1{ margin: 0; padding: 4px 14px 2px 14px; font-size: 20px; line-height: 1.1; }
 .deptToggle{
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 4px 10px;
+  padding: 6px 10px;
   white-space: nowrap;
 }
 
 #clear, #projListBtn{
-  padding: 5px 10px;
+  padding: 7px 10px;
   cursor: pointer;
   border: 1px solid var(--border);
   background: #fff;
@@ -119,8 +118,8 @@ h1{ margin: 0; padding: 4px 14px 2px 14px; font-size: 20px; line-height: 1.1; }
   padding: 0;
 }
 .brandLogo{
-  height: calc(100% - 8px);
-  max-height: 72px;
+  height: calc(100% - 10px);
+  max-height: 80px;
   width: auto;
   display: block;
 }
@@ -129,11 +128,11 @@ h1{ margin: 0; padding: 4px 14px 2px 14px; font-size: 20px; line-height: 1.1; }
 .layout{
   position: relative;
   display: flex;
-  height: calc(100vh - var(--topbar-height));
+  height: calc(100vh - 68px);
   width: 100%;
 }
 .map{ flex: 1; min-width: 0; }
-#map{ height: calc(100vh - var(--topbar-height)); }
+#map{ height: calc(100vh - 68px); }
 
 /* ===== Panel ===== */
 .panel{
@@ -180,7 +179,7 @@ h1{ margin: 0; padding: 4px 14px 2px 14px; font-size: 20px; line-height: 1.1; }
   background: #fff;
   border-radius: 10px;
   cursor: pointer;
-  padding: 4px 10px;
+  padding: 6px 10px;
 }
 
 .kv{
@@ -961,7 +960,7 @@ h1{ margin: 0; padding: 4px 14px 2px 14px; font-size: 20px; line-height: 1.1; }
 
 @page{
   size:A4 landscape;
-  margin:12mm;
+  margin:6mm;
 }
 
 @media print{
@@ -1100,13 +1099,13 @@ h1{ margin: 0; padding: 4px 14px 2px 14px; font-size: 20px; line-height: 1.1; }
     min-width:14mm !important;
   }
 
-  .dpeRow--A .dpeRowShape{ width:150px !important; }
-  .dpeRow--B .dpeRowShape{ width:184px !important; }
-  .dpeRow--C .dpeRowShape{ width:218px !important; }
-  .dpeRow--D .dpeRowShape{ width:252px !important; }
-  .dpeRow--E .dpeRowShape{ width:286px !important; }
-  .dpeRow--F .dpeRowShape{ width:320px !important; }
-  .dpeRow--G .dpeRowShape{ width:354px !important; }
+  .dpeRow--A .dpeRowShape{ width:178px !important; }
+  .dpeRow--B .dpeRowShape{ width:214px !important; }
+  .dpeRow--C .dpeRowShape{ width:250px !important; }
+  .dpeRow--D .dpeRowShape{ width:286px !important; }
+  .dpeRow--E .dpeRowShape{ width:322px !important; }
+  .dpeRow--F .dpeRowShape{ width:358px !important; }
+  .dpeRow--G .dpeRowShape{ width:394px !important; }
 
   .dpeCard,
   .dpeRowShape,
@@ -1121,6 +1120,10 @@ h1{ margin: 0; padding: 4px 14px 2px 14px; font-size: 20px; line-height: 1.1; }
     break-inside:avoid !important;
     page-break-inside:avoid !important;
     margin-top:0 !important;
+    min-height:190mm !important;
+    display:flex !important;
+    flex-direction:column !important;
+    justify-content:flex-start !important;
   }
 
   .panelSection--energy .energyLegendInline,
@@ -1137,20 +1140,29 @@ h1{ margin: 0; padding: 4px 14px 2px 14px; font-size: 20px; line-height: 1.1; }
     display:grid !important;
     grid-template-columns:1fr 1fr !important;
     align-items:start !important;
-    gap:4mm !important;
+    align-content:start !important;
+    gap:6mm !important;
+    flex:1 1 auto !important;
   }
 
   .panelSection--energy .dpeCard{
-    padding-top:2mm !important;
+    padding-top:1.5mm !important;
+    display:flex !important;
+    flex-direction:column !important;
+    justify-content:flex-start !important;
   }
 
   .panelSection--energy .dpeCard{
     min-width:0 !important;
   }
 
+  .panelSection--energy .dpeCards > *{
+    width:100% !important;
+  }
+
   .panelSection--energy .dpeRow{
     grid-template-columns:1fr auto !important;
-    column-gap:3mm !important;
+    column-gap:4mm !important;
   }
 
   .panelSection--energy .dpeScale{
@@ -1164,11 +1176,13 @@ h1{ margin: 0; padding: 4px 14px 2px 14px; font-size: 20px; line-height: 1.1; }
 
   .panelSection--energy .panelSectionTitle{
     margin-bottom:2mm !important;
+    font-size:17pt !important;
+    line-height:1.15 !important;
   }
 
   .panelSection--energy .energyLegendInline{
-    margin:1mm 0 3mm 0 !important;
-    font-size:9pt !important;
+    margin:1mm 0 4mm 0 !important;
+    font-size:10.5pt !important;
   }
 
   .energyLegendMiniMarker,
@@ -1179,26 +1193,28 @@ h1{ margin: 0; padding: 4px 14px 2px 14px; font-size: 20px; line-height: 1.1; }
 
 
   .panelSection--energy .dpeCardTitle{
-    font-size:12pt !important;
-    margin-bottom:2mm !important;
+    font-size:14pt !important;
+    margin-bottom:3mm !important;
+    line-height:1.15 !important;
   }
 
   .panelSection--energy .dpeUnitLine,
   .panelSection--energy .dpeRowRange{
-    font-size:8.5pt !important;
+    font-size:10pt !important;
   }
 
   .panelSection--energy .dpeScale{
-    gap:1.5mm !important;
+    gap:2mm !important;
   }
 
   .panelSection--energy .dpeRowShape{
-    height:9mm !important;
+    height:11mm !important;
   }
 
   .panelSection--energy .dpeMarker{
-    height:7mm !important;
-    min-width:14mm !important;
+    height:8.5mm !important;
+    min-width:16mm !important;
+    font-size:11pt !important;
   }
   .panelSectionTitle{
     margin-top:0 !important;
