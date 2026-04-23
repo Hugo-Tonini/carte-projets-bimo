@@ -1175,13 +1175,13 @@ marker.on("click", (e) => {
       const safe = escapeHtml(resumeTxt).replace(/\n/g, "<br>");
       html += `
         <div class="panelSubTitle" style="margin-top:12px;font-weight:800;font-size:22px;letter-spacing:.02em;transition:none;animation:none;transform:none;">Résumé</div>
-        <div class="panelResumeText">${safe}</div>
+        <div class="panelResumeText" style="border-top:1px solid var(--border);padding-top:10px;">${safe}</div>
       `;
     }
 
     html += `<section class="panelSection panelSection--general">`;
     html += `<div class="panelSubTitle panelSectionTitle panelSectionTitle--general" style="margin-top:18px;font-weight:800;font-size:22px;letter-spacing:.02em;transition:none;animation:none;transform:none;">`;
-    html += `<span class="screenOnlyInline">Infos générales</span><span class="printOnlyInline">Informations générales</span>`;
+    html += `<span class="screenOnlyInline">Informations générales</span><span class="printOnlyInline">Informations générales</span>`;
     html += `</div>`;
     html += buildKv(fieldsMain);
     html += `</section>`;
@@ -1341,7 +1341,7 @@ marker.on("click", (e) => {
     if (!beforeLetter && !afterLetter) return "";
 
     return `
-      <div class="dpeCard dpeCard--${escapeAttr(theme)}">
+      <div class="dpeCard dpeCard--${escapeAttr(theme)}" style="border-top:none;padding-top:0;">
         <div class="dpeCardTitle">${escapeHtml(title)}</div>
 
         <div class="dpeScale" role="img" aria-label="${escapeAttr(title)}">
@@ -1419,8 +1419,9 @@ marker.on("click", (e) => {
     return `
       <section class="panelSection panelSection--energy">
         <div class="panelSubTitle panelSectionTitle panelSectionTitle--energy" style="margin-top:20px;font-weight:800;font-size:22px;transition:none;animation:none;transform:none;letter-spacing:.02em;">
-          <span class="screenOnlyInline">Infos énergétiques</span><span class="printOnlyInline">Informations énergétiques</span>
+          <span class="screenOnlyInline">Informations énergétiques</span><span class="printOnlyInline">Informations énergétiques</span>
         </div>
+        <div style="border-top:1px solid var(--border);padding-top:10px;">
         <div class="energyLegendInline" aria-label="Légende des repères">
           <span class="energyLegendInlineItem">
             <span class="energyLegendMiniMarker energyLegendMiniMarker--before" aria-hidden="true"><svg class="energyLegendMiniMarkerSvg" viewBox="0 0 28 14" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true"><polygon points="7,0 28,0 28,14 7,14 0,7" fill="#111"/></svg></span>
@@ -1434,6 +1435,7 @@ marker.on("click", (e) => {
         <div class="dpeCards">
           ${energyCard}
           ${gesCard}
+        </div>
         </div>
       </section>
     `;
