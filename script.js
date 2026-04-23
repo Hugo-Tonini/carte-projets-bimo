@@ -125,7 +125,7 @@
       </div>
     `;
 
-    elProjectModeSwitch.parentNode?.insertBefore(wrap, elProjectModeSwitch);
+    elProjectModeSwitch.insertAdjacentElement("afterend", wrap);
 
     elCompletedYearFilter = wrap;
     elCompletedYearRange = wrap.querySelector("#completedYearRange");
