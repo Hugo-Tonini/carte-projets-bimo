@@ -20,7 +20,6 @@ html, body{ font-family:"Marianne", Arial, system-ui, -apple-system, Segoe UI, R
   --shadow: rgba(0,0,0,0.14);
   --bg: #ffffff;
   --muted: #666;
-  --accent: #000091;
 }
 
 *{ box-sizing: border-box; }
@@ -33,7 +32,7 @@ body{
 }
 
 /* ===== Top bar ===== */
-h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
+h1{ margin: 0; font-size: 20px; }
 
 .topbar{
   background: #f8f6f2;
@@ -41,8 +40,23 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
   position: relative;
 }
 
-.topbarHeader{ display:flex; align-items:center; justify-content:flex-start; padding-right:140px; }
-.titleRow{ display:flex; align-items:center; gap:12px; padding-top:2px; padding-right:140px; flex-wrap:wrap; }
+.topbarHeader{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+}
+.titleRow{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  width:100%;
+  padding: 8px 154px 8px 14px;
+  flex-wrap:wrap;
+}
+
+#pageTitle{
+  flex:0 1 auto;
+}
 
 .titleStats{
   color: var(--muted);
@@ -50,6 +64,7 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
   display:flex;
   gap:8px;
   align-items: baseline;
+  flex:0 0 auto;
 }
 .titleStats #statCount{ font-weight: 700; color:#111; }
 .titleStats .statDept{ color:#111; font-weight:600; }
@@ -59,28 +74,29 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
   display: flex;
   gap: 10px;
   align-items: center;
-  padding: 0 14px 4px 14px;
-  padding-right: 140px; /* évite de passer sous le logo */
+  padding: 0 14px 8px 14px;
+  padding-right: 154px; /* évite de passer sous le logo */
   flex-wrap: wrap;
 }
 
-.search input{
-  padding: 7px 9px;
-  min-width: 280px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-
-.titleSearch{
+.search{
   display:flex;
   align-items:center;
-  flex:0 1 360px;
-  min-width:280px;
 }
 
-.titleSearch input{
+.search--header{
+  margin-left:auto;
+  flex:0 1 360px;
+  min-width:280px;
+  max-width:420px;
+}
+
+.search input{
   width:100%;
-  min-width:0;
+  padding: 7px 9px;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
 }
 
 .types{
@@ -111,87 +127,30 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
 
 .projectModeSwitch{
   display:inline-flex;
-  align-items:stretch;
-  width: 192px;
-  height:auto;
-  min-height:0;
+  align-items:center;
   border:1px solid var(--border);
   border-radius:10px;
   overflow:hidden;
   background:#fff;
-  vertical-align:middle;
 }
 .projectModeBtn{
-  flex:1 1 0;
-  min-width:0;
-  height:100%;
-  min-height:100%;
-  padding:0 16px;
+  padding:7px 12px;
   cursor:pointer;
   border:0;
   background:transparent;
   font:inherit;
-  font-weight:600;
   color:#111;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  white-space:nowrap;
-  line-height:1;
 }
 .projectModeBtn + .projectModeBtn{
   border-left:1px solid var(--border);
 }
 .projectModeBtn:hover{
-  background:rgba(0,0,145,0.06);
+  background:rgba(0,0,0,0.03);
 }
-.projectModeBtn.is-active,
-.projectModeBtn.is-active:hover{
-  background:var(--accent);
+.projectModeBtn.is-active{
+  background:#111;
   color:#fff;
   font-weight:700;
-}
-
-.completedYearFilter{
-  display:none;
-  align-items:center;
-  gap:12px;
-  height:auto;
-  min-height:0;
-  padding: 0 12px;
-  border:1px solid var(--border);
-  border-radius:10px;
-  background:#fff;
-  vertical-align:middle;
-}
-.completedYearFilter.is-visible{
-  display:inline-flex;
-}
-.completedYearFilterLabel{
-  font-size:13px;
-  color:#111;
-  white-space:nowrap;
-}
-.completedYearValue{
-  color:var(--accent);
-}
-.completedYearRangeWrap{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  min-width:260px;
-}
-.completedYearBound{
-  min-width:32px;
-  text-align:center;
-  font-size:12px;
-  color:var(--muted);
-}
-.completedYearRange{
-  width:220px;
-  margin:0;
-  accent-color:var(--accent);
-  cursor:pointer;
 }
 
 .stats{
@@ -220,6 +179,22 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
   max-height: 80px;
   width: auto;
   display: block;
+}
+
+@media (max-width: 980px){
+  .titleRow{
+    padding-right:14px;
+  }
+
+  .toolbar{
+    padding-right:14px;
+  }
+
+  .search--header{
+    margin-left:0;
+    flex:1 1 100%;
+    max-width:none;
+  }
 }
 
 /* ===== Layout ===== */
@@ -1059,19 +1034,6 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
 @page{
   size:A4 landscape;
   margin:12mm;
-}
-
-@media (max-width: 980px){
-  .topbarHeader{
-    padding-right:14px;
-  }
-  .titleRow{
-    padding-right:14px;
-  }
-  .titleSearch{
-    flex:1 1 100%;
-    min-width:0;
-  }
 }
 
 @media print{
