@@ -20,7 +20,6 @@ html, body{ font-family:"Marianne", Arial, system-ui, -apple-system, Segoe UI, R
   --shadow: rgba(0,0,0,0.14);
   --bg: #ffffff;
   --muted: #666;
-  --accent: #000091;
 }
 
 *{ box-sizing: border-box; }
@@ -33,7 +32,7 @@ body{
 }
 
 /* ===== Top bar ===== */
-h1{ margin: 0; font-size: 20px; line-height:1.1; }
+h1{ margin: 0; font-size: 20px; }
 
 .topbar{
   background: #f8f6f2;
@@ -43,7 +42,7 @@ h1{ margin: 0; font-size: 20px; line-height:1.1; }
 
 .topbarHeader{
   display:flex;
-  align-items:flex-start;
+  align-items:center;
   justify-content:flex-start;
 }
 .titleRow{
@@ -51,14 +50,12 @@ h1{ margin: 0; font-size: 20px; line-height:1.1; }
   align-items:center;
   gap:14px;
   width:100%;
-  padding: 6px 154px 4px 12px;
+  padding: 8px 154px 8px 14px;
   flex-wrap:wrap;
 }
 
 #pageTitle{
   flex:0 1 auto;
-  position:relative;
-  top:-2px;
 }
 
 .titleStats{
@@ -77,7 +74,7 @@ h1{ margin: 0; font-size: 20px; line-height:1.1; }
   display: flex;
   gap: 10px;
   align-items: center;
-  padding: 0 14px 8px 8px;
+  padding: 0 14px 8px 14px;
   padding-right: 154px; /* évite de passer sous le logo */
   flex-wrap: wrap;
 }
@@ -88,7 +85,7 @@ h1{ margin: 0; font-size: 20px; line-height:1.1; }
 }
 
 .search--header{
-  margin-left:8px;
+  margin-left:auto;
   flex:0 1 360px;
   min-width:280px;
   max-width:420px;
@@ -130,89 +127,30 @@ h1{ margin: 0; font-size: 20px; line-height:1.1; }
 
 .projectModeSwitch{
   display:inline-flex;
-  align-items:stretch;
-  width:192px;
-  height:auto;
-  min-height:0;
+  align-items:center;
   border:1px solid var(--border);
   border-radius:10px;
   overflow:hidden;
   background:#fff;
-  vertical-align:middle;
-  flex:0 0 auto;
 }
 .projectModeBtn{
-  flex:1 1 0;
-  min-width:0;
-  height:100%;
-  min-height:100%;
-  padding:0 16px;
+  padding:7px 12px;
   cursor:pointer;
   border:0;
   background:transparent;
   font:inherit;
-  font-weight:600;
   color:#111;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  white-space:nowrap;
-  line-height:1;
 }
 .projectModeBtn + .projectModeBtn{
   border-left:1px solid var(--border);
 }
 .projectModeBtn:hover{
-  background:rgba(0,0,145,0.06);
+  background:rgba(0,0,0,0.03);
 }
-.projectModeBtn.is-active,
-.projectModeBtn.is-active:hover{
-  background:var(--accent);
+.projectModeBtn.is-active{
+  background:#111;
   color:#fff;
   font-weight:700;
-}
-
-.completedYearFilter{
-  display:none;
-  align-items:center;
-  gap:12px;
-  height:auto;
-  min-height:0;
-  padding:0 12px;
-  border:1px solid var(--border);
-  border-radius:10px;
-  background:#fff;
-  vertical-align:middle;
-  flex:0 0 auto;
-}
-.completedYearFilter.is-visible{
-  display:inline-flex;
-}
-.completedYearFilterLabel{
-  font-size:13px;
-  color:#111;
-  white-space:nowrap;
-}
-.completedYearValue{
-  color:var(--accent);
-}
-.completedYearRangeWrap{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  min-width:260px;
-}
-.completedYearBound{
-  min-width:32px;
-  text-align:center;
-  font-size:12px;
-  color:var(--muted);
-}
-.completedYearRange{
-  width:220px;
-  margin:0;
-  accent-color:var(--accent);
-  cursor:pointer;
 }
 
 .stats{
@@ -249,7 +187,6 @@ h1{ margin: 0; font-size: 20px; line-height:1.1; }
   }
 
   .toolbar{
-    padding-left:8px;
     padding-right:14px;
   }
 
@@ -257,21 +194,6 @@ h1{ margin: 0; font-size: 20px; line-height:1.1; }
     margin-left:0;
     flex:1 1 100%;
     max-width:none;
-  }
-
-  .completedYearFilter{
-    width:100%;
-    justify-content:space-between;
-    flex-wrap:wrap;
-  }
-
-  .completedYearRangeWrap{
-    min-width:0;
-    width:100%;
-  }
-
-  .completedYearRange{
-    width:100%;
   }
 }
 
