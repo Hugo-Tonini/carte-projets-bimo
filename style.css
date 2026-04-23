@@ -96,6 +96,34 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
 }
 #clear:hover, #projListBtn:hover{ filter: brightness(0.98); }
 
+.projectModeSwitch{
+  display:inline-flex;
+  align-items:center;
+  border:1px solid var(--border);
+  border-radius:10px;
+  overflow:hidden;
+  background:#fff;
+}
+.projectModeBtn{
+  padding:7px 12px;
+  cursor:pointer;
+  border:0;
+  background:transparent;
+  font:inherit;
+  color:#111;
+}
+.projectModeBtn + .projectModeBtn{
+  border-left:1px solid var(--border);
+}
+.projectModeBtn:hover{
+  background:rgba(0,0,0,0.03);
+}
+.projectModeBtn.is-active{
+  background:#111;
+  color:#fff;
+  font-weight:700;
+}
+
 .stats{
   margin-left: auto;
   color: var(--muted);
