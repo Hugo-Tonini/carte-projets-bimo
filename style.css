@@ -21,7 +21,6 @@ html, body{ font-family:"Marianne", Arial, system-ui, -apple-system, Segoe UI, R
   --bg: #ffffff;
   --muted: #666;
   --accent: #000091;
-  --btn-height: 38px;
 }
 
 *{ box-sizing: border-box; }
@@ -90,24 +89,18 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
 }
 
 #clear, #projListBtn{
-  min-height: var(--btn-height);
-  padding: 0 14px;
+  padding: 7px 10px;
   cursor: pointer;
   border: 1px solid var(--border);
   background: #fff;
   border-radius: 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font: inherit;
 }
 #clear:hover, #projListBtn:hover{ filter: brightness(0.98); }
 
 .projectModeSwitch{
   display:inline-flex;
-  align-items:stretch;
+  align-items:center;
   width: 192px;
-  min-height: var(--btn-height);
   border:1px solid var(--border);
   border-radius:10px;
   overflow:hidden;
@@ -116,8 +109,7 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
 .projectModeBtn{
   flex:1 1 0;
   min-width:0;
-  min-height: var(--btn-height);
-  padding:0 16px;
+  padding:7px 16px;
   cursor:pointer;
   border:0;
   background:transparent;
@@ -128,6 +120,7 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
   align-items:center;
   justify-content:center;
   white-space:nowrap;
+  line-height:1.2;
 }
 .projectModeBtn + .projectModeBtn{
   border-left:1px solid var(--border);
@@ -146,8 +139,7 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
   display:none;
   align-items:center;
   gap:12px;
-  min-height: var(--btn-height);
-  padding: 0 12px;
+  padding: 7px 12px;
   border:1px solid var(--border);
   border-radius:10px;
   background:#fff;
