@@ -26,6 +26,8 @@
       title: "Carte des projets finis du BIMO"
     }
   };
+  const COMPLETED_YEAR_MIN = 2008;
+  const COMPLETED_YEAR_MAX = 2024;
 
   // ---- DOM ----
   const elPageTitle = document.getElementById("pageTitle");
@@ -44,12 +46,16 @@
   const elProjListSearch = document.getElementById("projListSearch");
   const elProjListSort = document.getElementById("projListSort");
   const elProjListItems = document.getElementById("projListItems");
+  let elCompletedYearFilter = null;
+  let elCompletedYearRange = null;
+  let elCompletedYearValue = null;
 
 
   // ---- State ----
   let allProjects = [];
   let projectsByMode = { current: [], completed: [] };
   let currentProjectMode = PROJECT_MODES.current.key;
+  let completedYearFilter = COMPLETED_YEAR_MIN;
   let deptLayer = null;
   let deptNameToCode = new Map(); // "haute savoie" -> "74"
   let deptCodeToAntenna = {}; // "74" -> "Alpes Centre-Est"
@@ -84,7 +90,8 @@
     const typeFilters = Array.from(document.querySelectorAll(".typeFilter"));
     const hasTypeFilter = typeFilters.some((cb) => !cb.checked);
     const hasAntennaFilter = !!selectedAntenna;
-    return hasSearch || hasTypeFilter || hasAntennaFilter;
+    const hasCompletedYearFilter = currentProjectMode === PROJECT_MODES.completed.key && completedYearFilter > COMPLETED_YEAR_MIN;
+    return hasSearch || hasTypeFilter || hasAntennaFilter || hasCompletedYearFilter;
   }
 
   function updateClearButtonState() {
@@ -93,6 +100,71 @@
     elClear.classList.toggle("is-active", active);
     elClear.setAttribute("aria-pressed", active ? "true" : "false");
     elClear.title = active ? "Des filtres sont actifs" : "Aucun filtre actif";
+  }
+
+  function clampCompletedYear(year) {
+    const value = Number(year);
+    if (!Number.isFinite(value)) return COMPLETED_YEAR_MIN;
+    return Math.max(COMPLETED_YEAR_MIN, Math.min(COMPLETED_YEAR_MAX, Math.round(value)));
+  }
+
+  function createCompletedYearFilterUi() {
+    if (!elProjectModeSwitch || elCompletedYearFilter) return;
+
+    const wrap = document.createElement("div");
+    wrap.id = "completedYearFilter";
+    wrap.className = "completedYearFilter";
+    wrap.hidden = true;
+    wrap.setAttribute("aria-hidden", "true");
+    wrap.innerHTML = `
+      <span class="completedYearFilterLabel">Fin à partir de <strong id="completedYearValue" class="completedYearValue">${completedYearFilter}</strong></span>
+      <div class="completedYearRangeWrap">
+        <span class="completedYearBound">${COMPLETED_YEAR_MIN}</span>
+        <input id="completedYearRange" class="completedYearRange" type="range" min="${COMPLETED_YEAR_MIN}" max="${COMPLETED_YEAR_MAX}" step="1" value="${completedYearFilter}" aria-label="Afficher les projets finis à partir de cette année" />
+        <span class="completedYearBound">${COMPLETED_YEAR_MAX}</span>
+      </div>
+    `;
+
+    elProjectModeSwitch.parentNode?.insertBefore(wrap, elProjectModeSwitch);
+
+    elCompletedYearFilter = wrap;
+    elCompletedYearRange = wrap.querySelector("#completedYearRange");
+    elCompletedYearValue = wrap.querySelector("#completedYearValue");
+
+    elCompletedYearRange?.addEventListener("input", () => {
+      setCompletedYearFilter(elCompletedYearRange.value);
+    });
+  }
+
+  function updateCompletedYearFilterUi() {
+    const isCompletedMode = currentProjectMode === PROJECT_MODES.completed.key;
+
+    if (elCompletedYearFilter) {
+      elCompletedYearFilter.hidden = !isCompletedMode;
+      elCompletedYearFilter.classList.toggle("is-visible", isCompletedMode);
+      elCompletedYearFilter.setAttribute("aria-hidden", isCompletedMode ? "false" : "true");
+    }
+
+    if (elCompletedYearRange) {
+      elCompletedYearRange.value = String(completedYearFilter);
+    }
+
+    if (elCompletedYearValue) {
+      elCompletedYearValue.textContent = String(completedYearFilter);
+    }
+  }
+
+  function setCompletedYearFilter(year, { rerender = true } = {}) {
+    const nextYear = clampCompletedYear(year);
+    const changed = nextYear !== completedYearFilter;
+    completedYearFilter = nextYear;
+    updateCompletedYearFilterUi();
+    updateClearButtonState();
+
+    if (!changed || !rerender || currentProjectMode !== PROJECT_MODES.completed.key) return;
+
+    closePanel();
+    renderMarkers();
   }
 
 
@@ -110,6 +182,8 @@
       btn.classList.toggle("is-active", isActive);
       btn.setAttribute("aria-pressed", isActive ? "true" : "false");
     });
+
+    updateCompletedYearFilterUi();
   }
 
   function normalizeProjectsPayload(data) {
@@ -938,6 +1012,12 @@ function amountNumber(v) {
     return code ? String(deptCodeToName[code] ?? "").trim() : "";
   }
 
+  function projectEndYear(p) {
+    const raw = String(p["Fin"] ?? p.fin ?? "").trim();
+    const match = raw.match(/\b(19|20)\d{2}\b/);
+    return match ? Number(match[0]) : null;
+  }
+
   function matchesFilters(p) {
     const q = normalizeSearchText(elQ?.value || "");
     const types = getActiveTypes();
@@ -948,6 +1028,12 @@ function amountNumber(v) {
     if (q) {
       const blob = p.__searchBlob || normalizeSearchText(Object.values(p).join(" "));
       if (!blob.includes(q)) return false;
+    }
+
+    if (currentProjectMode === PROJECT_MODES.completed.key) {
+      const endYear = projectEndYear(p);
+      if (endYear == null) return completedYearFilter <= COMPLETED_YEAR_MIN;
+      if (endYear < completedYearFilter) return false;
     }
 
     return true;
@@ -1759,6 +1845,8 @@ marker.on("click", (e) => {
 
   // ---- Init UI ----
   renderLegendAntennas();
+  createCompletedYearFilterUi();
+  updateCompletedYearFilterUi();
 
   const rerenderDebounced = debounce(renderMarkers, 200);
   if (elQ) elQ.addEventListener("input", () => {
@@ -1776,6 +1864,7 @@ marker.on("click", (e) => {
       if (elQ) elQ.value = "";
       document.querySelectorAll(".typeFilter").forEach((cb) => (cb.checked = true));
       selectedAntenna = null;
+      setCompletedYearFilter(COMPLETED_YEAR_MIN, { rerender: false });
       updateDeptStyle();
       closePanel();
       updateDeptSelectedStat();
