@@ -142,7 +142,7 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
   background: #f8f6f2;
   border-left: 1px solid var(--border);
   box-shadow: -4px 0 16px var(--shadow);
-  padding: 12px 12px 18px 12px;
+  padding: 0 12px 18px 12px;
   display: none;
 }
 .panel.open{ display: block; }
