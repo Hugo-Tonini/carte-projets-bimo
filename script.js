@@ -21,6 +21,7 @@
   const elPanel = document.getElementById("panel");
   const elStatus = document.getElementById("status");
   const elLegend = document.getElementById("legend");
+  const elLegendAntennas = document.getElementById("legendAntennas");
   const elCount = document.getElementById("statCount");
   const elStatDept = document.getElementById("statDept");
   const elProjListBtn = document.getElementById("projListBtn");
@@ -85,7 +86,30 @@
     "Alpes Centre-Est": "#8B5CF6",
     "Méditerranée Grand-Sud": "#1D4ED8",
     "Nord-Ouest Île-de-France": "#EF4444"
-};
+  };
+
+  const ANTENNA_LEGEND_ORDER = [
+    "Alpes Centre-Est",
+    "Atlantique Grand-Ouest",
+    "Grand Sud-Ouest",
+    "Méditerranée Grand-Sud",
+    "Nord-Est",
+    "Nord-Ouest Île-de-France"
+  ];
+
+  function renderLegendAntennas() {
+    if (!elLegendAntennas) return;
+
+    elLegendAntennas.innerHTML = ANTENNA_LEGEND_ORDER.map((antenna) => {
+      const color = ANTENNA_COLORS[antenna] || "#FFFFFF";
+      return `
+        <div class="legend-row">
+          <span class="swatch" style="background:${escapeAttr(color)};"></span>
+          <span>${escapeHtml(antenna)}</span>
+        </div>
+      `;
+    }).join("");
+  }
 
   // Table “corrigée” : département (nom) -> antenne
   const DEPT_TO_ANTENNA_BY_NAME = new Map(Object.entries({
@@ -1654,6 +1678,8 @@ marker.on("click", (e) => {
   }
 
   // ---- Init UI ----
+  renderLegendAntennas();
+
   const rerenderDebounced = debounce(renderMarkers, 200);
   if (elQ) elQ.addEventListener("input", () => {
     updateClearButtonState();
