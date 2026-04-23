@@ -99,17 +99,22 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
 
 .projectModeSwitch{
   display:inline-flex;
-  align-items:center;
+  align-items:stretch;
   width: 192px;
+  height:auto;
+  min-height:0;
   border:1px solid var(--border);
   border-radius:10px;
   overflow:hidden;
   background:#fff;
+  vertical-align:middle;
 }
 .projectModeBtn{
   flex:1 1 0;
   min-width:0;
-  padding:7px 16px;
+  height:100%;
+  min-height:100%;
+  padding:0 16px;
   cursor:pointer;
   border:0;
   background:transparent;
@@ -120,7 +125,7 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
   align-items:center;
   justify-content:center;
   white-space:nowrap;
-  line-height:1.2;
+  line-height:1;
 }
 .projectModeBtn + .projectModeBtn{
   border-left:1px solid var(--border);
@@ -139,10 +144,13 @@ h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
   display:none;
   align-items:center;
   gap:12px;
-  padding: 7px 12px;
+  height:auto;
+  min-height:0;
+  padding: 0 12px;
   border:1px solid var(--border);
   border-radius:10px;
   background:#fff;
+  vertical-align:middle;
 }
 .completedYearFilter.is-visible{
   display:inline-flex;
