@@ -11,11 +11,24 @@
   });
 
   // ---- Configuration ----
-  const DATA_VERSION = "2026-04-16e";
-  const PROJECTS_URL = `export_projets_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
+  const DATA_VERSION = "2026-04-23a";
+  const CURRENT_PROJECTS_URL = `export_projets_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
+  const COMPLETED_PROJECTS_URL = `export_projets_finis_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const DEPTS_URL = `departements.geojson?v=${encodeURIComponent(DATA_VERSION)}`;
 
+  const PROJECT_MODES = {
+    current: {
+      key: "current",
+      title: "Carte des projets en cours du BIMO"
+    },
+    completed: {
+      key: "completed",
+      title: "Carte des projets finis du BIMO"
+    }
+  };
+
   // ---- DOM ----
+  const elPageTitle = document.getElementById("pageTitle");
   const elQ = document.getElementById("q");
   const elClear = document.getElementById("clear");
   const elPanel = document.getElementById("panel");
@@ -25,6 +38,8 @@
   const elCount = document.getElementById("statCount");
   const elStatDept = document.getElementById("statDept");
   const elProjListBtn = document.getElementById("projListBtn");
+  const elProjectModeSwitch = document.getElementById("projectModeSwitch");
+  const elProjectModeButtons = Array.from(document.querySelectorAll("[data-project-mode]"));
   const elProjListMenu = document.getElementById("projListMenu");
   const elProjListSearch = document.getElementById("projListSearch");
   const elProjListSort = document.getElementById("projListSort");
@@ -33,6 +48,8 @@
 
   // ---- State ----
   let allProjects = [];
+  let projectsByMode = { current: [], completed: [] };
+  let currentProjectMode = PROJECT_MODES.current.key;
   let deptLayer = null;
   let deptNameToCode = new Map(); // "haute savoie" -> "74"
   let deptCodeToAntenna = {}; // "74" -> "Alpes Centre-Est"
@@ -76,6 +93,65 @@
     elClear.classList.toggle("is-active", active);
     elClear.setAttribute("aria-pressed", active ? "true" : "false");
     elClear.title = active ? "Des filtres sont actifs" : "Aucun filtre actif";
+  }
+
+
+  function projectModeMeta(modeKey = currentProjectMode) {
+    return PROJECT_MODES[modeKey] || PROJECT_MODES.current;
+  }
+
+  function updateProjectModeUi() {
+    const meta = projectModeMeta();
+    if (elPageTitle) elPageTitle.textContent = meta.title;
+    document.title = meta.title;
+
+    elProjectModeButtons.forEach((btn) => {
+      const isActive = btn.getAttribute("data-project-mode") === currentProjectMode;
+      btn.classList.toggle("is-active", isActive);
+      btn.setAttribute("aria-pressed", isActive ? "true" : "false");
+    });
+  }
+
+  function normalizeProjectsPayload(data) {
+    if (Array.isArray(data?.projets)) return data.projets;
+    if (Array.isArray(data)) return data;
+    return [];
+  }
+
+  function ensureProjectIds(projects, modeKey) {
+    return projects.map((project, index) => {
+      const existingId = String(project["Code projet"] ?? project.code_projet ?? project.codeProjet ?? project.id ?? "").trim();
+      project.__projectMode = modeKey;
+      project.__projectId = existingId || `${modeKey}-${index + 1}`;
+      return project;
+    });
+  }
+
+  function setActiveProjectsForMode(modeKey) {
+    allProjects = Array.isArray(projectsByMode[modeKey]) ? projectsByMode[modeKey] : [];
+    projectIdToName = new Map();
+    for (const p of allProjects) {
+      const pid = projectId(p);
+      const nm = String(p["Nom de projet"] ?? p.nom ?? "").trim();
+      if (pid) projectIdToName.set(pid, nm);
+    }
+  }
+
+  function setProjectMode(modeKey) {
+    if (!PROJECT_MODES[modeKey] || modeKey === currentProjectMode) return;
+
+    currentProjectMode = modeKey;
+    selectedAntenna = null;
+    updateDeptStyle();
+    updateDeptSelectedStat();
+
+    if (elProjListMenu) elProjListMenu.hidden = true;
+
+    closePanel();
+    setActiveProjectsForMode(modeKey);
+    updateProjectModeUi();
+    renderMarkers();
+    updateClearButtonState();
   }
 
   // ---- Antennes / Couleurs ----
@@ -562,7 +638,7 @@ function amountNumber(v) {
 }
 
   function projectId(p) {
-    return String(p["Code projet"] ?? p.code_projet ?? p.codeProjet ?? p.id ?? "").trim();
+    return String(p.__projectId ?? p["Code projet"] ?? p.code_projet ?? p.codeProjet ?? p.id ?? "").trim();
   }
 
   function projectListLabel(p) {
@@ -718,8 +794,8 @@ function amountNumber(v) {
   }
 
   function projectLatLon(p) {
-    const lat = parseFloat(String(p.latitude ?? p.lat ?? "").replace(",", "."));
-    const lon = parseFloat(String(p.longitude ?? p.lon ?? "").replace(",", "."));
+    const lat = parseFloat(String(p["Latitude"] ?? p.latitude ?? p.lat ?? "").replace(",", "."));
+    const lon = parseFloat(String(p["Longitude"] ?? p.longitude ?? p.lon ?? "").replace(",", "."));
     if (Number.isFinite(lat) && Number.isFinite(lon)) return [lat, lon];
     return null;
   }
@@ -1139,6 +1215,8 @@ marker.on("click", (e) => {
       ["Antenne", p["Antenne"] ?? p.antenne],
       ["Phase projet", p["Phase projet"] ?? p.phase],
       ["Programme", p["Programme"] ?? p.programme],
+      ["Début", p["Début"] ?? p.debut ?? p.start],
+      ["Fin", p["Fin"] ?? p.fin ?? p.end],
       ["Thématique", p["Thématique"] ?? p.thematique]
     ];
 
@@ -1706,6 +1784,14 @@ marker.on("click", (e) => {
     });
   }
 
+  if (elProjectModeSwitch) {
+    elProjectModeSwitch.addEventListener("click", (e) => {
+      const btn = e.target?.closest?.("[data-project-mode]");
+      const modeKey = btn?.getAttribute?.("data-project-mode");
+      if (modeKey) setProjectMode(modeKey);
+    });
+  }
+
   // ---- Liste projets ----
   if (elProjListBtn && elProjListMenu) {
     elProjListBtn.addEventListener("click", (e) => {
@@ -1740,15 +1826,28 @@ marker.on("click", (e) => {
   (async () => {
     try {
       await loadDepartements();
-      const data = await fetchJson(PROJECTS_URL);
-      allProjects = Array.isArray(data?.projets) ? data.projets : Array.isArray(data) ? data : [];
-      enrichProjectsWithDepartments(allProjects);
-      projectIdToName = new Map();
-      for (const p of allProjects){
-        const pid = projectId(p);
-        const nm = String(p["Nom de projet"] ?? p.nom ?? "").trim();
-        if (pid) projectIdToName.set(pid, nm);
+
+      const [currentResult, completedResult] = await Promise.allSettled([
+        fetchJson(CURRENT_PROJECTS_URL),
+        fetchJson(COMPLETED_PROJECTS_URL)
+      ]);
+
+      if (currentResult.status !== "fulfilled") throw currentResult.reason;
+
+      projectsByMode.current = ensureProjectIds(normalizeProjectsPayload(currentResult.value), PROJECT_MODES.current.key);
+      projectsByMode.completed = completedResult.status === "fulfilled"
+        ? ensureProjectIds(normalizeProjectsPayload(completedResult.value), PROJECT_MODES.completed.key)
+        : [];
+
+      if (completedResult.status !== "fulfilled") {
+        console.warn("Impossible de charger les projets finis :", completedResult.reason);
       }
+
+      enrichProjectsWithDepartments(projectsByMode.current);
+      enrichProjectsWithDepartments(projectsByMode.completed);
+
+      setActiveProjectsForMode(currentProjectMode);
+      updateProjectModeUi();
       renderMarkers();
     } catch (err) {
       console.error(err);
