@@ -1536,8 +1536,8 @@ h1{ margin: 0; font-size: 20px; }
 
 /* Correctif : bloc du filtre d'année plus long + case 'Tout afficher' plus proche */
 .completedYearFilter{
-  width: 680px;
-  max-width: 680px;
+  width: fit-content;
+  max-width: 100%;
   box-sizing: border-box;
   gap: 10px;
   justify-content: flex-start;
