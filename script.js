@@ -49,6 +49,7 @@
   let elCompletedYearFilter = null;
   let elCompletedYearRange = null;
   let elCompletedYearValue = null;
+  let elCompletedShowAll = null;
 
 
   // ---- State ----
@@ -56,6 +57,7 @@
   let projectsByMode = { current: [], completed: [] };
   let currentProjectMode = PROJECT_MODES.current.key;
   let completedYearFilter = COMPLETED_YEAR_MIN;
+  let showAllCompletedProjects = false;
   let deptLayer = null;
   let deptNameToCode = new Map(); // "haute savoie" -> "74"
   let deptCodeToAntenna = {}; // "74" -> "Alpes Centre-Est"
@@ -90,7 +92,7 @@
     const typeFilters = Array.from(document.querySelectorAll(".typeFilter"));
     const hasTypeFilter = typeFilters.some((cb) => !cb.checked);
     const hasAntennaFilter = !!selectedAntenna;
-    const hasCompletedYearFilter = currentProjectMode === PROJECT_MODES.completed.key && completedYearFilter > COMPLETED_YEAR_MIN;
+    const hasCompletedYearFilter = currentProjectMode === PROJECT_MODES.completed.key && !showAllCompletedProjects;
     return hasSearch || hasTypeFilter || hasAntennaFilter || hasCompletedYearFilter;
   }
 
@@ -123,6 +125,10 @@
         <input id="completedYearRange" class="completedYearRange" type="range" min="${COMPLETED_YEAR_MIN}" max="${COMPLETED_YEAR_MAX}" step="1" value="${completedYearFilter}" aria-label="Afficher les projets finis présents pendant cette année" />
         <span class="completedYearBound">${COMPLETED_YEAR_MAX}</span>
       </div>
+      <label class="completedShowAll" for="completedShowAll">
+        <input id="completedShowAll" class="completedShowAllInput" type="checkbox" />
+        <span>Tout afficher</span>
+      </label>
     `;
 
     elProjectModeSwitch.insertAdjacentElement("afterend", wrap);
@@ -130,9 +136,14 @@
     elCompletedYearFilter = wrap;
     elCompletedYearRange = wrap.querySelector("#completedYearRange");
     elCompletedYearValue = wrap.querySelector("#completedYearValue");
+    elCompletedShowAll = wrap.querySelector("#completedShowAll");
 
     elCompletedYearRange?.addEventListener("input", () => {
       setCompletedYearFilter(elCompletedYearRange.value);
+    });
+
+    elCompletedShowAll?.addEventListener("change", () => {
+      setCompletedShowAll(elCompletedShowAll.checked);
     });
   }
 
@@ -142,15 +153,22 @@
     if (elCompletedYearFilter) {
       elCompletedYearFilter.hidden = !isCompletedMode;
       elCompletedYearFilter.classList.toggle("is-visible", isCompletedMode);
+      elCompletedYearFilter.classList.toggle("is-show-all", !!showAllCompletedProjects);
       elCompletedYearFilter.setAttribute("aria-hidden", isCompletedMode ? "false" : "true");
     }
 
     if (elCompletedYearRange) {
       elCompletedYearRange.value = String(completedYearFilter);
+      elCompletedYearRange.disabled = !!showAllCompletedProjects;
     }
 
     if (elCompletedYearValue) {
       elCompletedYearValue.textContent = String(completedYearFilter);
+    }
+
+    if (elCompletedShowAll) {
+      elCompletedShowAll.checked = !!showAllCompletedProjects;
+      elCompletedShowAll.setAttribute("aria-checked", showAllCompletedProjects ? "true" : "false");
     }
 
     syncToolbarControlHeights();
@@ -182,6 +200,19 @@
     const nextYear = clampCompletedYear(year);
     const changed = nextYear !== completedYearFilter;
     completedYearFilter = nextYear;
+    updateCompletedYearFilterUi();
+    updateClearButtonState();
+
+    if (!changed || !rerender || currentProjectMode !== PROJECT_MODES.completed.key || showAllCompletedProjects) return;
+
+    closePanel();
+    renderMarkers();
+  }
+
+  function setCompletedShowAll(value, { rerender = true } = {}) {
+    const nextValue = !!value;
+    const changed = nextValue !== showAllCompletedProjects;
+    showAllCompletedProjects = nextValue;
     updateCompletedYearFilterUi();
     updateClearButtonState();
 
@@ -1074,7 +1105,7 @@ function amountNumber(v) {
     }
 
     if (currentProjectMode === PROJECT_MODES.completed.key) {
-      if (!isProjectPresentInYear(p, completedYearFilter)) return false;
+      if (!showAllCompletedProjects && !isProjectPresentInYear(p, completedYearFilter)) return false;
     }
 
     return true;
@@ -1913,6 +1944,7 @@ marker.on("click", (e) => {
       document.querySelectorAll(".typeFilter").forEach((cb) => (cb.checked = true));
       selectedAntenna = null;
       setCompletedYearFilter(COMPLETED_YEAR_MIN, { rerender: false });
+      setCompletedShowAll(false, { rerender: false });
       updateDeptStyle();
       closePanel();
       updateDeptSelectedStat();
