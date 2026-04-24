@@ -1469,11 +1469,9 @@ marker.on("click", (e) => {
     const title = p["Nom de projet"] ?? p.nom ?? "Projet";
 
     // Ordre demandé
-    const deptLabel = deptNameFromProject(p);
     const fieldsMain = [
       ["Adresse", p["Adresse"] ?? p.adresse],
       ["Ville", projectCity(p)],
-      ["Département", deptLabel ? (deptCodeFromProject(p) ? `${deptLabel} (${deptCodeFromProject(p)})` : deptLabel) : ""],
       ["Client", p["Client"] ?? p.client],
       ["Type de projet", p["Type de projet"] ?? p.type],
       ["Type de montage", p["Type de montage"] ?? p.type_montage],
