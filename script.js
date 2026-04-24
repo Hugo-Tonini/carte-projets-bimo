@@ -117,10 +117,10 @@
     wrap.hidden = true;
     wrap.setAttribute("aria-hidden", "true");
     wrap.innerHTML = `
-      <span class="completedYearFilterLabel">Fin à partir de <strong id="completedYearValue" class="completedYearValue">${completedYearFilter}</strong></span>
+      <span class="completedYearFilterLabel">Présents en <strong id="completedYearValue" class="completedYearValue">${completedYearFilter}</strong></span>
       <div class="completedYearRangeWrap">
         <span class="completedYearBound">${COMPLETED_YEAR_MIN}</span>
-        <input id="completedYearRange" class="completedYearRange" type="range" min="${COMPLETED_YEAR_MIN}" max="${COMPLETED_YEAR_MAX}" step="1" value="${completedYearFilter}" aria-label="Afficher les projets finis à partir de cette année" />
+        <input id="completedYearRange" class="completedYearRange" type="range" min="${COMPLETED_YEAR_MIN}" max="${COMPLETED_YEAR_MAX}" step="1" value="${completedYearFilter}" aria-label="Afficher les projets finis présents pendant cette année" />
         <span class="completedYearBound">${COMPLETED_YEAR_MAX}</span>
       </div>
     `;
@@ -1036,10 +1036,29 @@ function amountNumber(v) {
     return code ? String(deptCodeToName[code] ?? "").trim() : "";
   }
 
+  function projectStartYear(p) {
+    const raw = String(p["Début"] ?? p.debut ?? p["Debut"] ?? p.deb ?? "").trim();
+    const match = raw.match(/\b(19|20)\d{2}\b/);
+    return match ? Number(match[0]) : null;
+  }
+
   function projectEndYear(p) {
     const raw = String(p["Fin"] ?? p.fin ?? "").trim();
     const match = raw.match(/\b(19|20)\d{2}\b/);
     return match ? Number(match[0]) : null;
+  }
+
+  function isProjectPresentInYear(p, year) {
+    const startYear = projectStartYear(p);
+    const endYear = projectEndYear(p);
+
+    if (startYear == null && endYear == null) return year <= COMPLETED_YEAR_MIN;
+    if (startYear == null) return year <= endYear;
+    if (endYear == null) return startYear <= year;
+
+    const fromYear = Math.min(startYear, endYear);
+    const toYear = Math.max(startYear, endYear);
+    return fromYear <= year && year <= toYear;
   }
 
   function matchesFilters(p) {
@@ -1055,9 +1074,7 @@ function amountNumber(v) {
     }
 
     if (currentProjectMode === PROJECT_MODES.completed.key) {
-      const endYear = projectEndYear(p);
-      if (endYear == null) return completedYearFilter <= COMPLETED_YEAR_MIN;
-      if (endYear < completedYearFilter) return false;
+      if (!isProjectPresentInYear(p, completedYearFilter)) return false;
     }
 
     return true;
