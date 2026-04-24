@@ -1,1360 +1,1981 @@
-/* ===== Marianne (global) ===== */
-@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Thin.woff2") format("woff2");font-weight:100;font-style:normal;font-display:swap;}
-@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Light.woff2") format("woff2");font-weight:300;font-style:normal;font-display:swap;}
-@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Regular.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap;}
-@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Medium.woff2") format("woff2");font-weight:500;font-style:normal;font-display:swap;}
-@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Bold.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap;}
-@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-ExtraBold.woff2") format("woff2");font-weight:800;font-style:normal;font-display:block;}
-@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Thin_Italic.woff2") format("woff2");font-weight:100;font-style:italic;font-display:swap;}
-@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Light_Italic.woff2") format("woff2");font-weight:300;font-style:italic;font-display:swap;}
-@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Regular_Italic.woff2") format("woff2");font-weight:400;font-style:italic;font-display:swap;}
-@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Medium_Italic.woff2") format("woff2");font-weight:500;font-style:italic;font-display:swap;}
-@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Bold_Italic.woff2") format("woff2");font-weight:700;font-style:italic;font-display:swap;}
-@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-ExtraBold_Italic.woff2") format("woff2");font-weight:800;font-style:italic;font-display:block;}
-/* Appliquer partout */
-html, body{ font-family:"Marianne", Arial, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+// Carte Projets — Leaflet + clustering + départements colorés par antenne
+(() => {
+  "use strict";
 
-/* Base */
-:root{
-  --border: #d0d0d0;
-  --shadow: rgba(0,0,0,0.14);
-  --bg: #ffffff;
-  --muted: #666;
-  --accent: #000091;
-}
+  // Affiche les erreurs JS dans la bannière (pratique sur GitHub Pages)
+  window.addEventListener("error", (e) => {
+    const el = document.getElementById("status");
+    if (!el) return;
+    el.textContent = `Erreur JS: ${e.message}`;
+    el.hidden = false;
+  });
 
-*{ box-sizing: border-box; }
-html, body{ height: 100%; }
-body{
-  margin: 0;
-  font-family:"Marianne", Arial, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  color: #111;
-  background: #f6f6f6;
-}
+  // ---- Configuration ----
+  const DATA_VERSION = "2026-04-23a";
+  const CURRENT_PROJECTS_URL = `export_projets_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
+  const COMPLETED_PROJECTS_URL = `export_projets_finis_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
+  const DEPTS_URL = `departements.geojson?v=${encodeURIComponent(DATA_VERSION)}`;
 
-/* ===== Top bar ===== */
-h1{ margin: 0; padding: 6px 14px 4px 14px; font-size: 20px; }
+  const PROJECT_MODES = {
+    current: {
+      key: "current",
+      title: "Carte des projets en cours du BIMO"
+    },
+    completed: {
+      key: "completed",
+      title: "Carte des projets finis du BIMO"
+    }
+  };
+  const COMPLETED_YEAR_MIN = 2008;
+  const COMPLETED_YEAR_MAX = 2024;
 
-.topbar{
-  background: #f8f6f2;
-  border-bottom: 1px solid var(--border);
-  position: relative;
-}
-
-.topbarHeader{ display:flex; align-items:center; justify-content:flex-start; }
-.titleRow{ display:flex; align-items:baseline; gap:10px; padding-top:2px; }
-
-.titleStats{
-  color: var(--muted);
-  white-space: nowrap;
-  display:flex;
-  gap:8px;
-  align-items: baseline;
-}
-.titleStats #statCount{ font-weight: 700; color:#111; }
-.titleStats .statDept{ color:#111; font-weight:600; }
-
-/* ===== Toolbar ===== */
-.toolbar{
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  padding: 0 14px 4px 14px;
-  padding-right: 140px; /* évite de passer sous le logo */
-  flex-wrap: wrap;
-}
-
-.search input{
-  padding: 7px 9px;
-  min-width: 280px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-
-.types{
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 6px 10px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-.types label{ white-space: nowrap; }
-
-.deptToggle{
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 6px 10px;
-  white-space: nowrap;
-}
-
-#clear, #projListBtn{
-  padding: 7px 10px;
-  cursor: pointer;
-  border: 1px solid var(--border);
-  background: #fff;
-  border-radius: 10px;
-}
-#clear:hover, #projListBtn:hover{ filter: brightness(0.98); }
-
-.projectModeSwitch{
-  display:inline-flex;
-  align-items:stretch;
-  width: 192px;
-  height:auto;
-  min-height:0;
-  border:1px solid var(--border);
-  border-radius:10px;
-  overflow:hidden;
-  background:#fff;
-  vertical-align:middle;
-}
-.projectModeBtn{
-  flex:1 1 0;
-  min-width:0;
-  height:100%;
-  min-height:100%;
-  padding:0 16px;
-  cursor:pointer;
-  border:0;
-  background:transparent;
-  font:inherit;
-  font-weight:600;
-  color:#111;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  white-space:nowrap;
-  line-height:1;
-}
-.projectModeBtn + .projectModeBtn{
-  border-left:1px solid var(--border);
-}
-.projectModeBtn:hover{
-  background:rgba(0,0,145,0.06);
-}
-.projectModeBtn.is-active,
-.projectModeBtn.is-active:hover{
-  background:var(--accent);
-  color:#fff;
-  font-weight:700;
-}
-
-.completedYearFilter{
-  display:none;
-  align-items:center;
-  gap:12px;
-  height:auto;
-  min-height:0;
-  padding: 0 12px;
-  border:1px solid var(--border);
-  border-radius:10px;
-  background:#fff;
-  vertical-align:middle;
-}
-.completedYearFilter.is-visible{
-  display:inline-flex;
-}
-.completedYearFilterLabel{
-  font-size:13px;
-  color:#111;
-  white-space:nowrap;
-}
-.completedYearValue{
-  color:var(--accent);
-}
-.completedYearRangeWrap{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  min-width:260px;
-}
-.completedYearBound{
-  min-width:32px;
-  text-align:center;
-  font-size:12px;
-  color:var(--muted);
-}
-.completedYearRange{
-  width:220px;
-  margin:0;
-  accent-color:var(--accent);
-  cursor:pointer;
-}
-
-.stats{
-  margin-left: auto;
-  color: var(--muted);
-  white-space: nowrap;
-  display: flex;
-  gap: 8px;
-  align-items: baseline;
-}
-.statDept{ color: #111; font-weight: 600; }
-
-/* Logo Ministère (à droite, pleine hauteur) */
-.brand{
-  position: absolute;
-  right: 14px;
-  top: 0;
-  bottom: 0;
-  margin-left: 0;
-  display: flex;
-  align-items: center;
-  padding: 0;
-}
-.brandLogo{
-  height: calc(100% - 10px);
-  max-height: 80px;
-  width: auto;
-  display: block;
-}
-
-/* ===== Layout ===== */
-.layout{
-  position: relative;
-  display: flex;
-  height: calc(100vh - 68px);
-  width: 100%;
-}
-.map{ flex: 1; min-width: 0; }
-#map{ height: calc(100vh - 68px); }
-
-/* ===== Panel ===== */
-.panel{
-  width: 680px;
-  height: 100%;
-  overflow: auto;
-  background: #f8f6f2;
-  border-left: 1px solid var(--border);
-  box-shadow: -4px 0 16px var(--shadow);
-  padding: 0 12px 18px 12px;
-  display: none;
-}
-.panel.open{ display: block; }
-
-.panelHeader{
-  display: flex;
-  align-items: start;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-.panelTitle{ margin: 0; font-size: 18px; line-height: 1.2; }
-
-.panelHeaderTitleWrap{
-  display:flex;
-  align-items:flex-start;
-  gap:14px;
-  min-width:0;
-  flex:1;
-}
-.printProjectLogo,
-.printOnlyInline{
-  display:none;
-}
-.screenOnlyInline{
-  display:inline;
-}
-.panelSection{
-  display:block;
-}
-
-.panelClose{
-  border: 1px solid var(--border);
-  background: #fff;
-  border-radius: 10px;
-  cursor: pointer;
-  padding: 6px 10px;
-}
-
-.kv{
-  border-top: 1px solid var(--border);
-  padding-top: 10px;
-  display: grid;
-  gap: 8px;
-}
-.kvRow{
-  display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: 10px;
-  align-items: baseline;
-}
-.kvKey{
-  color: var(--muted);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  font-weight: 700;
-}
-.kvVal{ white-space: pre-wrap; overflow-wrap: anywhere; }
+  // ---- DOM ----
+  const elPageTitle = document.getElementById("pageTitle");
+  const elQ = document.getElementById("q");
+  const elClear = document.getElementById("clear");
+  const elPanel = document.getElementById("panel");
+  const elStatus = document.getElementById("status");
+  const elLegend = document.getElementById("legend");
+  const elLegendAntennas = document.getElementById("legendAntennas");
+  const elCount = document.getElementById("statCount");
+  const elStatDept = document.getElementById("statDept");
+  const elProjListBtn = document.getElementById("projListBtn");
+  const elProjectModeSwitch = document.getElementById("projectModeSwitch");
+  const elProjectModeButtons = Array.from(document.querySelectorAll("[data-project-mode]"));
+  const elProjListMenu = document.getElementById("projListMenu");
+  const elProjListSearch = document.getElementById("projListSearch");
+  const elProjListSort = document.getElementById("projListSort");
+  const elProjListItems = document.getElementById("projListItems");
+  let elCompletedYearFilter = null;
+  let elCompletedYearRange = null;
+  let elCompletedYearValue = null;
 
 
-.energyLegendInline{
-  display:flex;
-  align-items:center;
-  gap:20px;
-  flex-wrap:nowrap;
-  margin:4px 0 14px 0;
-  font-size:13px;
-  line-height:1.3;
-  color:#222;
-}
+  // ---- State ----
+  let allProjects = [];
+  let projectsByMode = { current: [], completed: [] };
+  let currentProjectMode = PROJECT_MODES.current.key;
+  let completedYearFilter = COMPLETED_YEAR_MIN;
+  let deptLayer = null;
+  let deptNameToCode = new Map(); // "haute savoie" -> "74"
+  let deptCodeToAntenna = {}; // "74" -> "Alpes Centre-Est"
+  let deptCodeToName = {}; // "74" -> "Haute-Savoie"
+  let deptSpatialIndex = [];
+  let filteredCounts = {}; // "74" -> nb projets filtrés (tooltip)
 
-.energyLegendInlineItem{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  font-weight:700;
-  white-space:nowrap;
-}
+  // Focus antenne (pour foncer les départements de l’antenne sélectionnée)
+  let selectedAntenna = null;
 
-.energyLegendInlineText{
-  display:inline-block;
-}
-
-.energyLegendMiniMarker{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  width:28px;
-  height:14px;
-  flex:0 0 28px;
-  vertical-align:middle;
-}
-
-.energyLegendMiniMarkerSvg{
-  display:block;
-  width:100%;
-  height:100%;
-}
-
-@media (max-width: 700px){
-  .energyLegendInline{
-    gap:14px;
-    flex-wrap:wrap;
+  // Pin sélectionné (pour surligner/agrandir)
+  let selectedMarker = null;
+  let projectIdToMarker = new Map(); // "Code projet" -> Leaflet marker
+  let projectIdToName = new Map();  // "Code projet" -> Nom du projet (tooltips clusters)
+  function clearSelectedMarker() {
+    if (selectedMarker) selectedMarker.getElement()?.classList.remove("selected");
+    selectedMarker = null;
   }
-}
-
-.dpeCards{
-  display:grid;
-  gap:22px;
-}
-
-.dpeCard{
-  border-top:1px solid var(--border);
-  padding-top:12px;
-}
-
-.dpeCardTitle{
-  margin:0 0 16px 0;
-  font-size:18px;
-  font-weight:800;
-  line-height:1.2;
-}
-
-.dpeScale{
-  display:grid;
-  gap:6px;
-}
-
-.dpeRow{
-  display:grid;
-  grid-template-columns:var(--dpe-max-width) var(--dpe-marker-col-width);
-  column-gap:var(--dpe-gap-to-markers);
-  align-items:center;
-  justify-content:start;
-}
-
-.dpeScale{
-  --dpe-base-width: 150px;
-  --dpe-width-step: 34px;
-  --dpe-row-height: 30px;
-  --dpe-arrow-width: 18px;
-  --dpe-max-width: 354px;
-  --dpe-marker-col-width: 70px;
-  --dpe-gap-to-markers: 26px;
-  justify-items:start;
-  align-items:start;
-  width:max-content;
-  max-width:100%;
-}
-
-.dpeRowShape{
-  width:min(
-    calc(var(--dpe-base-width) + var(--dpe-step, 0) * var(--dpe-width-step)),
-    var(--dpe-max-width)
-  );
-  height:var(--dpe-row-height);
-  padding:0 14px 0 12px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  flex:0 0 auto;
-  clip-path:polygon(0 0, calc(100% - var(--dpe-arrow-width)) 0, 100% 50%, calc(100% - var(--dpe-arrow-width)) 100%, 0 100%);
-  font-weight:800;
-  letter-spacing:0.01em;
-  color:#111;
-}
-
-.dpeRow--A{ --dpe-step: 0; }
-.dpeRow--B{ --dpe-step: 1; }
-.dpeRow--C{ --dpe-step: 2; }
-.dpeRow--D{ --dpe-step: 3; }
-.dpeRow--E{ --dpe-step: 4; }
-.dpeRow--F{ --dpe-step: 5; }
-.dpeRow--G{ --dpe-step: 6; }
-
-.dpeRowRange{
-  font-size:12px;
-  font-weight:700;
-}
-
-.dpeRowLetter{
-  font-size:22px;
-  line-height:1;
-  font-weight:900;
-}
-
-.dpeRowMarkers{
-  width:var(--dpe-marker-col-width);
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  align-items:flex-start;
-  justify-content:center;
-}
-
-.dpeMarker{
-  --marker-width: 64px;
-  --marker-height: 30px;
-  --marker-tip: 16px;
-  --marker-border: 1px;
-  position:relative;
-  width:var(--marker-width);
-  min-width:var(--marker-width);
-  height:var(--marker-height);
-  padding:0;
-  display:block;
-  font-size:14px;
-  line-height:1;
-  font-weight:900;
-  box-sizing:border-box;
-  white-space:nowrap;
-  border:none;
-  background:none;
-  overflow:hidden;
-}
-
-.dpeMarker::before,
-.dpeMarker::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-}
-
-.dpeMarker::before{
-  clip-path:polygon(var(--marker-tip) 0, 100% 0, 100% 100%, var(--marker-tip) 100%, 0 50%);
-  z-index:0;
-}
-
-.dpeMarkerLabel{
-  position:absolute;
-  left:50%;
-  top:50%;
-  transform:translate(-50%, -50%);
-  z-index:2;
-  display:block;
-  text-align:center;
-  min-width:0;
-}
-
-.dpeMarker--before{
-  color:#fff;
-}
-
-.dpeMarker--before::before{
-  background:#111;
-}
-
-.dpeMarker--after{
-  color:#111;
-}
-
-.dpeMarker--after::before{
-  background:#111;
-}
-
-.dpeMarker--after::after{
-  inset:var(--marker-border);
-  clip-path:polygon(calc(var(--marker-tip) - var(--marker-border)) 0, 100% 0, 100% 100%, calc(var(--marker-tip) - var(--marker-border)) 100%, 0 50%);
-  background:#fff;
-  z-index:1;
-}
-
-.dpeUnitLine{
-  margin-top:14px;
-  padding-top:0;
-  border-top:none;
-  font-size:13px;
-  line-height:1.35;
-  color:#444;
-}
-
-
-.dpeCard--energy .dpeRow--A .dpeRowShape{ background:#57c84d; }
-.dpeCard--energy .dpeRow--B .dpeRowShape{ background:#82c341; }
-.dpeCard--energy .dpeRow--C .dpeRowShape{ background:#c7d92f; }
-.dpeCard--energy .dpeRow--D .dpeRowShape{ background:#f0da2c; }
-.dpeCard--energy .dpeRow--E .dpeRowShape{ background:#f4b63b; }
-.dpeCard--energy .dpeRow--F .dpeRowShape{ background:#f28b31; color:#111; }
-.dpeCard--energy .dpeRow--G .dpeRowShape{ background:#ea4335; color:#fff; }
-
-.dpeCard--ges .dpeRow--A .dpeRowShape{ background:#f0f0f0; }
-.dpeCard--ges .dpeRow--B .dpeRowShape{ background:#d8c8ea; }
-.dpeCard--ges .dpeRow--C .dpeRowShape{ background:#c8b0e2; }
-.dpeCard--ges .dpeRow--D .dpeRowShape{ background:#b596d7; }
-.dpeCard--ges .dpeRow--E .dpeRowShape{ background:#9a77c7; color:#fff; }
-.dpeCard--ges .dpeRow--F .dpeRowShape{ background:#8663ba; color:#fff; }
-.dpeCard--ges .dpeRow--G .dpeRowShape{ background:#7752ae; color:#fff; }
-
-@media (max-width: 700px){
-  .dpeRow{
-    grid-template-columns:1fr;
+  function setSelectedMarker(marker) {
+    clearSelectedMarker();
+    selectedMarker = marker;
+    marker.getElement()?.classList.add("selected");
   }
 
-  .dpeRowShape{
-    width:100% !important;
-    min-width:0;
+  function clearAntennaFocus() {
+    selectedAntenna = null;
+    updateDeptStyle();
   }
 
-  .dpeRowMarkers{
-    flex-direction:row;
-    gap:8px;
-  }
-}
-
-/* ===== Pins (divIcon projets) ===== */
-.pin-dot{ background: transparent; border: none; }
-
-.pin-dot-inner{
-  width: 17px;
-  height: 17px;
-  border-radius: 50%;
-  background: rgba(0,0,0,0.05);
-  border: 4px solid blue;
-  box-sizing: border-box;
-  transition: transform 120ms ease;
-  transform-origin: center;
-}
-
-/* Pin sélectionné : agrandissement */
-.pin-dot.selected .pin-dot-inner{ transform: scale(1.5); }
-
-/* ===== Clusters (divIcon) : même taille que pins 1 projet ===== */
-.pin-dot-cluster-wrap{ background: transparent; border: none; }
-
-.pin-dot-inner.pin-dot-cluster{
-  width: 17px;
-  height: 17px;
-  border-width: 4px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.pin-dot-inner.pin-dot-cluster .pin-dot-count{
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  text-align: center;
-}
-
-.pin-dot-count{
-  font-weight: 800;
-  font-size: 11px;
-  color: #111;
-  user-select: none;
-  text-shadow: 0 1px 0 rgba(255,255,255,0.8);
-}
-
-/* ===== Clusters (Leaflet.markercluster) : uniformiser la taille ===== */
-.marker-cluster,
-.marker-cluster-small,
-.marker-cluster-medium,
-.marker-cluster-large{
-  background: transparent !important;
-}
-
-.marker-cluster div,
-.marker-cluster-small div,
-.marker-cluster-medium div,
-.marker-cluster-large div{
-  width: 22px !important;
-  height: 22px !important;
-  line-height: 22px !important;
-  font-size: 11px !important;
-  margin: 0 !important;
-}
-
-/* ===== Pins fixes (Siège / Antennes) ===== */
-.pin-office-wrap{
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  background: #fff;
-  border: 2px solid #111;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  box-sizing: border-box;
-  box-shadow: 0 6px 18px var(--shadow);
-}
-.pin-office-svg{ width: 14px; height: 14px; fill: #111; display: block; }
-.pin-office-badge{
-  position: absolute;
-  top: -7px;
-  right: -7px;
-  width: 16px;
-  height: 16px;
-  border-radius: 999px;
-  background: #111;
-  color: #fff;
-  font-size: 11px;
-  line-height: 16px;
-  text-align: center;
-  box-shadow: 0 6px 18px var(--shadow);
-}
-
-/* ===== Legend ===== */
-.legend{
-  position: absolute;
-  left: 12px;
-  bottom: 12px;
-  background: rgba(255,255,255,0.96);
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  font-size: 12px;
-  z-index: 1000;
-}
-.legend-title{ font-weight: 700; margin-bottom: 8px; }
-.legend-row{ display: flex; align-items: center; gap: 8px; margin: 3px 0; }
-.swatch{ width: 18px; height: 12px; border: 1px solid var(--border); border-radius: 4px; }
-.sw-ago{ background: #9ED3FF; }
-.sw-ne{ background: #D6B48C; }
-.sw-gso{ background: #FFB099; }
-.sw-ace{ background: #C0A3FF; }
-.sw-mgs{ background: #76D6E8; }
-.sw-noidf{ background: #FF9FD6; }
-
-.legend-sep{ height: 1px; background: var(--border); margin: 8px 0; }
-.legend-subtitle{ font-weight: 700; margin: 2px 0 6px; }
-
-.pin-swatch{
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: rgba(0,0,0,0.05);
-  border: 4px solid blue;
-  box-sizing: border-box;
-  display: inline-block;
-}
-
-/* ===== Status / errors ===== */
-.status{
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(255, 245, 245, 0.98);
-  border: 1px solid #f0bcbc;
-  color: #8a1f1f;
-  padding: 10px 12px;
-  border-radius: 12px;
-  z-index: 1200;
-  max-width: min(780px, calc(100% - 24px));
-  box-shadow: 0 8px 24px var(--shadow);
-}
-
-/* ===== Accessibility helper ===== */
-.sr-only{
-  position:absolute;
-  width:1px;
-  height:1px;
-  padding:0;
-  margin:-1px;
-  overflow:hidden;
-  clip:rect(0,0,0,0);
-  white-space:nowrap;
-  border:0;
-}
-
-/* ===== Liste projets ===== */
-.projListMenu{
-  position:absolute;
-  top:64px;
-  left:14px;
-  width:min(880px,calc(100% - 28px));
-  background:rgba(255,255,255,0.98);
-  border:1px solid var(--border);
-  border-radius:12px;
-  box-shadow:0 10px 28px var(--shadow);
-  padding:10px;
-  z-index:2000;
-}
-.projListSearch{
-  width:100%;
-  padding:8px 10px;
-  border:1px solid var(--border);
-  border-radius:10px;
-  margin-bottom:8px;
-}
-.projListTop{ display:flex; gap:10px; align-items:center; margin-bottom:8px; }
-.projListTop .projListSearch{ flex: 1 1 auto; margin-bottom: 0; }
-.projListSort{
-  flex: 0 0 180px;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: #fff;
-}
-.projListHead{
-  display:grid;
-  grid-template-columns:2.2fr 0.8fr 0.9fr 1.3fr;
-  gap:10px;
-  padding:6px 8px;
-  font-size:11px;
-  text-transform:uppercase;
-  letter-spacing:0.03em;
-  color:var(--muted);
-  font-weight:700;
-  border-bottom:1px solid var(--border);
-}
-.projListItems{ max-height:min(52vh,520px); overflow:auto; }
-.projListRow{
-  display:grid;
-  grid-template-columns:2.2fr 0.8fr 0.9fr 1.3fr;
-  gap:10px;
-  padding:8px 8px;
-  border-bottom:1px solid rgba(0,0,0,0.05);
-  cursor:pointer;
-}
-.projListRow:hover{ background:rgba(0,0,0,0.03); }
-.projListName{ font-weight:700; }
-.projListEmpty{ padding:10px 8px; color:var(--muted); }
-
-@media (max-width: 620px){
-  .projListTop{ flex-direction: column; align-items: stretch; }
-  .projListSort{ flex-basis: auto; width: 100%; }
-}
-
-/* ===== Tooltips ===== */
-.leaflet-tooltip.projTooltip{
-  background: rgba(255,255,255,0.97);
-  border: 1px solid rgba(0,0,0,0.18);
-  border-radius: 10px;
-  box-shadow: 0 10px 28px rgba(0,0,0,0.12);
-  color: #111;
-  font-weight: 700;
-  padding: 6px 8px;
-  max-width: 520px;
-  white-space: normal;
-  line-height: 1.2;
-}
-.leaflet-tooltip.projTooltip:before{ border-top-color: rgba(255,255,255,0.97); }
-.leaflet-tooltip.projTooltip.projTooltip--single{
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.leaflet-tooltip.projTooltip.projTooltip--cluster{
-  max-width: 560px;
-  white-space: normal;
-}
-.leaflet-tooltip.projTooltip.projTooltip--cluster .ttLine{
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.leaflet-tooltip.projTooltip.projTooltip--cluster .ttMore{
-  margin-top: 4px;
-  font-weight: 800;
-}
-
-/* ===== Photos dans le panneau ===== */
-.projHero{
-  margin: 10px 0 8px;
-  border-radius: 14px;
-  overflow: hidden;
-  background: #fff;
-  isolation: isolate;
-  transform: translateZ(0);
-}
-.projHeroBtn{
-  display: block;
-  width: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  border-radius: inherit;
-  overflow: hidden;
-  -webkit-mask-image: -webkit-radial-gradient(white, black);
-}
-.projHeroPhoto{
-  display: block;
-  width: 100%;
-  height: auto;
-  max-height: 320px;
-  object-fit: cover;
-  border-radius: 0;
-  clip-path: inset(0 round 14px);
-  transform: translateZ(0);
-  backface-visibility: hidden;
-}
-
-.projPhotos{ margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
-.projPhotosTitle{ font-weight: 700; margin: 0 0 8px 0; }
-.projPhotosGrid{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.projPhoto{
-  width: 100%;
-  height: 92px;
-  object-fit: cover;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: #fff;
-  cursor: zoom-in;
-}
-
-/* Lightbox */
-.lightbox{
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-}
-.lightboxBackdrop{
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.78);
-}
-.lightboxContent{
-  position: relative;
-  z-index: 1;
-  width: min(1240px, calc(100vw - 48px));
-  max-height: calc(100vh - 48px);
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 12px;
-}
-.lightboxStage{
-  display: grid;
-  grid-template-columns: 56px minmax(0, 1fr) 56px;
-  align-items: center;
-  gap: 14px;
-}
-.lightboxFigure{
-  margin: 0;
-  min-width: 0;
-  min-height: 0;
-  padding: 18px;
-  border-radius: 18px;
-  background: #fff;
-  box-shadow: 0 16px 42px rgba(0,0,0,0.34);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-.lightboxImg{
-  display: block;
-  width: auto;
-  height: auto;
-  max-width: 100%;
-  max-height: calc(100vh - 144px);
-  object-fit: contain;
-  border-radius: 10px;
-  background: transparent;
-}
-.lightboxMeta{
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.lightboxCounter{
-  color: #fff;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-.lightboxClose{
-  position: absolute;
-  top: -6px;
-  right: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.26);
-  background: rgba(0,0,0,0.74);
-  color: #fff;
-  cursor: pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-@media (max-width: 520px){
-  .projPhotosGrid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .projPhoto{ height: 110px; }
-}
-
-/* Résumé (panneau projet) : texte justifié */
-#panel .panelResumeText{
-  text-align: justify;
-  text-justify: inter-word;
-  hyphens: auto;
-  -webkit-hyphens: auto;
-  -ms-hyphens: auto;
-  text-align-last: left; /* évite d’étirer la dernière ligne */
-}
-
-/* Optionnel : sur mobile, éviter les gros espacements */
-@media (max-width: 700px){
-  #panel .panelResumeText{ text-align: left; }
-}
-
-
-#clear.is-active{
-  background: #1d4ed8;
-  border-color: #1d4ed8;
-  color: #fff;
-  box-shadow: 0 0 0 3px rgba(29,78,216,0.18);
-}
-#clear.is-active:hover{
-  filter: brightness(1.05);
-}
-
-
-.officeProjectsList{
-  display:grid;
-  gap:10px;
-  margin-top:10px;
-}
-.officeProjectItem{
-  display:flex;
-  flex-direction:column;
-  align-items:flex-start;
-  gap:4px;
-  width:100%;
-  padding:12px 14px;
-  border:1px solid var(--border);
-  border-radius:12px;
-  background:#fff;
-  cursor:pointer;
-  text-align:left;
-}
-.officeProjectItem:hover{
-  background:rgba(29,78,216,0.04);
-  border-color:#94b8ff;
-}
-.officeProjectName{
-  font-weight:700;
-  color:#111;
-}
-.officeProjectMeta{
-  color:var(--muted);
-  font-size:14px;
-}
-.officeProjectsEmpty{
-  margin-top:10px;
-  color:var(--muted);
-}
-
-.lightboxNav{
-  position:relative;
-  width:52px;
-  height:52px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,0.24);
-  background:rgba(0,0,0,0.74);
-  color:#fff;
-  cursor:pointer;
-  font-size:34px;
-  line-height:1;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  justify-self:center;
-}
-.lightboxPrev,
-.lightboxNext{ left:auto; right:auto; }
-.lightboxNav:disabled{
-  opacity:0.38;
-  cursor:default;
-}
-.lightboxNav:not(:disabled):hover,
-.lightboxClose:hover{
-  background: rgba(15,23,42,0.92);
-}
-
-@media (max-width: 900px){
-  .lightbox{ padding: 16px; }
-  .lightboxContent{ width: min(1000px, calc(100vw - 32px)); max-height: calc(100vh - 32px); }
-  .lightboxStage{ grid-template-columns: 48px minmax(0, 1fr) 48px; gap: 10px; }
-  .lightboxFigure{ padding: 12px; }
-  .lightboxImg{ max-height: calc(100vh - 122px); }
-}
-
-
-.panelActions{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  flex-shrink:0;
-}
-.panelPrint{
-  border:1px solid var(--border);
-  background:#fff;
-  border-radius:10px;
-  cursor:pointer;
-  padding:6px 12px;
-  font-weight:700;
-}
-.panelPrint:hover,
-.panelClose:hover{
-  filter:brightness(0.98);
-}
-.projPhotoBtn{
-  display:block;
-  width:100%;
-  padding:0;
-  border:0;
-  background:transparent;
-  cursor:pointer;
-}
-
-@page{
-  size:A4 landscape;
-  margin:12mm;
-}
-
-@media print{
-  html, body{
-    height:auto !important;
-    background:#fff !important;
-  }
-  body{
-    margin:0 !important;
-    color:#000 !important;
-  }
-  .topbar,
-  .map,
-  #map,
-  .legend,
-  .status,
-  .brand,
-  .toolbar,
-  .leaflet-control-container,
-  .lightbox,
-  #projListMenu{
-    display:none !important;
-  }
-  .layout{
-    display:block !important;
-    height:auto !important;
-  }
-  .panel,
-  #panel{
-    display:block !important;
-    width:auto !important;
-    height:auto !important;
-    overflow:visible !important;
-    background:#fff !important;
-    border:0 !important;
-    box-shadow:none !important;
-    padding:0 !important;
-  }
-  .panelHeader{
-    position:static !important;
-    top:auto !important;
-    z-index:auto !important;
-    background:#fff !important;
-    backdrop-filter:none !important;
-    padding:0 0 5mm 0 !important;
-    margin:0 0 5mm 0 !important;
-    border-bottom:1px solid #bdbdbd !important;
-    break-inside:avoid;
-    page-break-inside:avoid;
-    display:flex !important;
-    align-items:flex-start !important;
-    justify-content:space-between !important;
-    gap:8mm !important;
-  }
-  .panelHeaderTitleWrap{
-    display:flex !important;
-    align-items:flex-start !important;
-    justify-content:space-between !important;
-    gap:8mm !important;
-    width:100% !important;
-  }
-  .panelActions,
-  .panelClose,
-  .panelPrint{
-    display:none !important;
-  }
-  .panelTitle{
-    font-size:24pt !important;
-    line-height:1.15 !important;
-    flex:1 1 auto !important;
-  }
-  .screenOnlyInline{
-    display:none !important;
-  }
-  .printOnlyInline{
-    display:inline !important;
-  }
-  .printProjectLogo{
-    display:block !important;
-    width:auto !important;
-    height:10mm !important;
-    max-height:10mm !important;
-    flex:0 0 auto !important;
-    margin-top:0.5mm !important;
-    object-fit:contain !important;
-  }
-  .panelSection,
-  .panelSubTitle,
-  .panelResumeText,
-  .kv,
-  .projHero,
-  .projPhotos,
-  .projPhotoBtn,
-  .projPhoto,
-  .projHeroPhoto{
-    break-inside:avoid;
-    page-break-inside:avoid;
-  }
-  .panelSection--general{
-    break-before:page;
-    page-break-before:always;
-    margin-top:0 !important;
-  }
-  .panelSection--contacts{
-    margin-top:10mm !important;
-  }
-  .dpeCards,
-  .dpeCard,
-  .dpeScale,
-  .dpeRow{
-    break-inside:avoid;
-    page-break-inside:avoid;
+  function hasActiveFilters() {
+    const hasSearch = !!(elQ && elQ.value.trim());
+    const typeFilters = Array.from(document.querySelectorAll(".typeFilter"));
+    const hasTypeFilter = typeFilters.some((cb) => !cb.checked);
+    const hasAntennaFilter = !!selectedAntenna;
+    const hasCompletedYearFilter = currentProjectMode === PROJECT_MODES.completed.key && completedYearFilter > COMPLETED_YEAR_MIN;
+    return hasSearch || hasTypeFilter || hasAntennaFilter || hasCompletedYearFilter;
   }
 
-  .dpeCard{
-    margin-top:0 !important;
-    padding-top:4mm !important;
+  function updateClearButtonState() {
+    if (!elClear) return;
+    const active = hasActiveFilters();
+    elClear.classList.toggle("is-active", active);
+    elClear.setAttribute("aria-pressed", active ? "true" : "false");
+    elClear.title = active ? "Des filtres sont actifs" : "Aucun filtre actif";
   }
 
-  .dpeCardTitle{
-    font-size:13pt !important;
+  function clampCompletedYear(year) {
+    const value = Number(year);
+    if (!Number.isFinite(value)) return COMPLETED_YEAR_MIN;
+    return Math.max(COMPLETED_YEAR_MIN, Math.min(COMPLETED_YEAR_MAX, Math.round(value)));
   }
 
-  .dpeUnitLine,
-  .dpeRowRange{
-    font-size:9pt !important;
+  function createCompletedYearFilterUi() {
+    if (!elProjectModeSwitch || elCompletedYearFilter) return;
+
+    const wrap = document.createElement("div");
+    wrap.id = "completedYearFilter";
+    wrap.className = "completedYearFilter";
+    wrap.hidden = true;
+    wrap.setAttribute("aria-hidden", "true");
+    wrap.innerHTML = `
+      <span class="completedYearFilterLabel">Fin à partir de <strong id="completedYearValue" class="completedYearValue">${completedYearFilter}</strong></span>
+      <div class="completedYearRangeWrap">
+        <span class="completedYearBound">${COMPLETED_YEAR_MIN}</span>
+        <input id="completedYearRange" class="completedYearRange" type="range" min="${COMPLETED_YEAR_MIN}" max="${COMPLETED_YEAR_MAX}" step="1" value="${completedYearFilter}" aria-label="Afficher les projets finis à partir de cette année" />
+        <span class="completedYearBound">${COMPLETED_YEAR_MAX}</span>
+      </div>
+    `;
+
+    elProjectModeSwitch.parentNode?.insertBefore(wrap, elProjectModeSwitch);
+
+    elCompletedYearFilter = wrap;
+    elCompletedYearRange = wrap.querySelector("#completedYearRange");
+    elCompletedYearValue = wrap.querySelector("#completedYearValue");
+
+    elCompletedYearRange?.addEventListener("input", () => {
+      setCompletedYearFilter(elCompletedYearRange.value);
+    });
   }
 
-  .dpeRowShape{
-    height:11mm !important;
-    min-width:0 !important;
+  function updateCompletedYearFilterUi() {
+    const isCompletedMode = currentProjectMode === PROJECT_MODES.completed.key;
+
+    if (elCompletedYearFilter) {
+      elCompletedYearFilter.hidden = !isCompletedMode;
+      elCompletedYearFilter.classList.toggle("is-visible", isCompletedMode);
+      elCompletedYearFilter.setAttribute("aria-hidden", isCompletedMode ? "false" : "true");
+    }
+
+    if (elCompletedYearRange) {
+      elCompletedYearRange.value = String(completedYearFilter);
+    }
+
+    if (elCompletedYearValue) {
+      elCompletedYearValue.textContent = String(completedYearFilter);
+    }
+
+    syncToolbarControlHeights();
   }
 
-  .dpeMarker{
-    height:9mm !important;
-    min-width:14mm !important;
+  function syncToolbarControlHeights() {
+    if (!elProjectModeSwitch) return;
+
+    const referenceButton = elClear || elProjListBtn;
+    const referenceHeight = Math.round(referenceButton?.getBoundingClientRect?.().height || 0);
+    if (!referenceHeight) return;
+
+    elProjectModeSwitch.style.height = `${referenceHeight}px`;
+    elProjectModeSwitch.style.minHeight = `${referenceHeight}px`;
+
+    const modeButtons = elProjectModeSwitch.querySelectorAll('.projectModeBtn');
+    modeButtons.forEach((btn) => {
+      btn.style.height = '100%';
+      btn.style.minHeight = '100%';
+    });
+
+    if (elCompletedYearFilter) {
+      elCompletedYearFilter.style.height = `${referenceHeight}px`;
+      elCompletedYearFilter.style.minHeight = `${referenceHeight}px`;
+    }
   }
 
-  .dpeRow--A .dpeRowShape{ width:188px !important; }
-  .dpeRow--B .dpeRowShape{ width:226px !important; }
-  .dpeRow--C .dpeRowShape{ width:264px !important; }
-  .dpeRow--D .dpeRowShape{ width:302px !important; }
-  .dpeRow--E .dpeRowShape{ width:340px !important; }
-  .dpeRow--F .dpeRowShape{ width:378px !important; }
-  .dpeRow--G .dpeRowShape{ width:416px !important; }
+  function setCompletedYearFilter(year, { rerender = true } = {}) {
+    const nextYear = clampCompletedYear(year);
+    const changed = nextYear !== completedYearFilter;
+    completedYearFilter = nextYear;
+    updateCompletedYearFilterUi();
+    updateClearButtonState();
 
-  .dpeCard,
-  .dpeRowShape,
-  .dpeMarker{
-    -webkit-print-color-adjust:exact;
-    print-color-adjust:exact;
-  }
+    if (!changed || !rerender || currentProjectMode !== PROJECT_MODES.completed.key) return;
 
-  .panelSection--energy{
-    break-before:page;
-    page-break-before:always;
-    break-inside:avoid !important;
-    page-break-inside:avoid !important;
-    margin-top:0 !important;
-    display:flex !important;
-    flex-direction:column !important;
-    justify-content:flex-start !important;
-  }
-
-  .panelSection--energy .energyLegendInline,
-  .panelSection--energy .dpeCards,
-  .panelSection--energy .dpeCard,
-  .panelSection--energy .dpeScale,
-  .panelSection--energy .dpeRow,
-  .panelSection--energy .dpeUnitLine{
-    break-inside:avoid !important;
-    page-break-inside:avoid !important;
-  }
-
-  .panelSection--energy .dpeCards{
-    display:grid !important;
-    grid-template-columns:1fr 1fr !important;
-    align-items:start !important;
-    align-content:start !important;
-    gap:6mm !important;
-    flex:1 1 auto !important;
-  }
-
-  .panelSection--energy .dpeCard{
-    padding-top:1.5mm !important;
-    display:flex !important;
-    flex-direction:column !important;
-    justify-content:flex-start !important;
-  }
-
-  .panelSection--energy .dpeCard{
-    min-width:0 !important;
-  }
-
-  .panelSection--energy .dpeCards > *{
-    width:100% !important;
-  }
-
-  .panelSection--energy .dpeRow{
-    grid-template-columns:1fr auto !important;
-    column-gap:4.2mm !important;
-  }
-
-  .panelSection--energy .dpeScale{
-    width:100% !important;
-  }
-
-  .panelSection--energy .dpeRowShape{
-    max-width:100% !important;
+    closePanel();
+    renderMarkers();
   }
 
 
-  .panelSection--energy .panelSectionTitle{
-    margin-bottom:2.5mm !important;
-    font-size:18pt !important;
-    line-height:1.12 !important;
+  function projectModeMeta(modeKey = currentProjectMode) {
+    return PROJECT_MODES[modeKey] || PROJECT_MODES.current;
   }
 
-  .panelSection--energy .energyLegendInline{
-    margin:1.5mm 0 4.5mm 0 !important;
-    font-size:11pt !important;
+  function updateProjectModeUi() {
+    const meta = projectModeMeta();
+    if (elPageTitle) elPageTitle.textContent = meta.title;
+    document.title = meta.title;
+
+    elProjectModeButtons.forEach((btn) => {
+      const isActive = btn.getAttribute("data-project-mode") === currentProjectMode;
+      btn.classList.toggle("is-active", isActive);
+      btn.setAttribute("aria-pressed", isActive ? "true" : "false");
+    });
+
+    updateCompletedYearFilterUi();
   }
 
-  .energyLegendMiniMarker,
-  .energyLegendMiniMarkerSvg{
-    -webkit-print-color-adjust:exact !important;
-    print-color-adjust:exact !important;
+  function normalizeProjectsPayload(data) {
+    if (Array.isArray(data?.projets)) return data.projets;
+    if (Array.isArray(data)) return data;
+    return [];
   }
 
-
-  .panelSection--energy .dpeCardTitle{
-    font-size:15pt !important;
-    margin-bottom:3.5mm !important;
-    line-height:1.12 !important;
+  function ensureProjectIds(projects, modeKey) {
+    return projects.map((project, index) => {
+      const existingId = String(project["Code projet"] ?? project.code_projet ?? project.codeProjet ?? project.id ?? "").trim();
+      project.__projectMode = modeKey;
+      project.__projectId = existingId || `${modeKey}-${index + 1}`;
+      return project;
+    });
   }
 
-  .panelSection--energy .dpeUnitLine,
-  .panelSection--energy .dpeRowRange{
-    font-size:10.5pt !important;
+  function setActiveProjectsForMode(modeKey) {
+    allProjects = Array.isArray(projectsByMode[modeKey]) ? projectsByMode[modeKey] : [];
+    projectIdToName = new Map();
+    for (const p of allProjects) {
+      const pid = projectId(p);
+      const nm = String(p["Nom de projet"] ?? p.nom ?? "").trim();
+      if (pid) projectIdToName.set(pid, nm);
+    }
   }
 
-  .panelSection--energy .dpeScale{
-    gap:2.6mm !important;
+  function setProjectMode(modeKey) {
+    if (!PROJECT_MODES[modeKey] || modeKey === currentProjectMode) return;
+
+    currentProjectMode = modeKey;
+    selectedAntenna = null;
+    updateDeptStyle();
+    updateDeptSelectedStat();
+
+    if (elProjListMenu) elProjListMenu.hidden = true;
+
+    closePanel();
+    setActiveProjectsForMode(modeKey);
+    updateProjectModeUi();
+    renderMarkers();
+    updateClearButtonState();
   }
 
-  .panelSection--energy .dpeRowShape{
-    height:13.2mm !important;
+  // ---- Antennes / Couleurs ----
+  const ANTENNA_COLORS = {
+    "Atlantique Grand-Ouest": "#3B82F6",
+    "Nord-Est": "#10B981",
+    "Grand Sud-Ouest": "#F59E0B",
+    "Alpes Centre-Est": "#8B5CF6",
+    "Méditerranée Grand-Sud": "#1D4ED8",
+    "Nord-Ouest Île-de-France": "#EF4444"
+  };
+
+  const ANTENNA_LEGEND_ORDER = [
+    "Alpes Centre-Est",
+    "Atlantique Grand-Ouest",
+    "Grand Sud-Ouest",
+    "Méditerranée Grand-Sud",
+    "Nord-Est",
+    "Nord-Ouest Île-de-France"
+  ];
+
+  function renderLegendAntennas() {
+    if (!elLegendAntennas) return;
+
+    elLegendAntennas.innerHTML = ANTENNA_LEGEND_ORDER.map((antenna) => {
+      const color = ANTENNA_COLORS[antenna] || "#FFFFFF";
+      return `
+        <div class="legend-row">
+          <span class="swatch" style="background:${escapeAttr(color)};"></span>
+          <span>${escapeHtml(antenna)}</span>
+        </div>
+      `;
+    }).join("");
   }
 
-  .panelSection--energy .dpeMarker{
-    height:10mm !important;
-    min-width:17.5mm !important;
-    font-size:11.5pt !important;
-  }
-  .panelSectionTitle{
-    margin-top:0 !important;
-    margin-bottom:4mm !important;
-  }
-  .panelResumeText{
-    margin-bottom:4mm;
-  }
-  .kv{
-    gap:4mm !important;
-  }
-  .kvRow{
-    grid-template-columns:48mm 1fr !important;
-    gap:5mm !important;
-    align-items:start !important;
-  }
-  .kvKey{
-    font-size:10pt !important;
-  }
-  .kvVal{
-    font-size:10.5pt !important;
-  }
-  .projHero{
-    margin:0 0 5mm 0 !important;
-  }
-  .projHeroBtn,
-  .projPhotoBtn{
-    cursor:default !important;
-  }
-  .projHeroPhoto{
-    width:100% !important;
-    height:auto !important;
-    max-height:75mm !important;
-    object-fit:contain !important;
-    border:1px solid #d8d8d8 !important;
-    border-radius:6px !important;
-    background:#fff !important;
-  }
-  .projPhotos{
-    margin-top:5mm !important;
-    padding-top:4mm !important;
-    border-top:1px solid #bdbdbd !important;
-  }
-  .projPhotosGrid{
-    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
-    gap:5mm !important;
-  }
-  .projPhoto{
-    width:100% !important;
-    height:auto !important;
-    max-height:65mm !important;
-    object-fit:contain !important;
-    border-radius:6px !important;
-    border:1px solid #d8d8d8 !important;
-    background:#fff !important;
-    padding:2mm !important;
+  // Table “corrigée” : département (nom) -> antenne
+  const DEPT_TO_ANTENNA_BY_NAME = new Map(Object.entries({
+    // Alpes Centre-Est
+    "ain": "Alpes Centre-Est",
+    "allier": "Alpes Centre-Est",
+    "ardeche": "Alpes Centre-Est",
+    "cantal": "Alpes Centre-Est",
+    "cote d or": "Alpes Centre-Est",
+    "drome": "Alpes Centre-Est",
+    "haute loire": "Alpes Centre-Est",
+    "haute savoie": "Alpes Centre-Est",
+    "isere": "Alpes Centre-Est",
+    "jura": "Alpes Centre-Est",
+    "loire": "Alpes Centre-Est",
+    "nievre": "Alpes Centre-Est",
+    "puy de dome": "Alpes Centre-Est",
+    "rhone": "Alpes Centre-Est",
+    "saone et loire": "Alpes Centre-Est",
+    "savoie": "Alpes Centre-Est",
+    "yonne": "Alpes Centre-Est",
+
+    // Atlantique Grand-Ouest
+    "charente": "Atlantique Grand-Ouest",
+    "charente maritime": "Atlantique Grand-Ouest",
+    "cotes d armor": "Atlantique Grand-Ouest",
+    "deux sevres": "Atlantique Grand-Ouest",
+    "finistere": "Atlantique Grand-Ouest",
+    "ille et vilaine": "Atlantique Grand-Ouest",
+    "indre": "Atlantique Grand-Ouest",
+    "indre et loire": "Atlantique Grand-Ouest",
+    "loire atlantique": "Atlantique Grand-Ouest",
+    "loir et cher": "Atlantique Grand-Ouest",
+    "maine et loire": "Atlantique Grand-Ouest",
+    "mayenne": "Atlantique Grand-Ouest",
+    "morbihan": "Atlantique Grand-Ouest",
+    "sarthe": "Atlantique Grand-Ouest",
+    "vendee": "Atlantique Grand-Ouest",
+    "vienne": "Atlantique Grand-Ouest",
+
+    // Grand Sud-Ouest
+    "ariege": "Grand Sud-Ouest",
+    "aude": "Grand Sud-Ouest",
+    "aveyron": "Grand Sud-Ouest",
+    "correze": "Grand Sud-Ouest",
+    "creuse": "Grand Sud-Ouest",
+    "dordogne": "Grand Sud-Ouest",
+    "gers": "Grand Sud-Ouest",
+    "gironde": "Grand Sud-Ouest",
+    "haute garonne": "Grand Sud-Ouest",
+    "hautes pyrenees": "Grand Sud-Ouest",
+    "haute vienne": "Grand Sud-Ouest",
+    "landes": "Grand Sud-Ouest",
+    "lot": "Grand Sud-Ouest",
+    "lot et garonne": "Grand Sud-Ouest",
+    "pyrenees atlantiques": "Grand Sud-Ouest",
+    "pyrenees orientales": "Grand Sud-Ouest",
+    "tarn": "Grand Sud-Ouest",
+    "tarn et garonne": "Grand Sud-Ouest",
+
+    // Méditerranée Grand-Sud
+    "alpes de haute provence": "Méditerranée Grand-Sud",
+    "alpes maritimes": "Méditerranée Grand-Sud",
+    "bouches du rhone": "Méditerranée Grand-Sud",
+    "corse du sud": "Méditerranée Grand-Sud",
+    "gard": "Méditerranée Grand-Sud",
+    "haute corse": "Méditerranée Grand-Sud",
+    "hautes alpes": "Méditerranée Grand-Sud",
+    "herault": "Méditerranée Grand-Sud",
+    "lozere": "Méditerranée Grand-Sud",
+    "var": "Méditerranée Grand-Sud",
+    "vaucluse": "Méditerranée Grand-Sud",
+
+    // Nord-Est
+    "ardennes": "Nord-Est",
+    "aube": "Nord-Est",
+    "bas rhin": "Nord-Est",
+    "doubs": "Nord-Est",
+    "haute marne": "Nord-Est",
+    "haute saone": "Nord-Est",
+    "haut rhin": "Nord-Est",
+    "marne": "Nord-Est",
+    "meurthe et moselle": "Nord-Est",
+    "meuse": "Nord-Est",
+    "moselle": "Nord-Est",
+    "territoire de belfort": "Nord-Est",
+    "vosges": "Nord-Est",
+
+    // Nord-Ouest Île-de-France
+    "aisne": "Nord-Ouest Île-de-France",
+    "calvados": "Nord-Ouest Île-de-France",
+    "cher": "Nord-Ouest Île-de-France",
+    "essonne": "Nord-Ouest Île-de-France",
+    "eure": "Nord-Ouest Île-de-France",
+    "eure et loir": "Nord-Ouest Île-de-France",
+    "hauts de seine": "Nord-Ouest Île-de-France",
+    "loiret": "Nord-Ouest Île-de-France",
+    "manche": "Nord-Ouest Île-de-France",
+    "nord": "Nord-Ouest Île-de-France",
+    "oise": "Nord-Ouest Île-de-France",
+    "orne": "Nord-Ouest Île-de-France",
+    "paris": "Nord-Ouest Île-de-France",
+    "pas de calais": "Nord-Ouest Île-de-France",
+    "seine et marne": "Nord-Ouest Île-de-France",
+    "seine maritime": "Nord-Ouest Île-de-France",
+    "seine saint denis": "Nord-Ouest Île-de-France",
+    "somme": "Nord-Ouest Île-de-France",
+    "val de marne": "Nord-Ouest Île-de-France",
+    "val d oise": "Nord-Ouest Île-de-France",
+    "yvelines": "Nord-Ouest Île-de-France"
+  }));
+
+  const OVERSEAS_AREA_RULES = [
+    {
+      code: "971",
+      name: "Guadeloupe",
+      matches: ({ cityBlob, allBlob, lat, lon }) =>
+        cityBlob.includes("guadeloupe") || allBlob.includes("guadeloupe") ||
+        (lat >= 15.75 && lat <= 16.55 && lon >= -61.9 && lon <= -60.95)
+    },
+    {
+      code: "972",
+      name: "Martinique",
+      matches: ({ cityBlob, allBlob, lat, lon }) =>
+        cityBlob.includes("martinique") || allBlob.includes("martinique") ||
+        (lat >= 14.25 && lat <= 15.05 && lon >= -61.35 && lon <= -60.75)
+    },
+    {
+      code: "973",
+      name: "Guyane",
+      matches: ({ cityBlob, allBlob, lat, lon }) =>
+        cityBlob.includes("guyane") || allBlob.includes("guyane") ||
+        (lat >= 1.8 && lat <= 6.1 && lon >= -54.75 && lon <= -51.4)
+    },
+    {
+      code: "974",
+      name: "La Réunion",
+      matches: ({ cityBlob, allBlob, lat, lon }) =>
+        cityBlob.includes("reunion") || cityBlob.includes("la reunion") || allBlob.includes("reunion") ||
+        (lat >= -21.45 && lat <= -20.8 && lon >= 55.15 && lon <= 55.95)
+    },
+    {
+      code: "975",
+      name: "Saint-Pierre-et-Miquelon",
+      matches: ({ cityBlob, allBlob, lat, lon }) =>
+        cityBlob.includes("saint pierre et miquelon") || allBlob.includes("saint pierre et miquelon") ||
+        (lat >= 46.7 && lat <= 47.25 && lon >= -56.55 && lon <= -56.05)
+    },
+    {
+      code: "976",
+      name: "Mayotte",
+      matches: ({ cityBlob, allBlob, lat, lon }) =>
+        cityBlob.includes("mayotte") || allBlob.includes("mayotte") ||
+        (lat >= -13.2 && lat <= -12.45 && lon >= 45.0 && lon <= 45.35)
+    }
+  ];
+
+  // ---- Map ----
+  const map = L.map("map", { preferCanvas: true }).setView([46.8, 2.5], 6);
+
+  // Bounds France métropolitaine (approx.) — utilisé pour "dézoomer" à la fermeture du panneau
+  const FRANCE_BOUNDS = L.latLngBounds([[41.0, -5.5], [51.6, 9.8]]);
+  function zoomToFrance(){
+  // Animation douce (au lieu d'une "téléportation")
+  if (typeof map.flyToBounds === "function") {
+    map.flyToBounds(FRANCE_BOUNDS, { padding: [20, 20], duration: 0.6 });
+  } else {
+    map.fitBounds(FRANCE_BOUNDS, { padding: [20, 20] });
   }
 }
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap",
+    maxZoom: 19
+  }).addTo(map);
+
+  const clusters = L.markerClusterGroup({
+    chunkedLoading: true,
+    chunkInterval: 10,
+    spiderfyOnMaxZoom: true,
+    maxClusterRadius: 10,
+    spiderfyDistanceMultiplier: 3.5,
+    showCoverageOnHover: false,
+    zoomToBoundsOnClick: true,
+    iconCreateFunction: (cluster) => {
+      const children = cluster.getAllChildMarkers();
+      const types = new Set(children.map(m => (m.options && m.options.__bimoType) ? m.options.__bimoType : ""));
+      const count = cluster.getChildCount();
+
+      // Si plusieurs types => jaune, sinon couleur du type
+      let col = "yellow";
+      if (types.size === 1) {
+        const only = types.values().next().value;
+        col = only || "yellow";
+      }
+
+      return L.divIcon({
+        className: "pin-dot pin-dot-cluster-wrap",
+        html: `<div class="pin-dot-inner pin-dot-cluster" style="border-color:${col};"><span class="pin-dot-count">${count}</span></div>`,
+        iconSize: [22, 22],
+        iconAnchor: [11, 11]
+      });
+    }
+  });
+
+  map.addLayer(clusters);
+
+// Tooltip (survol) : liste des projets dans un cluster
+clusters.on("clustermouseover", (a) => {
+  const cl = a.layer;
+  const kids = cl.getAllChildMarkers();
+  const names = [];
+  for (const m of kids) {
+    const pid = m?.options?.__projId;
+    const nm = pid ? (projectIdToName.get(pid) || "") : "";
+    if (nm) names.push(nm);
+  }
+  names.sort((x, y) => x.localeCompare(y, "fr"));
+  const max = 25;
+  // 1 ligne = 1 projet (pas de retour à la ligne automatique à l'intérieur d'un nom)
+  let html = names
+    .slice(0, max)
+    .map((n) => `<div class="ttLine">${escapeHtml(n)}</div>`)
+    .join("");
+  if (names.length > max) html += `<div class="ttMore">+${names.length - max} autres</div>`;
+  if (!html) html = `${kids.length} projets`;
+  if (!cl.getTooltip()) {
+    cl.bindTooltip(html, { className: "projTooltip projTooltip--cluster", direction: "top", offset: [0, -10], opacity: 0.95, sticky: true });
+  } else {
+    cl.setTooltipContent(html);
+  }
+  cl.openTooltip();
+});
+clusters.on("clustermouseout", (a) => {
+  a.layer.closeTooltip();
+});
+
+
+  // ---- Pins fixes : Siège & Antennes ----
+  const OFFICES = [
+    { type_lieu: "antenne", nom: "Alpes Centre-Est", antenne: "Alpes Centre-Est", adresse: "10 rue Stella, 69002 Lyon", latitude: 45.76061, longitude: 4.83664 },
+    { type_lieu: "antenne", nom: "Nord-Ouest Île-de-France", antenne: "Nord-Ouest Île-de-France", adresse: "10 rue du Centre, 93196 Noisy-le-Grand Cedex", latitude: 48.838387, longitude: 2.545001 },
+    { type_lieu: "antenne", nom: "Méditerranée Grand-Sud", antenne: "Méditerranée Grand-Sud", adresse: "52 rue Liandier, 13008 Marseille", latitude: 43.2780891, longitude: 5.3913314 },
+    { type_lieu: "antenne", nom: "Nord-Est", antenne: "Nord-Est", adresse: "14 rue du Maréchal Juin, 67000 Strasbourg", latitude: 48.577957, longitude: 7.762085 },
+    { type_lieu: "antenne", nom: "Grand Sud-Ouest", antenne: "Grand Sud-Ouest", adresse: "1 Place Émile Blouin, 31952 Toulouse", latitude: 43.61456, longitude: 1.466043 },
+    { type_lieu: "antenne", nom: "Atlantique Grand-Ouest", antenne: "Atlantique Grand-Ouest", adresse: "10 boulevard Gaston Doumergue, 44964 Nantes Cedex 9", latitude: 47.20811, longitude: -1.544726 },
+    { type_lieu: "siege", nom: "Siège", antenne: "Siège", adresse: "120 rue de Bercy, 75012 Paris", latitude: 48.841095, longitude: 2.3778439 }
+  ];
+
+  const officesLayer = L.layerGroup().addTo(map);
+  let officesEnabled = true;
+
+  function showOfficePanel(o) {
+    const title = o.nom || (o.type_lieu === "siege" ? "Siège" : "Antenne");
+    const fields = [
+      ["Type", o.type_lieu === "siege" ? "Siège" : "Antenne"],
+      ["Antenne", o.antenne],
+      ["Adresse", o.adresse]
+    ];
+
+    let html = "";
+    html += `<div class="panelHeader" style="position:sticky;top:0;z-index:50;background:rgba(255,255,255,0.95);backdrop-filter:blur(6px);padding:12px 12px 10px;border-bottom:1px solid rgba(0,0,0,0.08);">`;
+    html += `<h2 class="panelTitle" style="font-size:32px;line-height:1.1;margin:0;">${escapeHtml(title)}</h2>`;
+    html += `<div class="panelActions">`;
+    html += `<button id="panelPrint" class="panelPrint" type="button" aria-label="Imprimer le projet">Imprimer</button>`;
+    html += `<button id="panelClose" class="panelClose" type="button" aria-label="Fermer">✕</button>`;
+    html += `</div>`;
+    html += `</div>`;
+    html += buildKv(fields);
+
+    if (o.type_lieu === "antenne" && o.antenne) {
+      const antennaProjects = getProjectsForAntenna(o.antenne);
+      html += `<div class="panelSubTitle" style="margin-top:20px;font-weight:800;font-size:22px;letter-spacing:.02em;transition:none;animation:none;transform:none;">Projets</div>`;
+
+      if (antennaProjects.length) {
+        html += `<div class="officeProjectsList">`;
+        html += antennaProjects.map((p) => {
+          const pid = projectId(p);
+          const name = String(p["Nom de projet"] ?? p.nom ?? "Projet").trim() || "Projet";
+          const typ = String(p["Type de projet"] ?? p.type ?? "—").trim() || "—";
+          const city = projectCity(p) || "—";
+          return `
+            <button class="officeProjectItem" type="button" data-project-id="${escapeAttr(pid)}">
+              <span class="officeProjectName">${escapeHtml(name)}</span>
+              <span class="officeProjectMeta">${escapeHtml(typ)} — ${escapeHtml(city)}</span>
+            </button>`;
+        }).join("");
+        html += `</div>`;
+      } else {
+        html += `<div class="officeProjectsEmpty">Aucun projet rattaché à cette antenne.</div>`;
+      }
+    }
+
+    openPanel(html);
+
+    elPanel?.querySelectorAll(".officeProjectItem").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const pid = btn.getAttribute("data-project-id");
+        if (!pid) return;
+        const p = allProjects.find((x) => projectId(x) === pid);
+        if (p) openProjectFromData(p);
+      });
+    });
+
+    const btn = document.getElementById("panelClose");
+    if (btn) btn.addEventListener("click", () => closePanel({ resetView: true }), { once: true });
+
+    const printBtn = document.getElementById("panelPrint");
+    if (printBtn) {
+      printBtn.addEventListener("click", () => {
+        closeLightbox();
+        const previousTitle = document.title;
+        document.title = String(title || previousTitle);
+        window.print();
+        window.setTimeout(() => {
+          document.title = previousTitle;
+        }, 100);
+      });
+    }
+  }
+
+  function renderOffices() {
+    officesLayer.clearLayers();
+    if (!officesEnabled) return;
+
+    for (const o of OFFICES) {
+      const ll = [Number(o.latitude), Number(o.longitude)];
+      if (!Number.isFinite(ll[0]) || !Number.isFinite(ll[1])) continue;
+
+      const isHQ = o.type_lieu === "siege";
+
+      const officeSvg = `
+        <svg class="pin-office-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M4 22h16v-2H4v2zm2-4h12V4H6v14zm2-2V6h2v10H8zm4 0V6h2v10h-2z"/>
+        </svg>
+      `;
+
+      const marker = L.marker(ll, {
+        icon: L.divIcon({
+          className: "pin-dot",
+          html: `<div class="pin-office-wrap">${officeSvg}${isHQ ? `<div class="pin-office-badge">★</div>` : ``}</div>`,
+          iconSize: [22, 22],
+          iconAnchor: [11, 11]
+        })
+      });
+
+      marker.on("click", (e) => {
+        L.DomEvent.stopPropagation(e);
+        setSelectedMarker(marker);
+
+        // Focus antenne => départements plus foncés + filtrage des projets de cette antenne
+        if (o.type_lieu === "antenne" && o.antenne) {
+          selectedAntenna = o.antenne;
+          updateDeptStyle();
+          renderMarkers(); // n'afficher que les projets de l'antenne
+        } else {
+          clearAntennaFocus();
+          renderMarkers(); // ré-afficher tous les projets
+        }
+
+        updateClearButtonState();
+        showOfficePanel(o);
+      });
+
+      officesLayer.addLayer(marker);
+    }
+  }
+
+  function initOfficesToggle() {
+    // On insère un toggle à côté des filtres de type (MOM/AMO/EXP) si possible
+    const typeFilters = Array.from(document.querySelectorAll(".typeFilter"));
+    if (!typeFilters.length) {
+      renderOffices();
+      return;
+    }
+    const last = typeFilters[typeFilters.length - 1];
+    const host = last.closest("label")?.parentElement || last.parentElement || last;
+
+    // Eviter de doubler si le script est chargé deux fois
+    if (document.getElementById("officesToggle")) {
+      renderOffices();
+      return;
+    }
+
+    const wrap = document.createElement("label");
+    wrap.className = "toggle officesToggle";
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.id = "officesToggle";
+    cb.checked = true;
+
+    const span = document.createElement("span");
+    span.textContent = "Siège & antennes";
+
+    wrap.appendChild(cb);
+    wrap.appendChild(span);
+    host.insertAdjacentElement("afterend", wrap);
+
+    cb.addEventListener("change", () => {
+      officesEnabled = !!cb.checked;
+      renderOffices();
+    });
+
+    renderOffices();
+  }
+
+  map.on("click", () => closePanel());
+
+  // ---- Helpers ----
+  function showStatus(msg) {
+    if (!elStatus) return;
+    elStatus.textContent = msg;
+    elStatus.hidden = !msg;
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function formatEuro(v) {
+    const s = String(v ?? "").trim();
+    if (!s) return "";
+    // enlève espaces / symbole €, accepte virgule
+    const cleaned = s.replace(/\s/g, "").replace(/€/g, "").replace(",", ".");
+    const n = Number(cleaned);
+    if (!Number.isFinite(n)) return s;
+    return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
+  }
+
+
+
+function amountNumber(v) {
+  if (v == null) return NaN;
+  if (typeof v === "number") return v;
+  const s = String(v).trim();
+  if (!s) return NaN;
+  // enlève espaces (dont insécables), symbole €, et normalise virgule
+  const cleaned = s
+    .replace(/[\s\u00A0\u202F]/g, "")
+    .replace(/€/g, "")
+    .replace(/,/g, ".")
+    .replace(/[^0-9.+-]/g, "");
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : NaN;
+}
+
+  function projectId(p) {
+    return String(p.__projectId ?? p["Code projet"] ?? p.code_projet ?? p.codeProjet ?? p.id ?? "").trim();
+  }
+
+  function projectListLabel(p) {
+    const nom = String(p["Nom de projet"] ?? p.nom ?? "").trim();
+    const typ = String(p["Type de projet"] ?? p.type ?? "").trim();
+    const ant = String(p["Antenne"] ?? p.antenne ?? "").trim();
+    const mnt = formatEuro(p["Montant"] ?? p.montant);
+    return { nom, typ, mnt, ant };
+  }
+
+  function buildProjectList() {
+    if (!elProjListItems) return;
+    const q = normalizeSearchText(elProjListSearch?.value ?? "");
+
+    // On liste les projets actuellement filtrés (recherche + types + dept si activé)
+    const arr = filteredProjects();
+    const rows = [];
+
+    for (const p of arr) {
+      const pid = projectId(p);
+      if (!pid) continue;
+      const { nom, typ, mnt, ant } = projectListLabel(p);
+      const deptName = deptNameFromProject(p);
+      const city = projectCity(p);
+      const blob = normalizeSearchText(`${nom} ${typ} ${mnt} ${ant} ${deptName} ${city}`);
+      if (q && !blob.includes(q)) continue;
+      rows.push({ pid, nom, typ, mnt, ant, amountNum: amountNumber(p["Montant"] ?? p.montant) });
+    }
+
+    const sortMode = String(elProjListSort?.value ?? "name_asc");
+
+    const coll = new Intl.Collator("fr", { sensitivity: "base", numeric: true });
+
+    rows.sort((a, b) => {
+      switch (sortMode) {
+        case "name_desc":
+          return coll.compare(b.nom, a.nom);
+        case "amount_desc": {
+          const av = Number.isFinite(a.amountNum) ? a.amountNum : -Infinity;
+          const bv = Number.isFinite(b.amountNum) ? b.amountNum : -Infinity;
+          return bv - av || coll.compare(a.nom, b.nom);
+        }
+        case "amount_asc": {
+          const av = Number.isFinite(a.amountNum) ? a.amountNum : Infinity;
+          const bv = Number.isFinite(b.amountNum) ? b.amountNum : Infinity;
+          return av - bv || coll.compare(a.nom, b.nom);
+        }
+        case "type_asc":
+          return coll.compare(a.typ, b.typ) || coll.compare(a.nom, b.nom);
+        case "antenna_asc":
+          return coll.compare(a.ant, b.ant) || coll.compare(a.nom, b.nom);
+        case "name_asc":
+        default:
+          return coll.compare(a.nom, b.nom);
+      }
+    });
+
+    if (!rows.length) {
+      elProjListItems.innerHTML = `<div class="projListEmpty">Aucun projet.</div>`;
+      return;
+    }
+
+    elProjListItems.innerHTML = rows.map(r => `
+      <div class="projListRow" data-pid="${escapeAttr(r.pid)}">
+        <div class="projListName">${escapeHtml(r.nom || "(sans nom)")}</div>
+        <div>${escapeHtml(r.typ)}</div>
+        <div>${escapeHtml(r.mnt)}</div>
+        <div>${escapeHtml(r.ant)}</div>
+      </div>
+    `).join("");
+  }
+
+  function openProjectFromList(pid) {
+    const marker = projectIdToMarker.get(pid);
+    if (!marker) return;
+
+    const ll = marker.getLatLng();
+    setSelectedMarker(marker);
+
+    const targetZoom = Math.max(map.getZoom(), 14);
+    map.flyTo([ll.lat, ll.lng], targetZoom, { duration: 0.6 });
+
+    const p = allProjects.find(x => projectId(x) === pid);
+    if (p) showPanel(p);
+
+    if (elProjListMenu) elProjListMenu.hidden = true;
+  }
+
+  function openProjectFromData(p) {
+    if (!p) return;
+
+    const pid = projectId(p);
+    const ll = projectLatLon(p);
+    const marker = pid ? projectIdToMarker.get(pid) : null;
+
+    if (marker) setSelectedMarker(marker);
+    else clearSelectedMarker();
+
+    selectedAntenna = null;
+    updateDeptStyle();
+
+    if (ll) {
+      const targetZoom = Math.max(map.getZoom(), 14);
+      map.flyTo(ll, targetZoom, { duration: 0.6 });
+    }
+
+    showPanel(p);
+  }
+
+  function normalizeForLookup(s) {
+    const str = String(s || "").trim().toLowerCase();
+    if (!str) return "";
+    const noAccents = str.normalize("NFD").replace(/\p{Diacritic}/gu, "");
+    return noAccents
+      .replace(/[’']/g, " ")
+      .replace(/-/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function normalizeSearchText(s) {
+    return normalizeForLookup(s);
+  }
+
+  function normalizeDeptCode(code) {
+    const c = String(code || "").trim().toUpperCase();
+    if (!c) return "";
+    if (c === "2A" || c === "2B") return c;
+    if (/^\d{1,2}$/.test(c)) return c.padStart(2, "0");
+    if (/^\d{3}$/.test(c)) return c;
+    return c;
+  }
+
+  function getActiveTypes() {
+    return Array.from(document.querySelectorAll(".typeFilter:checked"))
+      .map((x) => String(x.value || "").toLowerCase().trim())
+      .filter(Boolean);
+  }
+
+  function projectType(p) {
+    return String(p["Type de projet"] ?? p.type ?? "").toLowerCase().trim();
+  }
+
+  function projectCity(p) {
+    return String(
+      p["Ville"] ??
+      p.ville ??
+      p["Commune"] ??
+      p.commune ??
+      p["Adresse ville"] ??
+      ""
+    ).trim();
+  }
+
+  function projectLatLon(p) {
+    const lat = parseFloat(String(p["Latitude"] ?? p.latitude ?? p.lat ?? "").replace(",", "."));
+    const lon = parseFloat(String(p["Longitude"] ?? p.longitude ?? p.lon ?? "").replace(",", "."));
+    if (Number.isFinite(lat) && Number.isFinite(lon)) return [lat, lon];
+    return null;
+  }
+
+  function pointInRing(point, ring) {
+    if (!Array.isArray(ring) || ring.length < 3) return false;
+    const [x, y] = point;
+    let inside = false;
+
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const [xi, yi] = ring[i];
+      const [xj, yj] = ring[j];
+      const denom = (yj - yi) || Number.EPSILON;
+      const intersects = ((yi > y) !== (yj > y)) && (x < ((xj - xi) * (y - yi)) / denom + xi);
+      if (intersects) inside = !inside;
+    }
+
+    return inside;
+  }
+
+  function pointInPolygonCoords(point, polygonCoords) {
+    if (!Array.isArray(polygonCoords) || !polygonCoords.length) return false;
+    if (!pointInRing(point, polygonCoords[0])) return false;
+
+    for (let i = 1; i < polygonCoords.length; i += 1) {
+      if (pointInRing(point, polygonCoords[i])) return false;
+    }
+    return true;
+  }
+
+  function pointInGeometry(point, geometry) {
+    if (!geometry) return false;
+    if (geometry.type === "Polygon") return pointInPolygonCoords(point, geometry.coordinates);
+    if (geometry.type === "MultiPolygon") return geometry.coordinates.some((poly) => pointInPolygonCoords(point, poly));
+    return false;
+  }
+
+  function collectGeometryPoints(coords, out = []) {
+    if (!Array.isArray(coords) || !coords.length) return out;
+    if (typeof coords[0] === "number" && typeof coords[1] === "number") {
+      out.push(coords);
+      return out;
+    }
+    coords.forEach((item) => collectGeometryPoints(item, out));
+    return out;
+  }
+
+  function getGeometryBbox(geometry) {
+    const pts = collectGeometryPoints(geometry?.coordinates, []);
+    if (!pts.length) return null;
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    for (const [x, y] of pts) {
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+    }
+
+    return [minX, minY, maxX, maxY];
+  }
+
+  function bboxContainsPoint(bbox, point) {
+    if (!bbox) return false;
+    const [minX, minY, maxX, maxY] = bbox;
+    const [x, y] = point;
+    return x >= minX && x <= maxX && y >= minY && y <= maxY;
+  }
+
+  function inferDeptFromLatLon(lat, lon) {
+    const point = [lon, lat];
+    for (const entry of deptSpatialIndex) {
+      if (!bboxContainsPoint(entry.bbox, point)) continue;
+      if (pointInGeometry(point, entry.geometry)) {
+        return { code: entry.code, name: entry.name };
+      }
+    }
+    return null;
+  }
+
+
+  function inferOverseasArea(project, lat, lon) {
+    const cityBlob = normalizeSearchText(projectCity(project));
+    const allBlob = normalizeSearchText(Object.values(project || {}).join(" "));
+
+    for (const rule of OVERSEAS_AREA_RULES) {
+      if (rule.matches({ cityBlob, allBlob, lat, lon })) {
+        return { code: rule.code, name: rule.name };
+      }
+    }
+    return null;
+  }
+
+  function enrichProjectsWithDepartments(projects) {
+    for (const p of projects) {
+      const existingCode = normalizeDeptCode(p.__deptCode ?? p["Code département"] ?? p.code_departement ?? p["Département"] ?? p.departement ?? "");
+      if (/^(\d{2}|\d{3}|2A|2B)$/.test(existingCode)) {
+        p.__deptCode = existingCode;
+        p.__deptName = String(p.__deptName ?? p["Nom département"] ?? deptCodeToName[existingCode] ?? p.__deptName ?? "").trim();
+        p.__searchBlob = normalizeSearchText(Object.values(p).join(" "));
+        continue;
+      }
+
+      const ll = projectLatLon(p);
+      let inferred = null;
+      if (ll) {
+        inferred = inferDeptFromLatLon(ll[0], ll[1]) || inferOverseasArea(p, ll[0], ll[1]);
+      }
+
+      if (inferred) {
+        p.__deptCode = inferred.code;
+        p.__deptName = inferred.name;
+      }
+
+      p.__searchBlob = normalizeSearchText(Object.values(p).join(" "));
+    }
+  }
+
+  function deptCodeFromProject(p) {
+    const codeLike = String(p.__deptCode ?? p["Code département"] ?? p.code_departement ?? p["Département"] ?? p.departement ?? "").trim();
+    if (codeLike) {
+      const maybeCode = normalizeDeptCode(codeLike);
+      if (/^(\d{2}|\d{3}|2A|2B)$/.test(maybeCode)) return maybeCode;
+    }
+
+    const rawName = String(p.__deptName ?? p["Nom département"] ?? p["Département"] ?? p.departement ?? "").trim();
+    if (!rawName) return "";
+    const key = normalizeForLookup(rawName);
+    return deptNameToCode.get(key) || "";
+  }
+
+  function deptNameFromProject(p) {
+    const rawName = String(p.__deptName ?? p["Nom département"] ?? "").trim();
+    if (rawName) return rawName;
+    const code = deptCodeFromProject(p);
+    return code ? String(deptCodeToName[code] ?? "").trim() : "";
+  }
+
+  function projectEndYear(p) {
+    const raw = String(p["Fin"] ?? p.fin ?? "").trim();
+    const match = raw.match(/\b(19|20)\d{2}\b/);
+    return match ? Number(match[0]) : null;
+  }
+
+  function matchesFilters(p) {
+    const q = normalizeSearchText(elQ?.value || "");
+    const types = getActiveTypes();
+    const t = projectType(p);
+
+    if (types.length && !types.some((x) => t.includes(x))) return false;
+
+    if (q) {
+      const blob = p.__searchBlob || normalizeSearchText(Object.values(p).join(" "));
+      if (!blob.includes(q)) return false;
+    }
+
+    if (currentProjectMode === PROJECT_MODES.completed.key) {
+      const endYear = projectEndYear(p);
+      if (endYear == null) return completedYearFilter <= COMPLETED_YEAR_MIN;
+      if (endYear < completedYearFilter) return false;
+    }
+
+    return true;
+  }
+
+  function filteredProjects() {
+    const base = allProjects.filter(matchesFilters);
+
+    // Si une antenne est sélectionnée (clic sur pin antenne),
+    // on n'affiche que les projets appartenant à cette antenne.
+    if (!selectedAntenna) return base;
+
+    const a = normalizeForLookup(selectedAntenna);
+    return base.filter((p) => normalizeForLookup(p["Antenne"] ?? p.antenne) === a);
+  }
+
+  function getProjectsForAntenna(antennaName) {
+    const a = normalizeForLookup(antennaName);
+    if (!a) return [];
+    return allProjects
+      .filter((p) => normalizeForLookup(p["Antenne"] ?? p.antenne) === a)
+      .sort((aProj, bProj) => String(aProj["Nom de projet"] ?? aProj.nom ?? "").localeCompare(String(bProj["Nom de projet"] ?? bProj.nom ?? ""), "fr", { sensitivity: "base" }));
+  }
+
+function computeFilteredCounts() {
+    const counts = {};
+    for (const p of filteredProjects()) {
+      const code = deptCodeFromProject(p);
+      if (!code) continue;
+      counts[code] = (counts[code] || 0) + 1;
+    }
+    return counts;
+  }
+
+// ---- Pins projets ----
+  function colorByType(t) {
+    if (!t) return "blue";
+    const x = String(t).toLowerCase();
+    if (x.includes("amo")) return "red";
+    if (x.includes("mom")) return "blue";
+    if (x.includes("exp")) return "green";
+    return "orange";
+  }
+
+  function renderMarkers() {
+    clusters.clearLayers();
+    projectIdToMarker = new Map();
+    clearSelectedMarker();
+
+    const list = filteredProjects();
+
+    for (const p of list) {
+      const ll = projectLatLon(p);
+      if (!ll) continue;
+
+      const col = colorByType(p["Type de projet"] ?? p.type ?? "");
+      const marker = L.marker(ll, {
+        icon: L.divIcon({
+          className: "pin-dot",
+          html: `<div class="pin-dot-inner" style="border-color:${col};"></div>`,
+          iconSize: [22, 22],
+          iconAnchor: [11, 11]
+        })
+      });
+
+      const pid = projectId(p);
+      if (pid) {
+        projectIdToMarker.set(pid, marker);
+        marker.options.__projId = pid;
+      }
+
+      marker.options.__bimoType = col;
+
+      // Tooltip (survol) : nom du projet
+      const pName = String(p["Nom de projet"] ?? p.nom ?? "").trim();
+      if (pName) {
+        marker.bindTooltip(escapeHtml(pName), {
+          className: "projTooltip projTooltip--single",
+          direction: "top",
+          offset: [0, -10],
+          opacity: 0.95,
+          sticky: true
+        });
+      }
+marker.on("click", (e) => {
+        L.DomEvent.stopPropagation(e);
+        setSelectedMarker(marker);
+
+        // En cliquant sur un projet, on enlève le focus antenne (si présent)
+        selectedAntenna = null;
+        updateDeptStyle();
+        updateClearButtonState();
+
+        // Zoom/centrage sur le pin cliqué
+        const targetZoom = Math.max(map.getZoom(), 14);
+        map.flyTo(ll, targetZoom, { duration: 0.6 });
+
+        showPanel(p);
+      });
+
+      clusters.addLayer(marker);
+    }
+
+    if (elCount) elCount.textContent = String(list.length);
+    filteredCounts = computeFilteredCounts();
+    buildProjectList();
+    updateDeptStyle();
+    updateClearButtonState();
+  }
+
+  // ---- Panel ----
+
+  // ---- Photos (panel) ----
+  function renderPhotosHtml(photos, title) {
+    if (!Array.isArray(photos) || photos.length === 0) return "";
+    const safeTitle = title ? escapeHtml(String(title)) : "Photo";
+    const items = photos
+      .filter((x) => typeof x === "string" && x.trim().length > 0)
+      .map((src, i) => {
+        const s = src.trim();
+        const alt = `${safeTitle} — ${i + 1}`;
+        // onerror: cache l’image si le fichier n’existe pas (suppression côté repo)
+        return `<img class="projPhoto" src="${escapeAttr(s)}" alt="${escapeAttr(alt)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'">`;
+      })
+      .join("");
+    if (!items) return "";
+    return `
+      <div class="projPhotos" style="margin-top:16px;">
+        <div class="projPhotosTitle" style="font-weight:800;font-size:22px;transition:none;animation:none;transform:none;">Photos</div>
+        <div class="projPhotosGrid">
+          ${items}
+        </div>
+      </div>
+    `;
+  }
+
+  let lightboxEl = null;
+  let lightboxItems = [];
+  let lightboxIndex = 0;
+  let lightboxKeyHandler = null;
+
+  function renderLightboxImage() {
+    if (!lightboxEl) return;
+    const img = lightboxEl.querySelector(".lightboxImg");
+    const prevBtn = lightboxEl.querySelector('[data-nav="-1"]');
+    const nextBtn = lightboxEl.querySelector('[data-nav="1"]');
+    const counter = lightboxEl.querySelector(".lightboxCounter");
+    if (!img) return;
+
+    const total = lightboxItems.length || 0;
+    const safeIndex = total ? Math.max(0, Math.min(lightboxIndex, total - 1)) : 0;
+    const current = total ? String(lightboxItems[safeIndex] || "") : "";
+
+    img.src = current;
+    img.alt = `Photo ${safeIndex + 1}`;
+    img.onerror = () => closeLightbox();
+
+    if (counter) counter.textContent = total > 1 ? `${safeIndex + 1} / ${total}` : "Photo";
+    if (prevBtn) prevBtn.disabled = total <= 1;
+    if (nextBtn) nextBtn.disabled = total <= 1;
+  }
+
+  function stepLightbox(delta) {
+    const total = lightboxItems.length || 0;
+    if (total <= 1) return;
+    lightboxIndex = (lightboxIndex + delta + total) % total;
+    renderLightboxImage();
+  }
+
+  function openLightbox(items, index = 0) {
+    const arr = Array.isArray(items) ? items.filter((x) => typeof x === "string" && x.trim()) : [items];
+    if (!arr.length) return;
+
+    closeLightbox();
+    lightboxItems = arr;
+    lightboxIndex = Math.max(0, Math.min(Number(index) || 0, arr.length - 1));
+
+    lightboxEl = document.createElement("div");
+    lightboxEl.className = "lightbox";
+    lightboxEl.innerHTML = `
+      <div class="lightboxBackdrop" data-close="1"></div>
+      <div class="lightboxContent" role="dialog" aria-modal="true" aria-label="Galerie photos">
+        <button class="lightboxClose" type="button" aria-label="Fermer" data-close="1">✕</button>
+        <div class="lightboxStage">
+          <button class="lightboxNav lightboxPrev" type="button" aria-label="Photo précédente" data-nav="-1">‹</button>
+          <figure class="lightboxFigure">
+            <img class="lightboxImg" src="" alt="" loading="eager">
+          </figure>
+          <button class="lightboxNav lightboxNext" type="button" aria-label="Photo suivante" data-nav="1">›</button>
+        </div>
+        <div class="lightboxMeta">
+          <div class="lightboxCounter" aria-live="polite"></div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(lightboxEl);
+    renderLightboxImage();
+
+    lightboxEl.addEventListener("click", (e) => {
+      const t = e.target;
+      if (!t) return;
+      const navBtn = t.closest?.("[data-nav]");
+      if (navBtn) {
+        stepLightbox(Number(navBtn.getAttribute("data-nav")) || 0);
+        return;
+      }
+      if (t.getAttribute && t.getAttribute("data-close") === "1") closeLightbox();
+    });
+
+    lightboxKeyHandler = (e) => {
+      if (e.key === "Escape") closeLightbox();
+      else if (e.key === "ArrowLeft") stepLightbox(-1);
+      else if (e.key === "ArrowRight") stepLightbox(1);
+    };
+    document.addEventListener("keydown", lightboxKeyHandler);
+  }
+
+  function closeLightbox() {
+    if (lightboxKeyHandler) {
+      document.removeEventListener("keydown", lightboxKeyHandler);
+      lightboxKeyHandler = null;
+    }
+    if (lightboxEl && lightboxEl.parentNode) lightboxEl.parentNode.removeChild(lightboxEl);
+    lightboxEl = null;
+    lightboxItems = [];
+    lightboxIndex = 0;
+  }
+
+  window.addEventListener("beforeprint", closeLightbox);
+
+  function openPanel(html) {
+    if (!elPanel) return;
+    elPanel.innerHTML = html;
+    elPanel.classList.add("open");
+  }
+
+  function closePanel({ resetView = false } = {}) {
+    if (!elPanel) return;
+    elPanel.classList.remove("open");
+    elPanel.innerHTML = "";
+    clearSelectedMarker();
+
+    // La fermeture du panneau ne doit pas désactiver le filtre antenne.
+    // Le bouton Réinitialiser doit donc rester actif tant que selectedAntenna
+    // ou un autre filtre est encore en cours.
+    updateDeptStyle();
+    updateClearButtonState();
+
+    if (resetView) zoomToFrance();
+  }
+
+  function showPanel(p) {
+    const title = p["Nom de projet"] ?? p.nom ?? "Projet";
+
+    // Ordre demandé
+    const deptLabel = deptNameFromProject(p);
+    const fieldsMain = [
+      ["Adresse", p["Adresse"] ?? p.adresse],
+      ["Ville", projectCity(p)],
+      ["Département", deptLabel ? (deptCodeFromProject(p) ? `${deptLabel} (${deptCodeFromProject(p)})` : deptLabel) : ""],
+      ["Client", p["Client"] ?? p.client],
+      ["Type de projet", p["Type de projet"] ?? p.type],
+      ["Type de montage", p["Type de montage"] ?? p.type_montage],
+      ["Montant", formatEuro(p["Montant"] ?? p.montant)],
+      ["Antenne", p["Antenne"] ?? p.antenne],
+      ["Phase projet", p["Phase projet"] ?? p.phase],
+      ["Programme", p["Programme"] ?? p.programme],
+      ["Début", p["Début"] ?? p.debut ?? p.start],
+      ["Fin", p["Fin"] ?? p.fin ?? p.end],
+      ["Thématique", p["Thématique"] ?? p.thematique]
+    ];
+
+    const fieldsContacts = [
+      ["CP principal", p["CP principal"] ?? p.cp_principal ?? p.cp],
+      ["Acheteur", p["Acheteur"] ?? p.acheteur],
+      ["CED principal", p["CED principal"] ?? p.ced_principal ?? p.ced],
+      ["Contact RPROG", p["Contact RPROG"] ?? p.contact_rprog],
+      ["Contact MOE", p["Contact MOE"] ?? p.contact_moe]
+    ];
+
+    const energyHtml = renderEnergySection(p);
+
+    let html = "";
+    html += `<div class="panelHeader" style="position:sticky;top:0;z-index:50;background:rgba(255,255,255,0.95);backdrop-filter:blur(6px);padding:12px 12px 10px;border-bottom:1px solid rgba(0,0,0,0.08);">`;
+    html += `<div class="panelHeaderTitleWrap">`;
+    html += `<h2 class="panelTitle" style="font-size:32px;line-height:1.1;margin:0;">${escapeHtml(title)}</h2>`;
+    html += `<img class="printProjectLogo" src="assets/logo-ministere.png" alt="Ministères économiques et financiers – Secrétariat général">`;
+    html += `</div>`;
+    html += `<div class="panelActions">`;
+    html += `<button id="panelPrint" class="panelPrint" type="button" aria-label="Imprimer le projet">Imprimer</button>`;
+    html += `<button id="panelClose" class="panelClose" aria-label="Fermer">✕</button>`;
+    html += `</div>`;
+    html += `</div>`;
+
+    const photos = getProjectPhotos(p);
+    html += renderHeroPhoto(photos[0]);
+
+    
+    // Résumé (affiché avant l'adresse)
+    const resumeVal = (p["Résumé"] ?? p["Resume"] ?? p.resume ?? p["Résumé projet"] ?? p["Résumé opération"] ?? p["Description"] ?? p.description);
+    const resumeTxt = (resumeVal === undefined || resumeVal === null) ? "" : String(resumeVal).trim();
+    if (resumeTxt) {
+      const safe = escapeHtml(resumeTxt).replace(/\n/g, "<br>");
+      html += `
+        <div class="panelSubTitle" style="margin-top:12px;font-weight:800;font-size:22px;letter-spacing:.02em;transition:none;animation:none;transform:none;">Résumé</div>
+        <div class="panelResumeText" style="border-top:1px solid var(--border);padding-top:10px;">${safe}</div>
+      `;
+    }
+
+    html += `<section class="panelSection panelSection--general">`;
+    html += `<div class="panelSubTitle panelSectionTitle panelSectionTitle--general" style="margin-top:18px;font-weight:800;font-size:22px;letter-spacing:.02em;transition:none;animation:none;transform:none;">`;
+    html += `<span class="screenOnlyInline">Informations générales</span><span class="printOnlyInline">Informations générales</span>`;
+    html += `</div>`;
+    html += buildKv(fieldsMain);
+    html += `</section>`;
+
+    // Sous-titre "Contacts" + infos
+    const hasContacts = fieldsContacts.some(([, v]) => v !== undefined && v !== null && String(v).trim() !== "");
+    if (hasContacts) {
+      html += `<section class="panelSection panelSection--contacts">`;
+      html += `<div class="panelSubTitle panelSectionTitle panelSectionTitle--contacts" style="margin-top:20px;font-weight:800;font-size:22px;letter-spacing:.02em;transition:none;animation:none;transform:none;">Contacts</div>`;
+      html += buildKv(fieldsContacts);
+      html += `</section>`;
+    }
+
+    if (energyHtml) {
+      html += energyHtml;
+    }
+
+    html += renderPhotosSection(photos.slice(1));
+
+    openPanel(html);
+
+    const galleryPhotos = photos.filter((x) => typeof x === "string" && x.trim());
+
+    elPanel?.querySelectorAll(".projPhotoBtn").forEach((btnEl) => {
+      btnEl.addEventListener("click", () => {
+        const idx = Number(btnEl.getAttribute("data-index")) || 0;
+        openLightbox(galleryPhotos, idx);
+      });
+    });
+
+    const btn = document.getElementById("panelClose");
+    if (btn) btn.addEventListener("click", () => closePanel({ resetView: true }), { once: true });
+
+    const printBtn = document.getElementById("panelPrint");
+    if (printBtn) {
+      printBtn.addEventListener("click", () => {
+        closeLightbox();
+        const previousTitle = document.title;
+        document.title = String(title || previousTitle);
+        window.print();
+        window.setTimeout(() => {
+          document.title = previousTitle;
+        }, 100);
+      });
+    }
+  }
+
+  const TERTIARY_DPE_THRESHOLDS = {
+    "bureaux administration enseignement": {
+      energy: [50, 110, 210, 350, 540, 750],
+      ges: [5, 15, 30, 60, 100, 145]
+    },
+    "commerces": {
+      energy: [50, 120, 230, 380, 570, 800],
+      ges: [5, 15, 30, 60, 100, 145]
+    },
+    "hotels hebergements": {
+      energy: [120, 250, 400, 600, 850, 1150],
+      ges: [10, 25, 50, 90, 140, 200]
+    },
+    "logistique entrepots": {
+      energy: [30, 70, 140, 240, 370, 520],
+      ges: [3, 8, 20, 40, 70, 100]
+    },
+    "sante etablissements medico sociaux": {
+      energy: [150, 300, 480, 700, 950, 1250],
+      ges: [15, 35, 65, 115, 175, 250]
+    }
+  };
+
+  function parseMetricValue(value) {
+    if (value === undefined || value === null) return null;
+    const raw = String(value).trim();
+    if (!raw) return null;
+    const normalized = raw.replace(/\s+/g, "").replace(",", ".");
+    const num = Number(normalized);
+    return Number.isFinite(num) ? num : null;
+  }
+
+  function formatMetricValue(value) {
+    if (!Number.isFinite(value)) return "—";
+    return new Intl.NumberFormat("fr-FR", {
+      maximumFractionDigits: 1
+    }).format(value);
+  }
+
+  function normalizeBuildingType(value) {
+    return normalizeForLookup(value)
+      .replace(/\//g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function getBuildingThresholds(project) {
+    const rawType =
+      project["Type de bâtiment"] ??
+      project["Type de batiment"] ??
+      project.type_batiment ??
+      "";
+    const key = normalizeBuildingType(rawType);
+    return TERTIARY_DPE_THRESHOLDS[key] || null;
+  }
+
+  function getLetterFromThresholds(value, bounds) {
+    if (!Number.isFinite(value) || !Array.isArray(bounds) || bounds.length !== 6) return "";
+    if (value <= bounds[0]) return "A";
+    if (value <= bounds[1]) return "B";
+    if (value <= bounds[2]) return "C";
+    if (value <= bounds[3]) return "D";
+    if (value <= bounds[4]) return "E";
+    if (value <= bounds[5]) return "F";
+    return "G";
+  }
+
+  function buildThresholdBands(bounds) {
+    if (!Array.isArray(bounds) || bounds.length !== 6) return [];
+    const fmt = (n) => new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 }).format(n);
+    return [
+      { letter: "A", label: `≤ ${fmt(bounds[0])}` },
+      { letter: "B", label: `${fmt(bounds[0] + 1)} à ${fmt(bounds[1])}` },
+      { letter: "C", label: `${fmt(bounds[1] + 1)} à ${fmt(bounds[2])}` },
+      { letter: "D", label: `${fmt(bounds[2] + 1)} à ${fmt(bounds[3])}` },
+      { letter: "E", label: `${fmt(bounds[3] + 1)} à ${fmt(bounds[4])}` },
+      { letter: "F", label: `${fmt(bounds[4] + 1)} à ${fmt(bounds[5])}` },
+      { letter: "G", label: `> ${fmt(bounds[5])}` }
+    ];
+  }
+
+  function formatMarkerValue(value) {
+    if (!Number.isFinite(value)) return "";
+    return new Intl.NumberFormat("fr-FR", {
+      maximumFractionDigits: 1
+    }).format(value);
+  }
+
+  function renderScaleMarker(kind, value) {
+    if (!Number.isFinite(value)) return "";
+    return `<span class="dpeMarker dpeMarker--${escapeAttr(kind)}"><span class="dpeMarkerLabel">${escapeHtml(formatMarkerValue(value))}</span></span>`;
+  }
+
+  function renderOfficialDpeCard(options) {
+    const {
+      theme,
+      title,
+      unitLine,
+      bounds,
+      beforeValue,
+      afterValue
+    } = options;
+
+    if (!Array.isArray(bounds) || bounds.length !== 6) return "";
+
+    const beforeLetter = getLetterFromThresholds(beforeValue, bounds);
+    const afterLetter = getLetterFromThresholds(afterValue, bounds);
+    const bands = buildThresholdBands(bounds);
+
+    if (!beforeLetter && !afterLetter) return "";
+
+    return `
+      <div class="dpeCard dpeCard--${escapeAttr(theme)}" style="border-top:none;padding-top:0;">
+        <div class="dpeCardTitle">${escapeHtml(title)}</div>
+
+        <div class="dpeScale" role="img" aria-label="${escapeAttr(title)}">
+          ${bands.map((band) => {
+            const beforeMarker = beforeLetter === band.letter ? renderScaleMarker("before", beforeValue) : "";
+            const afterMarker = afterLetter === band.letter ? renderScaleMarker("after", afterValue) : "";
+
+            return `
+              <div class="dpeRow dpeRow--${escapeAttr(theme)} dpeRow--${escapeAttr(band.letter)}">
+                <div class="dpeRowShape">
+                  <span class="dpeRowRange">${escapeHtml(band.label)}</span>
+                  <span class="dpeRowLetter">${escapeHtml(band.letter)}</span>
+                </div>
+                <div class="dpeRowMarkers">
+                  ${beforeMarker}
+                  ${afterMarker}
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+
+        <div class="dpeUnitLine">${escapeHtml(unitLine)}</div>
+      </div>
+    `;
+  }
+
+  function renderEnergySection(project) {
+    const thresholds = getBuildingThresholds(project);
+    if (!thresholds) return "";
+
+    const energyBefore = parseMetricValue(
+      project["Consommation énergetique - avant travaux"] ??
+      project["Consommation énergetique - existant"]
+    );
+    const energyAfter = parseMetricValue(
+      project["Consommation énergetique - Après travaux"] ??
+      project["Consommation énergetique - après travaux"] ??
+      project["Consommation énergetique - objectif"]
+    );
+    const gesBefore = parseMetricValue(
+      project["Émission GES - avant travaux"] ??
+      project["Emission GES - avant travaux"] ??
+      project["GES - avant travaux"]
+    );
+    const gesAfter = parseMetricValue(
+      project["Émission GES - Après travaux"] ??
+      project["Émission GES - après travaux"] ??
+      project["Emission GES - Après travaux"] ??
+      project["Emission GES - après travaux"] ??
+      project["GES - Après travaux"] ??
+      project["GES - après travaux"]
+    );
+
+    const energyCard = renderOfficialDpeCard({
+      theme: "energy",
+      title: "Consommations énergétiques",
+      unitLine: "Unité de mesure exprimée en kWhEP/ m².an",
+      bounds: thresholds.energy,
+      beforeValue: energyBefore,
+      afterValue: energyAfter
+    });
+
+    const gesCard = renderOfficialDpeCard({
+      theme: "ges",
+      title: "Émissions de gaz à effet de serre",
+      unitLine: "Unité de mesure exprimée en kgeqCO2/ m².An",
+      bounds: thresholds.ges,
+      beforeValue: gesBefore,
+      afterValue: gesAfter
+    });
+
+    if (!energyCard && !gesCard) return "";
+
+    return `
+      <section class="panelSection panelSection--energy">
+        <div class="panelSubTitle panelSectionTitle panelSectionTitle--energy" style="margin-top:20px;font-weight:800;font-size:22px;transition:none;animation:none;transform:none;letter-spacing:.02em;">
+          <span class="screenOnlyInline">Informations énergétiques</span><span class="printOnlyInline">Informations énergétiques</span>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:10px;">
+        <div class="energyLegendInline" aria-label="Légende des repères">
+          <span class="energyLegendInlineItem">
+            <span class="energyLegendMiniMarker energyLegendMiniMarker--before" aria-hidden="true"><svg class="energyLegendMiniMarkerSvg" viewBox="0 0 28 14" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true"><polygon points="7,0 28,0 28,14 7,14 0,7" fill="#111"/></svg></span>
+            <span class="energyLegendInlineText">Avant travaux</span>
+          </span>
+          <span class="energyLegendInlineItem">
+            <span class="energyLegendMiniMarker energyLegendMiniMarker--after" aria-hidden="true"><svg class="energyLegendMiniMarkerSvg" viewBox="0 0 28 14" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true"><polygon points="7,0 28,0 28,14 7,14 0,7" fill="#111"/><polygon points="7,1 27,1 27,13 7,13 1,7" fill="#fff"/></svg></span>
+            <span class="energyLegendInlineText">Après travaux</span>
+          </span>
+        </div>
+        <div class="dpeCards">
+          ${energyCard}
+          ${gesCard}
+        </div>
+        </div>
+      </section>
+    `;
+  }
+
+  // Génère le bloc d'infos du panneau avec les classes attendues par le CSS (kv/kvRow/kvKey/kvVal)
+  function buildKv(fields) {
+    let html = `<div class="kv" style="color:#000;">`;
+    for (const [label, value] of fields) {
+      if (value === undefined || value === null) continue;
+      const s = String(value).trim();
+      if (!s) continue;
+
+      // Mise en forme demandée :
+      // - libellés un peu plus grands + gras
+      // - valeurs centrées
+      html += `
+        <div class="kvRow" style="display:grid;grid-template-columns: 0.64fr 1fr;gap:12px;align-items:center;">
+          <div class="kvKey" style="color:#000;font-weight:700;font-size:13px;line-height:1.25;">${escapeHtml(label)} :</div>
+          <div class="kvVal" style="color:#000;text-align:left;justify-self:start;line-height:1.25;">${escapeHtml(s)}</div>
+        </div>`;
+    }
+    html += `</div>`;
+    return html;
+  }
+
+  // ---- Photos (dans le panneau projet) ----
+  function getProjectPhotos(p) {
+    const v = (p && (p.photos ?? p["photos"])) ?? [];
+    return Array.isArray(v) ? v.filter(Boolean) : [];
+  }
+
+  function renderPhotosSection(photos) {
+    if (!photos || photos.length === 0) return "";
+    const items = photos
+      .map((src, i) => {
+        const safe = String(src);
+        const alt = `Photo ${i + 1}`;
+        return `
+          <button class="projPhotoBtn" type="button" data-src="${escapeHtml(safe)}" data-index="${i + 1}" aria-label="${escapeHtml(alt)}">
+            <img class="projPhoto" src="${escapeHtml(safe)}" alt="${escapeHtml(alt)}" loading="lazy"
+                 onerror="this.closest('.projPhotoBtn') && (this.closest('.projPhotoBtn').style.display='none')">
+          </button>`;
+      })
+      .join("");
+    return `
+      <div class="projPhotos" style="margin-top:16px;">
+        <div class="projPhotosTitle" style="font-weight:800;font-size:22px;transition:none;animation:none;transform:none;">Photos</div>
+        <div class="projPhotosGrid">
+          ${items}
+        </div>
+      </div>`;
+  }
+
+  function renderHeroPhoto(src) {
+    if (!src) return "";
+    const safe = String(src);
+    const alt = "Photo 1";
+    // Même mécanisme que les miniatures (clic -> lightbox)
+    return `
+      <div class="projHero">
+        <button class="projPhotoBtn projHeroBtn" type="button" data-src="${escapeHtml(safe)}" data-index="0" aria-label="${escapeHtml(alt)}">
+          <img class="projHeroPhoto" src="${escapeHtml(safe)}" alt="${escapeHtml(alt)}" loading="eager"
+               onerror="this.closest('.projHero') && (this.closest('.projHero').style.display='none')">
+        </button>
+      </div>`;
+  }
+
+
+
+  // ---- Départements ----
+  function colorByAntenna(a) {
+    return ANTENNA_COLORS[a] || "#FFFFFF";
+  }
+
+  function styleDept(feature) {
+    const props = feature?.properties || {};
+    const codeRaw =
+      props.code ??
+      props.CODE ??
+      props.dep ??
+      props.DEP ??
+      props.insee ??
+      props.INSEE ??
+      props.code_dept ??
+      props.CODE_DEPT ??
+      "";
+    const code = normalizeDeptCode(codeRaw);
+    const antenna = deptCodeToAntenna[code] || "";
+
+    const isAntennaFocused = !!(selectedAntenna && antenna && antenna === selectedAntenna);
+
+    // On "fonce" l’antenne sélectionnée via opacité/contour
+    const weight = isAntennaFocused ? 2 : 1;
+    const color = isAntennaFocused ? "#111" : "#666";
+    const fillOpacity = isAntennaFocused ? 0.70 : (antenna ? 0.45 : 0.14);
+
+    return {
+      weight,
+      color,
+      fillColor: colorByAntenna(antenna),
+      fillOpacity
+    };
+  }
+
+  function highlightDept(e) {
+    const layer = e.target;
+    layer.setStyle({ weight: 2, color: "#111", fillOpacity: 0.85 });
+    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) layer.bringToFront();
+  }
+
+  function resetDeptHighlight(e) {
+    if (!deptLayer) return;
+    deptLayer.resetStyle(e.target);
+  }
+
+  function onEachDept(feature, layer) {
+    const props = feature?.properties || {};
+    const name = props.nom ?? props.NOM ?? props.name ?? props.NAME ?? "";
+    const codeRaw =
+      props.code ??
+      props.CODE ??
+      props.dep ??
+      props.DEP ??
+      props.insee ??
+      props.INSEE ??
+      props.code_dept ??
+      props.CODE_DEPT ??
+      "";
+    const code = normalizeDeptCode(codeRaw);
+
+    layer.on({
+      mouseover: highlightDept,
+      mouseout: resetDeptHighlight,
+      click: () => {
+        map.fitBounds(layer.getBounds(), { padding: [20, 20] });
+        closePanel();
+      }
+    });
+
+    layer.bindTooltip(
+      () => {
+        const tail = code ? ` (${code})` : "";
+        const a = deptCodeToAntenna[code] || "";
+        const aTxt = a ? ` — ${escapeHtml(a)}` : "";
+        const n = filteredCounts[code] || 0;
+        return `${escapeHtml(name)}${tail}${aTxt} — ${n} projet(s)`;
+      },
+      { sticky: true }
+    );
+  }
+
+  function buildDeptMaps(geo) {
+    deptNameToCode = new Map();
+    deptCodeToAntenna = {};
+    deptCodeToName = {};
+    deptSpatialIndex = [];
+
+    const features = geo?.features || [];
+    for (const f of features) {
+      const props = f?.properties || {};
+      const codeRaw =
+        props.code ??
+        props.CODE ??
+        props.dep ??
+        props.DEP ??
+        props.insee ??
+        props.INSEE ??
+        props.code_dept ??
+        props.CODE_DEPT ??
+        "";
+      const nameRaw = props.nom ?? props.NOM ?? props.name ?? props.NAME ?? props.libelle ?? props.LIBELLE ?? "";
+
+      const code = normalizeDeptCode(codeRaw);
+      const key = normalizeForLookup(nameRaw);
+
+      if (code && key) {
+        deptNameToCode.set(key, code);
+        deptCodeToName[code] = String(nameRaw || "").trim();
+        const antenna = DEPT_TO_ANTENNA_BY_NAME.get(key) || "";
+        if (antenna) deptCodeToAntenna[code] = antenna;
+      }
+
+      if (code && f?.geometry) {
+        deptSpatialIndex.push({
+          code,
+          name: String(nameRaw || "").trim(),
+          geometry: f.geometry,
+          bbox: getGeometryBbox(f.geometry)
+        });
+      }
+    }
+  }
+
+  async function loadDepartements() {
+    const geo = await fetchJson(DEPTS_URL);
+    buildDeptMaps(geo);
+
+    deptLayer = L.geoJSON(geo, { style: styleDept, onEachFeature: onEachDept }).addTo(map);
+    deptLayer.bringToBack();
+    if (elLegend) elLegend.hidden = false;
+  }
+
+  function updateDeptStyle() {
+    if (!deptLayer) return;
+    deptLayer.setStyle(styleDept);
+  }
+
+  function updateDeptSelectedStat() {
+    if (!elStatDept) return;
+    elStatDept.textContent = "";
+  }
+
+  // ---- Fetch robuste ----
+  async function fetchJson(url, { timeoutMs = 15000 } = {}) {
+    showStatus("");
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort("timeout"), timeoutMs);
+
+    try {
+      const r = await fetch(url, {
+        cache: "no-cache",
+        headers: { Accept: "application/json" },
+        signal: ctrl.signal
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status} sur ${url}`);
+      const txt = await r.text();
+      const clean = txt.replace(/^\uFEFF/, "");
+      return JSON.parse(clean);
+    } finally {
+      clearTimeout(t);
+    }
+  }
+
+  // ---- Debounce ----
+  function debounce(fn, waitMs) {
+    let t = null;
+    return (...args) => {
+      if (t) clearTimeout(t);
+      t = setTimeout(() => fn(...args), waitMs);
+    };
+  }
+
+  // ---- Init UI ----
+  renderLegendAntennas();
+  createCompletedYearFilterUi();
+  updateCompletedYearFilterUi();
+  syncToolbarControlHeights();
+
+  window.addEventListener("resize", syncToolbarControlHeights);
+  window.addEventListener("load", syncToolbarControlHeights);
+  if (document.fonts?.ready) {
+    document.fonts.ready.then(syncToolbarControlHeights).catch(() => {});
+  }
+
+  const rerenderDebounced = debounce(renderMarkers, 200);
+  if (elQ) elQ.addEventListener("input", () => {
+    updateClearButtonState();
+    rerenderDebounced();
+  });
+  document.querySelectorAll(".typeFilter").forEach((cb) => cb.addEventListener("change", () => {
+    updateClearButtonState();
+    renderMarkers();
+  }));
+  initOfficesToggle();
+
+  if (elClear) {
+    elClear.addEventListener("click", () => {
+      if (elQ) elQ.value = "";
+      document.querySelectorAll(".typeFilter").forEach((cb) => (cb.checked = true));
+      selectedAntenna = null;
+      setCompletedYearFilter(COMPLETED_YEAR_MIN, { rerender: false });
+      updateDeptStyle();
+      closePanel();
+      updateDeptSelectedStat();
+      updateClearButtonState();
+      renderMarkers();
+    });
+  }
+
+  if (elProjectModeSwitch) {
+    elProjectModeSwitch.addEventListener("click", (e) => {
+      const btn = e.target?.closest?.("[data-project-mode]");
+      const modeKey = btn?.getAttribute?.("data-project-mode");
+      if (modeKey) setProjectMode(modeKey);
+    });
+  }
+
+  // ---- Liste projets ----
+  if (elProjListBtn && elProjListMenu) {
+    elProjListBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      elProjListMenu.hidden = !elProjListMenu.hidden;
+      if (!elProjListMenu.hidden) {
+        buildProjectList();
+        elProjListSearch?.focus();
+      }
+    });
+
+    elProjListSearch?.addEventListener("input", buildProjectList);
+    elProjListSort?.addEventListener("change", buildProjectList);
+
+    elProjListItems?.addEventListener("click", (e) => {
+      const row = e.target?.closest?.(".projListRow");
+      const pid = row?.getAttribute?.("data-pid");
+      if (pid) openProjectFromList(pid);
+    });
+
+    document.addEventListener("click", () => { elProjListMenu.hidden = true; });
+    document.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape") elProjListMenu.hidden = true;
+    });
+    elProjListMenu.addEventListener("click", (e) => e.stopPropagation());
+  }
+
+
+  updateClearButtonState();
+
+  // ---- Load data ----
+  (async () => {
+    try {
+      await loadDepartements();
+
+      const [currentResult, completedResult] = await Promise.allSettled([
+        fetchJson(CURRENT_PROJECTS_URL),
+        fetchJson(COMPLETED_PROJECTS_URL)
+      ]);
+
+      if (currentResult.status !== "fulfilled") throw currentResult.reason;
+
+      projectsByMode.current = ensureProjectIds(normalizeProjectsPayload(currentResult.value), PROJECT_MODES.current.key);
+      projectsByMode.completed = completedResult.status === "fulfilled"
+        ? ensureProjectIds(normalizeProjectsPayload(completedResult.value), PROJECT_MODES.completed.key)
+        : [];
+
+      if (completedResult.status !== "fulfilled") {
+        console.warn("Impossible de charger les projets finis :", completedResult.reason);
+      }
+
+      enrichProjectsWithDepartments(projectsByMode.current);
+      enrichProjectsWithDepartments(projectsByMode.completed);
+
+      setActiveProjectsForMode(currentProjectMode);
+      updateProjectModeUi();
+      renderMarkers();
+    } catch (err) {
+      console.error(err);
+      showStatus(String(err?.message || err));
+    }
+  })();
+
+  function escapeAttr(s) {
+    return escapeHtml(s).replace(/"/g, "&quot;");
+  }
+})();
