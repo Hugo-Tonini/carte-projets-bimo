@@ -226,6 +226,65 @@ h1{ margin: 0; font-size: 20px; }
   margin:0;
   accent-color:var(--accent);
 }
+.completedYearPlayBtn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
+  width:32px;
+  height:32px;
+  padding:0;
+  border:1px solid var(--border);
+  border-radius:999px;
+  background:#fff;
+  color:var(--accent);
+  cursor:pointer;
+  transition:background-color .16s ease,border-color .16s ease,color .16s ease,transform .16s ease;
+}
+.completedYearPlayBtn:hover{
+  background:rgba(0,0,145,0.06);
+}
+.completedYearPlayBtn:active{
+  transform:scale(0.98);
+}
+.completedYearPlayBtn.is-playing{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:#fff;
+}
+.completedYearPlayBtn:disabled{
+  opacity:0.55;
+  cursor:not-allowed;
+  transform:none;
+}
+.playToggleIcon{
+  display:block;
+  position:relative;
+}
+.playToggleIcon--play{
+  width:0;
+  height:0;
+  border-top:7px solid transparent;
+  border-bottom:7px solid transparent;
+  border-left:11px solid currentColor;
+  margin-left:2px;
+}
+.playToggleIcon--pause{
+  width:12px;
+  height:14px;
+}
+.playToggleIcon--pause::before,
+.playToggleIcon--pause::after{
+  content:"";
+  position:absolute;
+  top:0;
+  width:4px;
+  height:14px;
+  border-radius:1px;
+  background:currentColor;
+}
+.playToggleIcon--pause::before{ left:0; }
+.playToggleIcon--pause::after{ right:0; }
 .completedYearFilter.is-show-all .completedYearFilterLabel,
 .completedYearFilter.is-show-all .completedYearRangeWrap{
   opacity:0.55;
