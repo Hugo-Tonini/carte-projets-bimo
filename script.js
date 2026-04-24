@@ -125,7 +125,7 @@
       </div>
     `;
 
-    elProjectModeSwitch.parentNode?.insertBefore(wrap, elProjectModeSwitch);
+    elProjectModeSwitch.insertAdjacentElement("afterend", wrap);
 
     elCompletedYearFilter = wrap;
     elCompletedYearRange = wrap.querySelector("#completedYearRange");
@@ -151,6 +151,30 @@
 
     if (elCompletedYearValue) {
       elCompletedYearValue.textContent = String(completedYearFilter);
+    }
+
+    syncToolbarControlHeights();
+  }
+
+  function syncToolbarControlHeights() {
+    if (!elProjectModeSwitch) return;
+
+    const referenceButton = elClear || elProjListBtn;
+    const referenceHeight = Math.round(referenceButton?.getBoundingClientRect?.().height || 0);
+    if (!referenceHeight) return;
+
+    elProjectModeSwitch.style.height = `${referenceHeight}px`;
+    elProjectModeSwitch.style.minHeight = `${referenceHeight}px`;
+
+    const modeButtons = elProjectModeSwitch.querySelectorAll('.projectModeBtn');
+    modeButtons.forEach((btn) => {
+      btn.style.height = '100%';
+      btn.style.minHeight = '100%';
+    });
+
+    if (elCompletedYearFilter) {
+      elCompletedYearFilter.style.height = `${referenceHeight}px`;
+      elCompletedYearFilter.style.minHeight = `${referenceHeight}px`;
     }
   }
 
@@ -1847,6 +1871,13 @@ marker.on("click", (e) => {
   renderLegendAntennas();
   createCompletedYearFilterUi();
   updateCompletedYearFilterUi();
+  syncToolbarControlHeights();
+
+  window.addEventListener("resize", syncToolbarControlHeights);
+  window.addEventListener("load", syncToolbarControlHeights);
+  if (document.fonts?.ready) {
+    document.fonts.ready.then(syncToolbarControlHeights).catch(() => {});
+  }
 
   const rerenderDebounced = debounce(renderMarkers, 200);
   if (elQ) elQ.addEventListener("input", () => {
