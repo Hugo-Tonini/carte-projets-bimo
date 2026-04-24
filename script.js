@@ -50,6 +50,7 @@
   let elCompletedYearRange = null;
   let elCompletedYearValue = null;
   let elCompletedShowAll = null;
+  let elCompletedPlayBtn = null;
 
 
   // ---- State ----
@@ -58,6 +59,9 @@
   let currentProjectMode = PROJECT_MODES.current.key;
   let completedYearFilter = COMPLETED_YEAR_MIN;
   let showAllCompletedProjects = false;
+  let completedYearPlaybackTimer = null;
+  let completedYearPlaybackActive = false;
+  const COMPLETED_YEAR_PLAYBACK_STEP_MS = 2000;
   let deptLayer = null;
   let deptNameToCode = new Map(); // "haute savoie" -> "74"
   let deptCodeToAntenna = {}; // "74" -> "Alpes Centre-Est"
@@ -110,6 +114,85 @@
     return Math.max(COMPLETED_YEAR_MIN, Math.min(COMPLETED_YEAR_MAX, Math.round(value)));
   }
 
+  function updateCompletedPlaybackButtonUi() {
+    if (!elCompletedPlayBtn) return;
+    const label = completedYearPlaybackActive ? "Pause" : "Lecture automatique";
+    elCompletedPlayBtn.classList.toggle("is-playing", completedYearPlaybackActive);
+    elCompletedPlayBtn.setAttribute("aria-pressed", completedYearPlaybackActive ? "true" : "false");
+    elCompletedPlayBtn.setAttribute("aria-label", label);
+    elCompletedPlayBtn.setAttribute("title", label);
+    elCompletedPlayBtn.innerHTML = completedYearPlaybackActive
+      ? '<span class="playToggleIcon playToggleIcon--pause" aria-hidden="true"></span>'
+      : '<span class="playToggleIcon playToggleIcon--play" aria-hidden="true"></span>';
+  }
+
+  function stopCompletedYearPlayback() {
+    if (completedYearPlaybackTimer) {
+      clearTimeout(completedYearPlaybackTimer);
+      completedYearPlaybackTimer = null;
+    }
+    if (!completedYearPlaybackActive) {
+      updateCompletedPlaybackButtonUi();
+      return;
+    }
+    completedYearPlaybackActive = false;
+    updateCompletedPlaybackButtonUi();
+  }
+
+  function queueCompletedYearPlaybackStep() {
+    if (!completedYearPlaybackActive || currentProjectMode !== PROJECT_MODES.completed.key) return;
+
+    if (completedYearFilter >= COMPLETED_YEAR_MAX) {
+      stopCompletedYearPlayback();
+      return;
+    }
+
+    completedYearPlaybackTimer = window.setTimeout(() => {
+      completedYearPlaybackTimer = null;
+      if (!completedYearPlaybackActive || currentProjectMode !== PROJECT_MODES.completed.key) return;
+
+      const nextYear = Math.min(COMPLETED_YEAR_MAX, completedYearFilter + 1);
+      setCompletedYearFilter(nextYear);
+
+      if (nextYear >= COMPLETED_YEAR_MAX) {
+        stopCompletedYearPlayback();
+        return;
+      }
+
+      queueCompletedYearPlaybackStep();
+    }, COMPLETED_YEAR_PLAYBACK_STEP_MS);
+  }
+
+  function startCompletedYearPlayback() {
+    stopCompletedYearPlayback();
+
+    if (currentProjectMode !== PROJECT_MODES.completed.key) return;
+
+    if (showAllCompletedProjects) {
+      setCompletedShowAll(false, { rerender: false });
+    }
+
+    completedYearPlaybackActive = true;
+    updateCompletedPlaybackButtonUi();
+    setCompletedYearFilter(COMPLETED_YEAR_MIN);
+
+    if (COMPLETED_YEAR_MIN >= COMPLETED_YEAR_MAX) {
+      stopCompletedYearPlayback();
+      return;
+    }
+
+    queueCompletedYearPlaybackStep();
+  }
+
+  function toggleCompletedYearPlayback() {
+    if (completedYearPlaybackActive) {
+      stopCompletedYearPlayback();
+      return;
+    }
+
+    startCompletedYearPlayback();
+  }
+
   function createCompletedYearFilterUi() {
     if (!elProjectModeSwitch || elCompletedYearFilter) return;
 
@@ -129,6 +212,9 @@
         <input id="completedShowAll" class="completedShowAllInput" type="checkbox" />
         <span>Tout afficher</span>
       </label>
+      <button id="completedYearPlayBtn" class="completedYearPlayBtn" type="button" aria-label="Lecture automatique" title="Lecture automatique">
+        <span class="playToggleIcon playToggleIcon--play" aria-hidden="true"></span>
+      </button>
     `;
 
     elProjectModeSwitch.insertAdjacentElement("afterend", wrap);
@@ -137,6 +223,7 @@
     elCompletedYearRange = wrap.querySelector("#completedYearRange");
     elCompletedYearValue = wrap.querySelector("#completedYearValue");
     elCompletedShowAll = wrap.querySelector("#completedShowAll");
+    elCompletedPlayBtn = wrap.querySelector("#completedYearPlayBtn");
 
     elCompletedYearRange?.addEventListener("input", () => {
       setCompletedYearFilter(elCompletedYearRange.value);
@@ -145,6 +232,12 @@
     elCompletedShowAll?.addEventListener("change", () => {
       setCompletedShowAll(elCompletedShowAll.checked);
     });
+
+    elCompletedPlayBtn?.addEventListener("click", () => {
+      toggleCompletedYearPlayback();
+    });
+
+    updateCompletedPlaybackButtonUi();
   }
 
   function updateCompletedYearFilterUi() {
@@ -171,6 +264,11 @@
       elCompletedShowAll.setAttribute("aria-checked", showAllCompletedProjects ? "true" : "false");
     }
 
+    if (elCompletedPlayBtn) {
+      elCompletedPlayBtn.disabled = !isCompletedMode;
+    }
+
+    updateCompletedPlaybackButtonUi();
     syncToolbarControlHeights();
   }
 
@@ -194,6 +292,13 @@
       elCompletedYearFilter.style.height = `${referenceHeight}px`;
       elCompletedYearFilter.style.minHeight = `${referenceHeight}px`;
     }
+
+    if (elCompletedPlayBtn) {
+      elCompletedPlayBtn.style.width = `${referenceHeight}px`;
+      elCompletedPlayBtn.style.minWidth = `${referenceHeight}px`;
+      elCompletedPlayBtn.style.height = `${Math.max(referenceHeight - 8, 28)}px`;
+      elCompletedPlayBtn.style.minHeight = `${Math.max(referenceHeight - 8, 28)}px`;
+    }
   }
 
   function setCompletedYearFilter(year, { rerender = true } = {}) {
@@ -212,6 +317,7 @@
   function setCompletedShowAll(value, { rerender = true } = {}) {
     const nextValue = !!value;
     const changed = nextValue !== showAllCompletedProjects;
+    if (nextValue) stopCompletedYearPlayback();
     showAllCompletedProjects = nextValue;
     updateCompletedYearFilterUi();
     updateClearButtonState();
@@ -269,6 +375,7 @@
   function setProjectMode(modeKey) {
     if (!PROJECT_MODES[modeKey] || modeKey === currentProjectMode) return;
 
+    stopCompletedYearPlayback();
     currentProjectMode = modeKey;
     selectedAntenna = null;
     updateDeptStyle();
@@ -1943,6 +2050,7 @@ marker.on("click", (e) => {
       if (elQ) elQ.value = "";
       document.querySelectorAll(".typeFilter").forEach((cb) => (cb.checked = true));
       selectedAntenna = null;
+      stopCompletedYearPlayback();
       setCompletedYearFilter(COMPLETED_YEAR_MIN, { rerender: false });
       setCompletedShowAll(false, { rerender: false });
       updateDeptStyle();
