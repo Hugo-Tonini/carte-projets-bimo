@@ -170,7 +170,7 @@ h1{ margin: 0; font-size: 20px; }
 .completedYearFilter{
   display:none;
   align-items:center;
-  gap:12px;
+  gap:14px;
   padding:0 12px;
   border:1px solid var(--border);
   border-radius:10px;
@@ -202,6 +202,28 @@ h1{ margin: 0; font-size: 20px; }
   width:260px;
   margin:0;
   accent-color:var(--accent);
+}
+.completedYearRange:disabled{
+  opacity:0.45;
+  cursor:not-allowed;
+}
+.completedShowAll{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-size:13px;
+  color:#111;
+  white-space:nowrap;
+  cursor:pointer;
+  user-select:none;
+}
+.completedShowAllInput{
+  margin:0;
+  accent-color:var(--accent);
+}
+.completedYearFilter.is-show-all .completedYearFilterLabel,
+.completedYearFilter.is-show-all .completedYearRangeWrap{
+  opacity:0.55;
 }
 
 .stats{
