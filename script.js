@@ -294,10 +294,11 @@
     }
 
     if (elCompletedPlayBtn) {
-      elCompletedPlayBtn.style.width = `${referenceHeight}px`;
-      elCompletedPlayBtn.style.minWidth = `${referenceHeight}px`;
-      elCompletedPlayBtn.style.height = `${Math.max(referenceHeight - 8, 28)}px`;
-      elCompletedPlayBtn.style.minHeight = `${Math.max(referenceHeight - 8, 28)}px`;
+      const playButtonSize = Math.max(Math.round(referenceHeight * 0.9), 28);
+      elCompletedPlayBtn.style.width = `${playButtonSize}px`;
+      elCompletedPlayBtn.style.minWidth = `${playButtonSize}px`;
+      elCompletedPlayBtn.style.height = `${playButtonSize}px`;
+      elCompletedPlayBtn.style.minHeight = `${playButtonSize}px`;
     }
   }
 
