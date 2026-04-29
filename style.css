@@ -1104,7 +1104,7 @@ select:focus-visible,
 .kv--project .kvKey{
   color:#000;
   font-weight:700;
-  font-size:17px;
+  font-size:20px;
   line-height:1.25;
   text-transform:none;
   letter-spacing:0;
@@ -1324,7 +1324,7 @@ select:focus-visible,
     display:none !important;
   }
   .panelTitle{
-    font-size:24pt !important;
+    font-size:28pt !important;
     line-height:1.15 !important;
     flex:1 1 auto !important;
   }
