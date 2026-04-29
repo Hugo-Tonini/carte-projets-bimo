@@ -1124,8 +1124,10 @@ select:focus-visible,
 
 .kv--project .kvRow--phase{
   grid-template-columns:1fr;
-  gap:8px;
+  gap:2px;
   align-items:start;
+  margin-top:-2px;
+  margin-bottom:-2px;
 }
 
 .kv--project .kvVal--phase{
@@ -1141,7 +1143,7 @@ select:focus-visible,
   display:flex;
   align-items:stretch;
   width:100%;
-  padding:3px;
+  padding:1px 2px;
   overflow:visible;
 }
 
@@ -1152,13 +1154,13 @@ select:focus-visible,
   display:flex;
   align-items:center;
   justify-content:center;
-  min-height:46px;
-  padding:9px 22px;
+  min-height:42px;
+  padding:8px 24px;
   text-align:center;
   font-size:14px;
   line-height:1;
   font-weight:800;
-  color:#fff;
+  color:#111;
   white-space:nowrap;
   clip-path:polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%, 16px 50%);
 }
@@ -1172,25 +1174,25 @@ select:focus-visible,
   padding-left:18px;
 }
 
-.phaseStep--definition{ background:#f2a646; }
-.phaseStep--conception{ background:#d8c93a; color:#111; }
-.phaseStep--realisation{ background:#81cf72; color:#111; }
-.phaseStep--gpa{ background:#17824a; }
+.phaseStep--definition{ background:#ffb347; }
+.phaseStep--conception{ background:#f0e333; color:#111; }
+.phaseStep--realisation{ background:#6edb5f; color:#111; }
+.phaseStep--gpa{ background:#25b45b; color:#111; }
 
 .phaseStep.is-upcoming{
-  opacity:0.42;
-  filter:saturate(0.7);
+  opacity:0.55;
+  filter:saturate(0.9);
 }
 
 .phaseStep.is-done{
-  opacity:0.9;
+  opacity:1;
 }
 
 .phaseStep.is-current{
   opacity:1;
-  outline:3px solid #111;
-  outline-offset:2px;
-  z-index:2;
+  outline:5px solid #111;
+  outline-offset:1px;
+  z-index:3;
 }
 
 .phaseStep.is-neutral{
@@ -1639,17 +1641,18 @@ select:focus-visible,
   }
   .kv--project .kvRow--phase{
     grid-template-columns:1fr !important;
-    gap:2mm !important;
+    gap:0.8mm !important;
   }
   .phaseStepper{
     display:flex !important;
     gap:0 !important;
-    padding:0.8mm !important;
+    padding:0.4mm !important;
   }
   .phaseStep{
-    min-height:10mm !important;
-    padding:2mm 5mm !important;
+    min-height:9.2mm !important;
+    padding:1.8mm 5mm !important;
     font-size:9.5pt !important;
+    color:#111 !important;
     white-space:nowrap !important;
     transform:none !important;
   }
@@ -1657,8 +1660,8 @@ select:focus-visible,
     margin-left:-3mm !important;
   }
   .phaseStep.is-current{
-    outline:1.2pt solid #111 !important;
-    outline-offset:1pt !important;
+    outline:2.4pt solid #111 !important;
+    outline-offset:0.6pt !important;
   }
   .projHero{
     margin:0 0 5mm 0 !important;
