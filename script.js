@@ -19,7 +19,7 @@
   });
 
   // ---- Configuration ----
-  const DATA_VERSION = "2026-04-29e";
+  const DATA_VERSION = "2026-04-29f";
   const CURRENT_PROJECTS_URL = `export_projets_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const COMPLETED_PROJECTS_URL = `export_projets_finis_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const DEPTS_URL = `departements.geojson?v=${encodeURIComponent(DATA_VERSION)}`;
@@ -85,6 +85,7 @@
   let projectIdToMarker = new Map(); // "Code projet" -> Leaflet marker
   let projectIdToName = new Map();  // "Code projet" -> Nom du projet (tooltips clusters)
   let projectListDirty = true;
+  let completedProjectsLoadFailed = false;
   function clearSelectedMarker() {
     if (selectedMarker) selectedMarker.getElement()?.classList.remove("selected");
     selectedMarker = null;
@@ -355,9 +356,14 @@
     document.title = meta.title;
 
     elProjectModeButtons.forEach((btn) => {
-      const isActive = btn.getAttribute("data-project-mode") === currentProjectMode;
+      const modeKey = btn.getAttribute("data-project-mode");
+      const isActive = modeKey === currentProjectMode;
+      const isUnavailable = modeKey === PROJECT_MODES.completed.key && completedProjectsLoadFailed;
+
       btn.classList.toggle("is-active", isActive);
       btn.setAttribute("aria-pressed", isActive ? "true" : "false");
+      btn.disabled = isUnavailable;
+      btn.title = isUnavailable ? "Les projets finis n’ont pas pu être chargés." : "";
     });
 
     updateCompletedYearFilterUi();
@@ -381,6 +387,43 @@
     });
   }
 
+  function reportProjectDataQuality(projects, modeKey) {
+    if (!Array.isArray(projects) || !projects.length) return;
+
+    const seenIds = new Set();
+    const duplicateIds = new Set();
+    let missingNames = 0;
+    let missingCoordinates = 0;
+    let completedWithoutDates = 0;
+
+    for (const project of projects) {
+      const pid = projectId(project);
+      if (pid) {
+        if (seenIds.has(pid)) duplicateIds.add(pid);
+        seenIds.add(pid);
+      }
+
+      const name = String(project["Nom de projet"] ?? project.nom ?? "").trim();
+      if (!name) missingNames += 1;
+      if (!projectLatLon(project)) missingCoordinates += 1;
+      if (modeKey === PROJECT_MODES.completed.key && projectStartYear(project) == null && projectEndYear(project) == null) {
+        completedWithoutDates += 1;
+      }
+    }
+
+    if (duplicateIds.size) {
+      console.warn(`[BIMO] ${duplicateIds.size} identifiant(s) projet en doublon (${modeKey}) :`, Array.from(duplicateIds));
+    }
+    if (missingNames || missingCoordinates || completedWithoutDates) {
+      console.info(`[BIMO] Qualité des données (${modeKey})`, {
+        projets: projects.length,
+        sansNom: missingNames,
+        sansCoordonnees: missingCoordinates,
+        finisSansDates: completedWithoutDates
+      });
+    }
+  }
+
   function setActiveProjectsForMode(modeKey) {
     allProjects = Array.isArray(projectsByMode[modeKey]) ? projectsByMode[modeKey] : [];
     projectIdToName = new Map();
@@ -393,6 +436,11 @@
 
   function setProjectMode(modeKey) {
     if (!PROJECT_MODES[modeKey] || modeKey === currentProjectMode) return;
+    if (modeKey === PROJECT_MODES.completed.key && completedProjectsLoadFailed) {
+      showStatus("Les projets finis sont indisponibles pour le moment.");
+      updateProjectModeUi();
+      return;
+    }
 
     stopCompletedYearPlayback();
     currentProjectMode = modeKey;
@@ -2207,8 +2255,12 @@ marker.on("click", (e) => {
       projectsByMode.completed = completedResult.status === "fulfilled"
         ? ensureProjectIds(normalizeProjectsPayload(completedResult.value), PROJECT_MODES.completed.key)
         : [];
+      completedProjectsLoadFailed = completedResult.status !== "fulfilled";
 
-      if (completedResult.status !== "fulfilled") {
+      reportProjectDataQuality(projectsByMode.current, PROJECT_MODES.current.key);
+      reportProjectDataQuality(projectsByMode.completed, PROJECT_MODES.completed.key);
+
+      if (completedProjectsLoadFailed) {
         console.warn("Impossible de charger les projets finis :", completedResult.reason);
         showStatus(`Les projets finis n’ont pas pu être chargés (${describeLoadError(completedResult.reason)}). Les projets en cours restent disponibles.`);
       }
