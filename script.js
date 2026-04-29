@@ -1967,16 +1967,11 @@ marker.on("click", (e) => {
       return `<span class="${classes.join(" ")}">${escapeHtml(step.label)}</span>`;
     }).join("");
 
-    const caption = currentKey
-      ? `<div class="phaseStepperCaption">Phase actuelle : <strong>${escapeHtml(steps[currentIndex].label)}</strong></div>`
-      : `<div class="phaseStepperCaption">Valeur source : <strong>${escapeHtml(raw)}</strong></div>`;
-
     return `
       <div class="phaseStepperWrap" aria-label="Phase projet">
         <div class="phaseStepper" role="img" aria-label="Phase projet : ${escapeHtml(raw)}">
           ${items}
         </div>
-        ${caption}
       </div>`;
   }
 
