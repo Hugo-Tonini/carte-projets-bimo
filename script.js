@@ -19,7 +19,7 @@
   });
 
   // ---- Configuration ----
-  const DATA_VERSION = "2026-04-29f";
+  const DATA_VERSION = "2026-04-29g";
   const CURRENT_PROJECTS_URL = `export_projets_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const COMPLETED_PROJECTS_URL = `export_projets_finis_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const DEPTS_URL = `departements.geojson?v=${encodeURIComponent(DATA_VERSION)}`;
@@ -372,6 +372,7 @@
   function normalizeProjectsPayload(data) {
     if (Array.isArray(data?.projets)) return data.projets;
     if (Array.isArray(data)) return data;
+    console.warn("[BIMO] Format de données projets inattendu :", data);
     return [];
   }
 
@@ -964,21 +965,20 @@ clusters.on("clustermouseout", (a) => {
   }
 
 
-
-function amountNumber(v) {
-  if (v == null) return NaN;
-  if (typeof v === "number") return v;
-  const s = String(v).trim();
-  if (!s) return NaN;
-  // enlève espaces (dont insécables), symbole €, et normalise virgule
-  const cleaned = s
-    .replace(/[\s\u00A0\u202F]/g, "")
-    .replace(/€/g, "")
-    .replace(/,/g, ".")
-    .replace(/[^0-9.+-]/g, "");
-  const n = Number(cleaned);
-  return Number.isFinite(n) ? n : NaN;
-}
+  function amountNumber(v) {
+    if (v == null) return NaN;
+    if (typeof v === "number") return v;
+    const s = String(v).trim();
+    if (!s) return NaN;
+    // enlève espaces (dont insécables), symbole €, et normalise virgule
+    const cleaned = s
+      .replace(/[\s\u00A0\u202F]/g, "")
+      .replace(/€/g, "")
+      .replace(/,/g, ".")
+      .replace(/[^0-9.+-]/g, "");
+    const n = Number(cleaned);
+    return Number.isFinite(n) ? n : NaN;
+  }
 
   function projectId(p) {
     return String(p.__projectId ?? p["Code projet"] ?? p.code_projet ?? p.codeProjet ?? p.id ?? "").trim();
@@ -1364,7 +1364,7 @@ function amountNumber(v) {
     const types = getActiveTypes();
     const t = projectType(p);
 
-    if (types.length && !types.some((x) => t.includes(x))) return false;
+    if (types.length && !types.includes(t)) return false;
 
     if (q) {
       const blob = p.__searchBlob || buildProjectSearchBlob(p);
@@ -1397,7 +1397,7 @@ function amountNumber(v) {
       .sort((aProj, bProj) => String(aProj["Nom de projet"] ?? aProj.nom ?? "").localeCompare(String(bProj["Nom de projet"] ?? bProj.nom ?? ""), "fr", { sensitivity: "base" }));
   }
 
-function computeFilteredCounts() {
+  function computeFilteredCounts() {
     const counts = {};
     for (const p of filteredProjects()) {
       const code = deptCodeFromProject(p);
@@ -1407,7 +1407,7 @@ function computeFilteredCounts() {
     return counts;
   }
 
-// ---- Pins projets ----
+  // ---- Pins projets ----
   function colorByType(t) {
     if (!t) return "blue";
     const x = String(t).toLowerCase();
