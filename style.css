@@ -1566,3 +1566,155 @@ h1{ margin: 0; font-size: 20px; }
   margin: 0;
   flex: 0 0 auto;
 }
+
+/*
+  Correctif à intégrer directement dans style.css
+  À copier à la fin du fichier style.css existant.
+  Aucun nouveau fichier CSS n'est nécessaire.
+*/
+
+html,
+body {
+  height: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+body {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  flex: 0 0 auto;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.topbarHeader,
+.titleRow,
+.toolbar {
+  min-height: 0 !important;
+  margin-top: 0 !important;
+}
+
+.titleRow {
+  padding: 5px 146px 3px 14px !important;
+  gap: 10px !important;
+  align-items: center !important;
+}
+
+#pageTitle {
+  margin: 0 !important;
+  font-size: 20px !important;
+  line-height: 1.1 !important;
+}
+
+.titleStats {
+  line-height: 1.1 !important;
+}
+
+.toolbar {
+  padding: 0 146px 5px 14px !important;
+  gap: 8px !important;
+  align-items: center !important;
+}
+
+.types {
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 8px !important;
+}
+
+.types label {
+  line-height: 1.1 !important;
+}
+
+.search--header {
+  min-width: 260px !important;
+  max-width: 360px !important;
+}
+
+.search input {
+  padding: 5px 9px !important;
+  min-height: 30px !important;
+  line-height: 1.1 !important;
+}
+
+#clear,
+#projListBtn {
+  padding: 5px 10px !important;
+  line-height: 1.1 !important;
+}
+
+.projectModeSwitch {
+  height: 31px !important;
+}
+
+.projectModeBtn {
+  padding-top: 0 !important;
+  padding-bottom: 1px !important;
+  line-height: 1 !important;
+}
+
+.brand {
+  position: absolute !important;
+  top: 4px !important;
+  right: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  width: 122px !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  z-index: 2;
+}
+
+.brandLogo {
+  display: block !important;
+  max-width: 122px !important;
+  max-height: 52px !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+}
+
+.layout {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.map,
+#map {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+@media (max-width: 900px) {
+  .titleRow {
+    padding-right: 14px !important;
+  }
+
+  .toolbar {
+    padding-right: 14px !important;
+  }
+
+  .brand {
+    position: static !important;
+    width: auto !important;
+    margin-left: auto !important;
+  }
+
+  .brandLogo {
+    max-height: 38px !important;
+  }
+}
