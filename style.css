@@ -1461,17 +1461,25 @@ select:focus-visible,
     width:100% !important;
   }
 
-  .panelSection--energy .dpeRow{
-    grid-template-columns:1fr auto !important;
-    column-gap:4.2mm !important;
+  .panelSection--energy .dpeScale{
+    --dpe-print-shape-col-width: 416px;
+    --dpe-print-marker-col-width: 72px;
+    --dpe-print-gap-to-markers: 26px;
+    width:max-content !important;
+    max-width:none !important;
   }
 
-  .panelSection--energy .dpeScale{
-    width:100% !important;
+  .panelSection--energy .dpeRow{
+    grid-template-columns:var(--dpe-print-shape-col-width) var(--dpe-print-marker-col-width) !important;
+    column-gap:var(--dpe-print-gap-to-markers) !important;
+  }
+
+  .panelSection--energy .dpeRowMarkers{
+    width:var(--dpe-print-marker-col-width) !important;
   }
 
   .panelSection--energy .dpeRowShape{
-    max-width:100% !important;
+    max-width:var(--dpe-print-shape-col-width) !important;
   }
 
 
