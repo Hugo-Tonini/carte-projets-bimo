@@ -378,7 +378,12 @@ h1{ margin: 0; font-size: 20px; }
   backdrop-filter: blur(6px);
   border-bottom: 1px solid rgba(0,0,0,0.08);
 }
-.panelTitle{ margin: 0; font-size: 28px; line-height: 1.2; }
+.panelTitle{
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.2;
+  font-weight: 800;
+}
 
 .panelHeaderTitleWrap{
   display:flex;
@@ -1327,6 +1332,7 @@ select:focus-visible,
     font-size:28pt !important;
     line-height:1.15 !important;
     flex:1 1 auto !important;
+    font-weight:800 !important;
   }
   .screenOnlyInline{
     display:none !important;
@@ -1639,6 +1645,7 @@ select:focus-visible,
   font-size:32px;
   line-height:1.1;
   margin:0;
+  font-weight:800;
 }
 
 .panelSubTitle--office{
