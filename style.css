@@ -365,13 +365,20 @@ h1{ margin: 0; font-size: 20px; }
 .panel.open{ display: block; }
 
 .panelHeader{
+  position: sticky;
+  top: 0;
+  z-index: 50;
   display: flex;
   align-items: start;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 10px;
+  margin: 0 -12px 10px -12px;
+  padding: 12px 12px 10px;
+  background: rgba(248,246,242,0.96);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(0,0,0,0.08);
 }
-.panelTitle{ margin: 0; font-size: 18px; line-height: 1.2; }
+.panelTitle{ margin: 0; font-size: 23px; line-height: 1.2; }
 
 .panelHeaderTitleWrap{
   display:flex;
@@ -1097,7 +1104,7 @@ select:focus-visible,
 .kv--project .kvKey{
   color:#000;
   font-weight:700;
-  font-size:13px;
+  font-size:15px;
   line-height:1.25;
   text-transform:none;
   letter-spacing:0;
@@ -1625,13 +1632,7 @@ select:focus-visible,
 }
 
 .panelHeader--office{
-  position:sticky;
-  top:0;
-  z-index:50;
-  background:rgba(255,255,255,0.95);
-  backdrop-filter:blur(6px);
-  padding:12px 12px 10px;
-  border-bottom:1px solid rgba(0,0,0,0.08);
+  background:rgba(248,246,242,0.96);
 }
 
 .panelTitle--office{
