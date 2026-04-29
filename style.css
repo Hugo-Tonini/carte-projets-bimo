@@ -17,7 +17,7 @@ html, body{ font-family:"Marianne", Arial, system-ui, -apple-system, Segoe UI, R
 /* Base */
 :root{
   --border: #d0d0d0;
-  --shadow: rgba(0,0,0,0.14);a
+  --shadow: rgba(0,0,0,0.14);
   --bg: #ffffff;
   --muted: #666;
   --accent: #000091;
@@ -2079,5 +2079,85 @@ body{
   .kv--project .phaseStep.is-current{
     outline:2.4pt solid #111 !important;
     outline-offset:0.6pt !important;
+  }
+}
+
+/* ===== Correctif impression : conserver les chevrons Phase projet ===== */
+@media print{
+  .kv--project .phaseFullRow,
+  .kv--project .phaseStepperWrap,
+  .kv--project .phaseStepper,
+  .kv--project .phaseStep{
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+  }
+
+  .kv--project .phaseStepper{
+    display:flex !important;
+    align-items:stretch !important;
+    width:100% !important;
+    height:8mm !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:visible !important;
+  }
+
+  .kv--project .phaseStep{
+    position:relative !important;
+    flex:1 1 0 !important;
+    min-width:0 !important;
+    height:8mm !important;
+    min-height:8mm !important;
+    padding:0 4mm !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    font-size:9pt !important;
+    font-weight:800 !important;
+    line-height:1 !important;
+    color:#111 !important;
+    white-space:nowrap !important;
+    text-align:center !important;
+    clip-path:polygon(0 0, calc(100% - 4mm) 0, 100% 50%, calc(100% - 4mm) 100%, 0 100%, 4mm 50%) !important;
+    border:0 !important;
+  }
+
+  .kv--project .phaseStep:first-child{
+    clip-path:polygon(0 0, calc(100% - 4mm) 0, 100% 50%, calc(100% - 4mm) 100%, 0 100%) !important;
+  }
+
+  .kv--project .phaseStep + .phaseStep{
+    margin-left:-3mm !important;
+  }
+
+  .kv--project .phaseStep--definition{
+    background-color:#ffad33 !important;
+    background:#ffad33 !important;
+  }
+
+  .kv--project .phaseStep--conception{
+    background-color:#fff01f !important;
+    background:#fff01f !important;
+  }
+
+  .kv--project .phaseStep--realisation{
+    background-color:#62dd50 !important;
+    background:#62dd50 !important;
+  }
+
+  .kv--project .phaseStep--gpa{
+    background-color:#18b957 !important;
+    background:#18b957 !important;
+  }
+
+  .kv--project .phaseStep.is-upcoming{
+    opacity:0.55 !important;
+    filter:saturate(0.9) !important;
+  }
+
+  .kv--project .phaseStep.is-current{
+    outline:2.6pt solid #111 !important;
+    outline-offset:0.6pt !important;
+    z-index:3 !important;
   }
 }
