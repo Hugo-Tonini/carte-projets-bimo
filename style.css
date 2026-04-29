@@ -1803,3 +1803,8 @@ body{
     max-height:38px;
   }
 }
+
+.projectModeBtn:disabled{
+  opacity: .55;
+  cursor: not-allowed;
+}
