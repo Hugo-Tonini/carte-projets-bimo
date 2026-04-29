@@ -111,11 +111,21 @@ h1{ margin: 0; font-size: 20px; }
 }
 .types label{ white-space: nowrap; }
 
-.deptToggle{
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 6px 10px;
-  white-space: nowrap;
+.officesToggle{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:7px 10px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#fff;
+  white-space:nowrap;
+  cursor:pointer;
+  line-height:1.1;
+}
+.officesToggle input{
+  margin:0;
+  accent-color:var(--accent);
 }
 
 #clear, #projListBtn{
@@ -295,14 +305,7 @@ h1{ margin: 0; font-size: 20px; }
   opacity:0.55;
 }
 
-.stats{
-  margin-left: auto;
-  color: var(--muted);
-  white-space: nowrap;
-  display: flex;
-  gap: 8px;
-  align-items: baseline;
-}
+.statDept
 .statDept{ color: #111; font-weight: 600; }
 
 /* Logo Ministère (à droite, pleine hauteur) */
@@ -776,13 +779,7 @@ h1{ margin: 0; font-size: 20px; }
 .legend-title{ font-weight: 700; margin-bottom: 8px; }
 .legend-row{ display: flex; align-items: center; gap: 8px; margin: 3px 0; }
 .swatch{ width: 18px; height: 12px; border: 1px solid var(--border); border-radius: 4px; }
-.sw-ago{ background: #9ED3FF; }
-.sw-ne{ background: #D6B48C; }
-.sw-gso{ background: #FFB099; }
-.sw-ace{ background: #C0A3FF; }
-.sw-mgs{ background: #76D6E8; }
-.sw-noidf{ background: #FF9FD6; }
-
+.legend-sep
 .legend-sep{ height: 1px; background: var(--border); margin: 8px 0; }
 .legend-subtitle{ font-weight: 700; margin: 2px 0 6px; }
 
@@ -1567,11 +1564,7 @@ h1{ margin: 0; font-size: 20px; }
   flex: 0 0 auto;
 }
 
-/*
-  Correctif à intégrer directement dans style.css
-  À copier à la fin du fichier style.css existant.
-  Aucun nouveau fichier CSS n'est nécessaire.
-*/
+/* Ajustements finaux de layout intégrés au fichier principal. */
 
 html,
 body {
