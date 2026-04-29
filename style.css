@@ -1045,6 +1045,69 @@ h1{ margin: 0; font-size: 20px; }
   .projPhoto{ height: 110px; }
 }
 
+/* Titres et blocs du panneau projet */
+.panelSubTitle--project{
+  margin-top:20px;
+  font-weight:800;
+  font-size:22px;
+  letter-spacing:.02em;
+  transition:none;
+  animation:none;
+  transform:none;
+}
+
+.panelSubTitle--resume{
+  margin-top:12px;
+}
+
+.panelSectionTitle--general{
+  margin-top:18px;
+}
+
+.panelSectionBody{
+  border-top:1px solid var(--border);
+  padding-top:10px;
+}
+
+.kv--project{
+  color:#000;
+}
+
+.kv--project .kvRow{
+  display:grid;
+  grid-template-columns:0.64fr 1fr;
+  gap:12px;
+  align-items:center;
+}
+
+.kv--project .kvKey{
+  color:#000;
+  font-weight:700;
+  font-size:13px;
+  line-height:1.25;
+  text-transform:none;
+  letter-spacing:0;
+}
+
+.kv--project .kvVal{
+  color:#000;
+  text-align:left;
+  justify-self:start;
+  line-height:1.25;
+}
+
+.projPhotos{
+  margin-top:16px;
+}
+
+.projPhotosTitle{
+  font-weight:800;
+  font-size:22px;
+  transition:none;
+  animation:none;
+  transform:none;
+}
+
 /* Résumé (panneau projet) : texte justifié */
 #panel .panelResumeText{
   text-align: justify;
