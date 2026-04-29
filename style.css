@@ -1490,11 +1490,13 @@ h1{ margin: 0; font-size: 20px; }
   .completedYearRange{ width: 200px; }
 }
 
-/* Bloc de la barre d'année : taille fixe */
+/* Barre d'année et ajustements finaux intégrés sans surcharges en !important. */
 .completedYearFilter{
   box-sizing:border-box;
-  width:430px;
-  justify-content:space-between;
+  width:fit-content;
+  max-width:100%;
+  gap:10px;
+  justify-content:flex-start;
 }
 
 .completedYearFilterLabel{
@@ -1514,14 +1516,15 @@ h1{ margin: 0; font-size: 20px; }
 }
 
 .completedYearRangeWrap{
-  flex:1 1 auto;
+  gap:8px;
+  flex:0 0 auto;
   min-width:0;
 }
 
 .completedYearRange{
-  flex:1 1 auto;
-  width:auto;
-  min-width:0;
+  width:250px;
+  min-width:250px;
+  flex:0 0 250px;
 }
 
 .completedYearBound{
@@ -1531,183 +1534,195 @@ h1{ margin: 0; font-size: 20px; }
   font-variant-numeric:tabular-nums;
 }
 
-/* Correctif : bloc du filtre d'année plus long + case 'Tout afficher' plus proche */
-.completedYearFilter{
-  width: fit-content;
-  max-width: 100%;
-  box-sizing: border-box;
-  gap: 10px;
-  justify-content: flex-start;
-}
-
-.completedYearRangeWrap{
-  gap: 8px;
-  flex: 0 0 auto;
-}
-
-.completedYearRange{
-  width: 250px;
-  min-width: 250px;
-  flex: 0 0 250px;
-}
-
 .completedYearFilter label{
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-  margin: 0;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  white-space:nowrap;
+  margin:0;
 }
 
 .completedYearFilter input[type="checkbox"]{
-  margin: 0;
-  flex: 0 0 auto;
+  margin:0;
+  flex:0 0 auto;
 }
 
-/* Ajustements finaux de layout intégrés au fichier principal. */
+.panelHeader--office{
+  position:sticky;
+  top:0;
+  z-index:50;
+  background:rgba(255,255,255,0.95);
+  backdrop-filter:blur(6px);
+  padding:12px 12px 10px;
+  border-bottom:1px solid rgba(0,0,0,0.08);
+}
+
+.panelTitle--office{
+  font-size:32px;
+  line-height:1.1;
+  margin:0;
+}
+
+.panelSubTitle--office{
+  margin-top:20px;
+  font-weight:800;
+  font-size:22px;
+  letter-spacing:.02em;
+  transition:none;
+  animation:none;
+  transform:none;
+}
 
 html,
-body {
-  height: 100%;
-  min-height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
+body{
+  height:100%;
+  min-height:100%;
+  margin:0;
+  padding:0;
+  overflow:hidden;
 }
 
-body {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
+body{
+  height:100vh;
+  display:flex;
+  flex-direction:column;
 }
 
-.topbar {
-  flex: 0 0 auto;
-  margin: 0 !important;
-  padding: 0 !important;
+.topbar{
+  flex:0 0 auto;
+  margin:0;
+  padding:0;
 }
 
 .topbarHeader,
 .titleRow,
-.toolbar {
-  min-height: 0 !important;
-  margin-top: 0 !important;
+.toolbar{
+  min-height:0;
+  margin-top:0;
 }
 
-.titleRow {
-  padding: 5px 146px 3px 14px !important;
-  gap: 10px !important;
-  align-items: center !important;
+.titleRow{
+  padding:5px 146px 3px 14px;
+  gap:10px;
+  align-items:center;
 }
 
-#pageTitle {
-  margin: 0 !important;
-  font-size: 20px !important;
-  line-height: 1.1 !important;
+#pageTitle{
+  margin:0;
+  font-size:20px;
+  line-height:1.1;
 }
 
-.titleStats {
-  line-height: 1.1 !important;
+.titleStats{
+  line-height:1.1;
 }
 
-.toolbar {
-  padding: 0 146px 5px 14px !important;
-  gap: 8px !important;
-  align-items: center !important;
+.toolbar{
+  padding:0 146px 5px 14px;
+  gap:8px;
+  align-items:center;
 }
 
-.types {
-  margin: 0 !important;
-  padding: 0 !important;
-  gap: 8px !important;
+.types{
+  margin:0;
+  padding:0;
+  gap:8px;
 }
 
-.types label {
-  line-height: 1.1 !important;
+.types label{
+  line-height:1.1;
 }
 
-.search--header {
-  min-width: 260px !important;
-  max-width: 360px !important;
+.search--header{
+  min-width:260px;
+  max-width:360px;
 }
 
-.search input {
-  padding: 5px 9px !important;
-  min-height: 30px !important;
-  line-height: 1.1 !important;
+.search input{
+  padding:5px 9px;
+  min-height:30px;
+  line-height:1.1;
 }
 
 #clear,
-#projListBtn {
-  padding: 5px 10px !important;
-  line-height: 1.1 !important;
+#projListBtn{
+  padding:5px 10px;
+  line-height:1.1;
 }
 
-.projectModeSwitch {
-  height: 31px !important;
+.projectModeSwitch{
+  height:31px;
 }
 
-.projectModeBtn {
-  padding-top: 0 !important;
-  padding-bottom: 1px !important;
-  line-height: 1 !important;
+.projectModeBtn{
+  padding-top:0;
+  padding-bottom:1px;
+  line-height:1;
 }
 
-.brand {
-  position: absolute !important;
-  top: 4px !important;
-  right: 14px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-end !important;
-  width: 122px !important;
-  height: auto !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  z-index: 2;
+.brand{
+  position:absolute;
+  top:4px;
+  right:14px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  width:122px;
+  height:auto;
+  margin:0;
+  padding:0;
+  z-index:2;
 }
 
-.brandLogo {
-  display: block !important;
-  max-width: 122px !important;
-  max-height: 52px !important;
-  width: auto !important;
-  height: auto !important;
-  object-fit: contain !important;
+.brandLogo{
+  display:block;
+  max-width:122px;
+  max-height:52px;
+  width:auto;
+  height:auto;
+  object-fit:contain;
 }
 
-.layout {
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  height: auto !important;
-  margin: 0 !important;
-  position: relative !important;
-  overflow: hidden !important;
+.layout{
+  flex:1 1 auto;
+  min-height:0;
+  height:auto;
+  margin:0;
+  position:relative;
+  overflow:hidden;
 }
 
 .map,
-#map {
-  width: 100% !important;
-  height: 100% !important;
-  min-height: 0 !important;
+#map{
+  width:100%;
+  height:100%;
+  min-height:0;
 }
 
-@media (max-width: 900px) {
-  .titleRow {
-    padding-right: 14px !important;
+@media (max-width: 980px){
+  .completedYearRange{
+    width:200px;
+    min-width:200px;
+    flex-basis:200px;
+  }
+}
+
+@media (max-width: 900px){
+  .titleRow{
+    padding-right:14px;
   }
 
-  .toolbar {
-    padding-right: 14px !important;
+  .toolbar{
+    padding-right:14px;
   }
 
-  .brand {
-    position: static !important;
-    width: auto !important;
-    margin-left: auto !important;
+  .brand{
+    position:static;
+    width:auto;
+    margin-left:auto;
   }
 
-  .brandLogo {
-    max-height: 38px !important;
+  .brandLogo{
+    max-height:38px;
   }
 }
