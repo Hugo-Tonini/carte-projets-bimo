@@ -1401,13 +1401,13 @@ select:focus-visible,
     min-width:14mm !important;
   }
 
-  .dpeRow--A .dpeRowShape{ width:188px !important; }
-  .dpeRow--B .dpeRowShape{ width:226px !important; }
-  .dpeRow--C .dpeRowShape{ width:264px !important; }
-  .dpeRow--D .dpeRowShape{ width:302px !important; }
-  .dpeRow--E .dpeRowShape{ width:340px !important; }
-  .dpeRow--F .dpeRowShape{ width:378px !important; }
-  .dpeRow--G .dpeRowShape{ width:416px !important; }
+  .dpeRow--A .dpeRowShape{ width:176px !important; }
+  .dpeRow--B .dpeRowShape{ width:212px !important; }
+  .dpeRow--C .dpeRowShape{ width:248px !important; }
+  .dpeRow--D .dpeRowShape{ width:284px !important; }
+  .dpeRow--E .dpeRowShape{ width:320px !important; }
+  .dpeRow--F .dpeRowShape{ width:356px !important; }
+  .dpeRow--G .dpeRowShape{ width:390px !important; }
 
   .dpeCard,
   .dpeRowShape,
@@ -1462,9 +1462,9 @@ select:focus-visible,
   }
 
   .panelSection--energy .dpeScale{
-    --dpe-print-shape-col-width: 416px;
-    --dpe-print-marker-col-width: 72px;
-    --dpe-print-gap-to-markers: 26px;
+    --dpe-print-shape-col-width: 390px;
+    --dpe-print-marker-col-width: 68px;
+    --dpe-print-gap-to-markers: 22px;
     width:max-content !important;
     max-width:none !important;
   }
