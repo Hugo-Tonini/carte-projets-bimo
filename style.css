@@ -1971,3 +1971,96 @@ body{
   opacity: .55;
   cursor: not-allowed;
 }
+
+/* ===== Correctif final : frise Phase projet compacte sous le libellé ===== */
+.kv--project .kvRow--phase{
+  display:flex !important;
+  flex-direction:column !important;
+  grid-template-columns:none !important;
+  gap:3px !important;
+  align-items:stretch !important;
+  width:100% !important;
+  margin-top:-4px !important;
+  margin-bottom:-4px !important;
+  padding:0 !important;
+}
+
+.kv--project .kvRow--phase .kvKey{
+  display:block !important;
+  width:100% !important;
+  margin:0 !important;
+  padding:0 !important;
+  line-height:1.05 !important;
+}
+
+.kv--project .kvVal--phase{
+  display:block !important;
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  line-height:1 !important;
+  justify-self:stretch !important;
+  overflow:visible !important;
+}
+
+.phaseStepperWrap{
+  display:block !important;
+  width:100% !important;
+  margin:0 !important;
+  padding:0 !important;
+  line-height:1 !important;
+}
+
+.phaseStepper{
+  display:flex !important;
+  align-items:stretch !important;
+  width:100% !important;
+  max-width:100% !important;
+  height:34px !important;
+  margin:0 !important;
+  padding:0 !important;
+  overflow:visible !important;
+  line-height:1 !important;
+}
+
+.phaseStep{
+  height:34px !important;
+  min-height:34px !important;
+  padding:0 18px !important;
+  font-size:14px !important;
+  line-height:1 !important;
+  color:#111 !important;
+}
+
+.phaseStep + .phaseStep{
+  margin-left:-12px !important;
+}
+
+.phaseStep.is-current{
+  outline:5px solid #111 !important;
+  outline-offset:1px !important;
+  z-index:3 !important;
+}
+
+@media print{
+  .kv--project .kvRow--phase{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:1mm !important;
+    margin-top:0 !important;
+    margin-bottom:0 !important;
+  }
+
+  .phaseStepper{
+    height:7.5mm !important;
+  }
+
+  .phaseStep{
+    height:7.5mm !important;
+    min-height:7.5mm !important;
+    padding:0 4mm !important;
+    font-size:9pt !important;
+  }
+}
