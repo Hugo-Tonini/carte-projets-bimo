@@ -1983,14 +1983,19 @@ marker.on("click", (e) => {
       const s = String(value).trim();
       if (!s) continue;
 
-      const isPhase = label === "Phase projet";
-      const rowClass = isPhase ? "kvRow kvRow--phase" : "kvRow";
-      const valueHtml = isPhase ? renderProjectPhase(s) : escapeHtml(s);
+      if (label === "Phase projet") {
+        html += `
+          <div class="kvRow kvRow--phaseLabel">
+            <div class="kvKey">${escapeHtml(label)} :</div>
+          </div>
+          <div class="phaseFullRow">${renderProjectPhase(s)}</div>`;
+        continue;
+      }
 
       html += `
-        <div class="${rowClass}">
+        <div class="kvRow">
           <div class="kvKey">${escapeHtml(label)} :</div>
-          <div class="kvVal${isPhase ? ' kvVal--phase' : ''}">${valueHtml}</div>
+          <div class="kvVal">${escapeHtml(s)}</div>
         </div>`;
     }
     html += `</div>`;
