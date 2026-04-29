@@ -1124,29 +1124,29 @@ select:focus-visible,
 
 .kv--project .kvRow--phase{
   grid-template-columns:1fr;
-  gap:0;
+  gap:2px;
   align-items:start;
-  margin-top:-6px;
-  margin-bottom:-6px;
+  margin-top:0;
+  margin-bottom:0;
 }
 
 .kv--project .kvRow--phase .kvKey{
   margin:0;
-  line-height:1;
+  line-height:1.05;
 }
 
 .kv--project .kvVal--phase{
   width:100%;
   overflow:visible;
-  margin-top:-10px;
-  margin-bottom:-10px;
-  line-height:0;
+  margin:0;
+  line-height:1;
 }
 
 .phaseStepperWrap{
   width:100%;
   margin:0;
   padding:0;
+  display:block;
 }
 
 .phaseStepper{
@@ -1165,7 +1165,7 @@ select:focus-visible,
   display:flex;
   align-items:center;
   justify-content:center;
-  min-height:38px;
+  min-height:34px;
   padding:0 24px;
   text-align:center;
   font-size:14px;
@@ -1652,9 +1652,9 @@ select:focus-visible,
   }
   .kv--project .kvRow--phase{
     grid-template-columns:1fr !important;
-    gap:0 !important;
-    margin-top:-1.4mm !important;
-    margin-bottom:-1.4mm !important;
+    gap:0.8mm !important;
+    margin-top:0 !important;
+    margin-bottom:0 !important;
   }
   .phaseStepper{
     display:flex !important;
@@ -1663,7 +1663,7 @@ select:focus-visible,
     margin:0 !important;
   }
   .phaseStep{
-    min-height:8.3mm !important;
+    min-height:7.6mm !important;
     padding:0 5mm !important;
     font-size:9.5pt !important;
     color:#111 !important;
