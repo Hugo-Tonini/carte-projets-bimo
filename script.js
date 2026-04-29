@@ -11,7 +11,7 @@
   });
 
   // ---- Configuration ----
-  const DATA_VERSION = "2026-04-23a";
+  const DATA_VERSION = "2026-04-29b";
   const CURRENT_PROJECTS_URL = `export_projets_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const COMPLETED_PROJECTS_URL = `export_projets_finis_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const DEPTS_URL = `departements.geojson?v=${encodeURIComponent(DATA_VERSION)}`;
@@ -26,8 +26,8 @@
       title: "Carte des projets finis du BIMO"
     }
   };
-  const COMPLETED_YEAR_MIN = 2008;
-  const COMPLETED_YEAR_MAX = 2024;
+  let COMPLETED_YEAR_MIN = 2008;
+  let COMPLETED_YEAR_MAX = 2024;
 
   // ---- DOM ----
   const elPageTitle = document.getElementById("pageTitle");
@@ -76,6 +76,7 @@
   let selectedMarker = null;
   let projectIdToMarker = new Map(); // "Code projet" -> Leaflet marker
   let projectIdToName = new Map();  // "Code projet" -> Nom du projet (tooltips clusters)
+  let projectListDirty = true;
   function clearSelectedMarker() {
     if (selectedMarker) selectedMarker.getElement()?.classList.remove("selected");
     selectedMarker = null;
@@ -130,10 +131,6 @@
     if (completedYearPlaybackTimer) {
       clearTimeout(completedYearPlaybackTimer);
       completedYearPlaybackTimer = null;
-    }
-    if (!completedYearPlaybackActive) {
-      updateCompletedPlaybackButtonUi();
-      return;
     }
     completedYearPlaybackActive = false;
     updateCompletedPlaybackButtonUi();
@@ -204,9 +201,9 @@
     wrap.innerHTML = `
       <span class="completedYearFilterLabel">Présents en <strong id="completedYearValue" class="completedYearValue">${completedYearFilter}</strong></span>
       <div class="completedYearRangeWrap">
-        <span class="completedYearBound">${COMPLETED_YEAR_MIN}</span>
+        <span class="completedYearBound" data-completed-bound="min">${COMPLETED_YEAR_MIN}</span>
         <input id="completedYearRange" class="completedYearRange" type="range" min="${COMPLETED_YEAR_MIN}" max="${COMPLETED_YEAR_MAX}" step="1" value="${completedYearFilter}" aria-label="Afficher les projets finis présents pendant cette année" />
-        <span class="completedYearBound">${COMPLETED_YEAR_MAX}</span>
+        <span class="completedYearBound" data-completed-bound="max">${COMPLETED_YEAR_MAX}</span>
       </div>
       <label class="completedShowAll" for="completedShowAll">
         <input id="completedShowAll" class="completedShowAllInput" type="checkbox" />
@@ -251,8 +248,17 @@
     }
 
     if (elCompletedYearRange) {
+      elCompletedYearRange.min = String(COMPLETED_YEAR_MIN);
+      elCompletedYearRange.max = String(COMPLETED_YEAR_MAX);
       elCompletedYearRange.value = String(completedYearFilter);
       elCompletedYearRange.disabled = !!showAllCompletedProjects;
+    }
+
+    if (elCompletedYearFilter) {
+      const minBound = elCompletedYearFilter.querySelector('[data-completed-bound="min"]');
+      const maxBound = elCompletedYearFilter.querySelector('[data-completed-bound="max"]');
+      if (minBound) minBound.textContent = String(COMPLETED_YEAR_MIN);
+      if (maxBound) maxBound.textContent = String(COMPLETED_YEAR_MAX);
     }
 
     if (elCompletedYearValue) {
@@ -611,11 +617,11 @@
       const types = new Set(children.map(m => (m.options && m.options.__bimoType) ? m.options.__bimoType : ""));
       const count = cluster.getChildCount();
 
-      // Si plusieurs types => jaune, sinon couleur du type
-      let col = "yellow";
+      // Si plusieurs types => couleur "Autres", sinon couleur du type
+      let col = "orange";
       if (types.size === 1) {
         const only = types.values().next().value;
-        col = only || "yellow";
+        col = only || "orange";
       }
 
       return L.divIcon({
@@ -888,6 +894,7 @@ function amountNumber(v) {
 
   function buildProjectList() {
     if (!elProjListItems) return;
+    projectListDirty = false;
     const q = normalizeSearchText(elProjListSearch?.value ?? "");
 
     // On liste les projets actuellement filtrés (recherche + types + dept si activé)
@@ -949,8 +956,15 @@ function amountNumber(v) {
   }
 
   function openProjectFromList(pid) {
+    const p = allProjects.find((x) => projectId(x) === pid);
     const marker = projectIdToMarker.get(pid);
-    if (!marker) return;
+
+    if (!marker) {
+      clearSelectedMarker();
+      if (p) showPanel(p);
+      if (elProjListMenu) elProjListMenu.hidden = true;
+      return;
+    }
 
     const ll = marker.getLatLng();
     setSelectedMarker(marker);
@@ -958,7 +972,6 @@ function amountNumber(v) {
     const targetZoom = Math.max(map.getZoom(), 14);
     map.flyTo([ll.lat, ll.lng], targetZoom, { duration: 0.6 });
 
-    const p = allProjects.find(x => projectId(x) === pid);
     if (p) showPanel(p);
 
     if (elProjListMenu) elProjListMenu.hidden = true;
@@ -969,13 +982,14 @@ function amountNumber(v) {
 
     const pid = projectId(p);
     const ll = projectLatLon(p);
-    const marker = pid ? projectIdToMarker.get(pid) : null;
-
-    if (marker) setSelectedMarker(marker);
-    else clearSelectedMarker();
 
     selectedAntenna = null;
+    renderMarkers();
     updateDeptStyle();
+
+    const marker = pid ? projectIdToMarker.get(pid) : null;
+    if (marker) setSelectedMarker(marker);
+    else clearSelectedMarker();
 
     if (ll) {
       const targetZoom = Math.max(map.getZoom(), 14);
@@ -1187,11 +1201,29 @@ function amountNumber(v) {
     return match ? Number(match[0]) : null;
   }
 
+  function updateCompletedYearBounds(projects) {
+    const years = [];
+    for (const p of Array.isArray(projects) ? projects : []) {
+      const startYear = projectStartYear(p);
+      const endYear = projectEndYear(p);
+      if (Number.isFinite(startYear)) years.push(startYear);
+      if (Number.isFinite(endYear)) years.push(endYear);
+    }
+
+    if (years.length) {
+      COMPLETED_YEAR_MIN = Math.min(2008, ...years);
+      COMPLETED_YEAR_MAX = Math.max(2024, ...years);
+    }
+
+    completedYearFilter = clampCompletedYear(completedYearFilter);
+    updateCompletedYearFilterUi();
+  }
+
   function isProjectPresentInYear(p, year) {
     const startYear = projectStartYear(p);
     const endYear = projectEndYear(p);
 
-    if (startYear == null && endYear == null) return year <= COMPLETED_YEAR_MIN;
+    if (startYear == null && endYear == null) return true;
     if (startYear == null) return year <= endYear;
     if (endYear == null) return startYear <= year;
 
@@ -1319,7 +1351,8 @@ marker.on("click", (e) => {
 
     if (elCount) elCount.textContent = String(list.length);
     filteredCounts = computeFilteredCounts();
-    buildProjectList();
+    projectListDirty = true;
+    if (elProjListMenu && !elProjListMenu.hidden) buildProjectList();
     updateDeptStyle();
     updateClearButtonState();
   }
@@ -1327,29 +1360,6 @@ marker.on("click", (e) => {
   // ---- Panel ----
 
   // ---- Photos (panel) ----
-  function renderPhotosHtml(photos, title) {
-    if (!Array.isArray(photos) || photos.length === 0) return "";
-    const safeTitle = title ? escapeHtml(String(title)) : "Photo";
-    const items = photos
-      .filter((x) => typeof x === "string" && x.trim().length > 0)
-      .map((src, i) => {
-        const s = src.trim();
-        const alt = `${safeTitle} — ${i + 1}`;
-        // onerror: cache l’image si le fichier n’existe pas (suppression côté repo)
-        return `<img class="projPhoto" src="${escapeAttr(s)}" alt="${escapeAttr(alt)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'">`;
-      })
-      .join("");
-    if (!items) return "";
-    return `
-      <div class="projPhotos" style="margin-top:16px;">
-        <div class="projPhotosTitle" style="font-weight:800;font-size:22px;transition:none;animation:none;transform:none;">Photos</div>
-        <div class="projPhotosGrid">
-          ${items}
-        </div>
-      </div>
-    `;
-  }
-
   let lightboxEl = null;
   let lightboxItems = [];
   let lightboxIndex = 0;
@@ -1502,7 +1512,7 @@ marker.on("click", (e) => {
     html += `</div>`;
     html += `<div class="panelActions">`;
     html += `<button id="panelPrint" class="panelPrint" type="button" aria-label="Imprimer le projet">Imprimer</button>`;
-    html += `<button id="panelClose" class="panelClose" aria-label="Fermer">✕</button>`;
+    html += `<button id="panelClose" class="panelClose" type="button" aria-label="Fermer">✕</button>`;
     html += `</div>`;
     html += `</div>`;
 
@@ -1603,13 +1613,6 @@ marker.on("click", (e) => {
     return Number.isFinite(num) ? num : null;
   }
 
-  function formatMetricValue(value) {
-    if (!Number.isFinite(value)) return "—";
-    return new Intl.NumberFormat("fr-FR", {
-      maximumFractionDigits: 1
-    }).format(value);
-  }
-
   function normalizeBuildingType(value) {
     return normalizeForLookup(value)
       .replace(/\//g, " ")
@@ -1643,11 +1646,11 @@ marker.on("click", (e) => {
     const fmt = (n) => new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 }).format(n);
     return [
       { letter: "A", label: `≤ ${fmt(bounds[0])}` },
-      { letter: "B", label: `${fmt(bounds[0] + 1)} à ${fmt(bounds[1])}` },
-      { letter: "C", label: `${fmt(bounds[1] + 1)} à ${fmt(bounds[2])}` },
-      { letter: "D", label: `${fmt(bounds[2] + 1)} à ${fmt(bounds[3])}` },
-      { letter: "E", label: `${fmt(bounds[3] + 1)} à ${fmt(bounds[4])}` },
-      { letter: "F", label: `${fmt(bounds[4] + 1)} à ${fmt(bounds[5])}` },
+      { letter: "B", label: `> ${fmt(bounds[0])} à ${fmt(bounds[1])}` },
+      { letter: "C", label: `> ${fmt(bounds[1])} à ${fmt(bounds[2])}` },
+      { letter: "D", label: `> ${fmt(bounds[2])} à ${fmt(bounds[3])}` },
+      { letter: "E", label: `> ${fmt(bounds[3])} à ${fmt(bounds[4])}` },
+      { letter: "F", label: `> ${fmt(bounds[4])} à ${fmt(bounds[5])}` },
       { letter: "G", label: `> ${fmt(bounds[5])}` }
     ];
   }
@@ -1999,7 +2002,6 @@ marker.on("click", (e) => {
 
     try {
       const r = await fetch(url, {
-        cache: "no-cache",
         headers: { Accept: "application/json" },
         signal: ctrl.signal
       });
@@ -2074,7 +2076,7 @@ marker.on("click", (e) => {
       e.stopPropagation();
       elProjListMenu.hidden = !elProjListMenu.hidden;
       if (!elProjListMenu.hidden) {
-        buildProjectList();
+        if (projectListDirty) buildProjectList();
         elProjListSearch?.focus();
       }
     });
@@ -2117,7 +2119,10 @@ marker.on("click", (e) => {
 
       if (completedResult.status !== "fulfilled") {
         console.warn("Impossible de charger les projets finis :", completedResult.reason);
+        showStatus("Les projets finis n’ont pas pu être chargés. Les projets en cours restent disponibles.");
       }
+
+      updateCompletedYearBounds(projectsByMode.completed);
 
       enrichProjectsWithDepartments(projectsByMode.current);
       enrichProjectsWithDepartments(projectsByMode.completed);
@@ -2132,6 +2137,6 @@ marker.on("click", (e) => {
   })();
 
   function escapeAttr(s) {
-    return escapeHtml(s).replace(/"/g, "&quot;");
+    return escapeHtml(s);
   }
 })();
