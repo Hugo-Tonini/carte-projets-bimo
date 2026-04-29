@@ -11,7 +11,7 @@
   });
 
   // ---- Configuration ----
-  const DATA_VERSION = "2026-04-29b";
+  const DATA_VERSION = "2026-04-29c";
   const CURRENT_PROJECTS_URL = `export_projets_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const COMPLETED_PROJECTS_URL = `export_projets_finis_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const DEPTS_URL = `departements.geojson?v=${encodeURIComponent(DATA_VERSION)}`;
@@ -541,6 +541,15 @@
     "yvelines": "Nord-Ouest Île-de-France"
   }));
 
+  const DEPT_TO_ANTENNA_BY_CODE = {
+    "01": "Alpes Centre-Est", "03": "Alpes Centre-Est", "07": "Alpes Centre-Est", "15": "Alpes Centre-Est", "21": "Alpes Centre-Est", "26": "Alpes Centre-Est", "38": "Alpes Centre-Est", "39": "Alpes Centre-Est", "42": "Alpes Centre-Est", "43": "Alpes Centre-Est", "58": "Alpes Centre-Est", "63": "Alpes Centre-Est", "69": "Alpes Centre-Est", "71": "Alpes Centre-Est", "73": "Alpes Centre-Est", "74": "Alpes Centre-Est", "89": "Alpes Centre-Est",
+    "16": "Atlantique Grand-Ouest", "17": "Atlantique Grand-Ouest", "22": "Atlantique Grand-Ouest", "29": "Atlantique Grand-Ouest", "35": "Atlantique Grand-Ouest", "36": "Atlantique Grand-Ouest", "37": "Atlantique Grand-Ouest", "41": "Atlantique Grand-Ouest", "44": "Atlantique Grand-Ouest", "49": "Atlantique Grand-Ouest", "53": "Atlantique Grand-Ouest", "56": "Atlantique Grand-Ouest", "72": "Atlantique Grand-Ouest", "79": "Atlantique Grand-Ouest", "85": "Atlantique Grand-Ouest", "86": "Atlantique Grand-Ouest",
+    "09": "Grand Sud-Ouest", "11": "Grand Sud-Ouest", "12": "Grand Sud-Ouest", "19": "Grand Sud-Ouest", "23": "Grand Sud-Ouest", "24": "Grand Sud-Ouest", "31": "Grand Sud-Ouest", "32": "Grand Sud-Ouest", "33": "Grand Sud-Ouest", "40": "Grand Sud-Ouest", "46": "Grand Sud-Ouest", "47": "Grand Sud-Ouest", "64": "Grand Sud-Ouest", "65": "Grand Sud-Ouest", "66": "Grand Sud-Ouest", "81": "Grand Sud-Ouest", "82": "Grand Sud-Ouest", "87": "Grand Sud-Ouest",
+    "04": "Méditerranée Grand-Sud", "05": "Méditerranée Grand-Sud", "06": "Méditerranée Grand-Sud", "13": "Méditerranée Grand-Sud", "2A": "Méditerranée Grand-Sud", "2B": "Méditerranée Grand-Sud", "30": "Méditerranée Grand-Sud", "34": "Méditerranée Grand-Sud", "48": "Méditerranée Grand-Sud", "83": "Méditerranée Grand-Sud", "84": "Méditerranée Grand-Sud",
+    "08": "Nord-Est", "10": "Nord-Est", "25": "Nord-Est", "51": "Nord-Est", "52": "Nord-Est", "54": "Nord-Est", "55": "Nord-Est", "57": "Nord-Est", "67": "Nord-Est", "68": "Nord-Est", "70": "Nord-Est", "88": "Nord-Est", "90": "Nord-Est",
+    "02": "Nord-Ouest Île-de-France", "14": "Nord-Ouest Île-de-France", "18": "Nord-Ouest Île-de-France", "27": "Nord-Ouest Île-de-France", "28": "Nord-Ouest Île-de-France", "45": "Nord-Ouest Île-de-France", "50": "Nord-Ouest Île-de-France", "59": "Nord-Ouest Île-de-France", "60": "Nord-Ouest Île-de-France", "61": "Nord-Ouest Île-de-France", "62": "Nord-Ouest Île-de-France", "75": "Nord-Ouest Île-de-France", "76": "Nord-Ouest Île-de-France", "77": "Nord-Ouest Île-de-France", "78": "Nord-Ouest Île-de-France", "80": "Nord-Ouest Île-de-France", "91": "Nord-Ouest Île-de-France", "92": "Nord-Ouest Île-de-France", "93": "Nord-Ouest Île-de-France", "94": "Nord-Ouest Île-de-France", "95": "Nord-Ouest Île-de-France"
+  };
+
   const OVERSEAS_AREA_RULES = [
     {
       code: "971",
@@ -587,18 +596,29 @@
   ];
 
   // ---- Map ----
-  const map = L.map("map", { preferCanvas: true }).setView([46.8, 2.5], 6);
+  if (!window.L || typeof L.map !== "function" || typeof L.markerClusterGroup !== "function") {
+    showStatus("Erreur : Leaflet ou MarkerCluster n’est pas chargé. Vérifiez la connexion ou les dépendances CDN.");
+    return;
+  }
+
+  const mapEl = document.getElementById("map");
+  if (!mapEl) {
+    showStatus("Erreur : conteneur de carte introuvable.");
+    return;
+  }
+
+  const map = L.map(mapEl, { preferCanvas: true }).setView([46.8, 2.5], 6);
 
   // Bounds France métropolitaine (approx.) — utilisé pour "dézoomer" à la fermeture du panneau
   const FRANCE_BOUNDS = L.latLngBounds([[41.0, -5.5], [51.6, 9.8]]);
-  function zoomToFrance(){
-  // Animation douce (au lieu d'une "téléportation")
-  if (typeof map.flyToBounds === "function") {
-    map.flyToBounds(FRANCE_BOUNDS, { padding: [20, 20], duration: 0.6 });
-  } else {
-    map.fitBounds(FRANCE_BOUNDS, { padding: [20, 20] });
+  function zoomToFrance() {
+    // Animation douce (au lieu d'une "téléportation")
+    if (typeof map.flyToBounds === "function") {
+      map.flyToBounds(FRANCE_BOUNDS, { padding: [20, 20], duration: 0.6 });
+    } else {
+      map.fitBounds(FRANCE_BOUNDS, { padding: [20, 20] });
+    }
   }
-}
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "© OpenStreetMap",
     maxZoom: 19
@@ -689,10 +709,10 @@ clusters.on("clustermouseout", (a) => {
     ];
 
     let html = "";
-    html += `<div class="panelHeader" style="position:sticky;top:0;z-index:50;background:rgba(255,255,255,0.95);backdrop-filter:blur(6px);padding:12px 12px 10px;border-bottom:1px solid rgba(0,0,0,0.08);">`;
-    html += `<h2 class="panelTitle" style="font-size:32px;line-height:1.1;margin:0;">${escapeHtml(title)}</h2>`;
+    html += `<div class="panelHeader panelHeader--office">`;
+    html += `<h2 class="panelTitle panelTitle--office">${escapeHtml(title)}</h2>`;
     html += `<div class="panelActions">`;
-    html += `<button id="panelPrint" class="panelPrint" type="button" aria-label="Imprimer le projet">Imprimer</button>`;
+    html += `<button id="panelPrint" class="panelPrint" type="button" aria-label="Imprimer cette fiche">Imprimer</button>`;
     html += `<button id="panelClose" class="panelClose" type="button" aria-label="Fermer">✕</button>`;
     html += `</div>`;
     html += `</div>`;
@@ -700,7 +720,7 @@ clusters.on("clustermouseout", (a) => {
 
     if (o.type_lieu === "antenne" && o.antenne) {
       const antennaProjects = getProjectsForAntenna(o.antenne);
-      html += `<div class="panelSubTitle" style="margin-top:20px;font-weight:800;font-size:22px;letter-spacing:.02em;transition:none;animation:none;transform:none;">Projets</div>`;
+      html += `<div class="panelSubTitle panelSubTitle--office">Projets</div>`;
 
       if (antennaProjects.length) {
         html += `<div class="officeProjectsList">`;
@@ -857,7 +877,7 @@ clusters.on("clustermouseout", (a) => {
     const s = String(v ?? "").trim();
     if (!s) return "";
     // enlève espaces / symbole €, accepte virgule
-    const cleaned = s.replace(/\s/g, "").replace(/€/g, "").replace(",", ".");
+    const cleaned = s.replace(/\s/g, "").replace(/€/g, "").replace(/,/g, ".");
     const n = Number(cleaned);
     if (!Number.isFinite(n)) return s;
     return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
@@ -1150,7 +1170,7 @@ function amountNumber(v) {
       if (/^(\d{2}|\d{3}|2A|2B)$/.test(existingCode)) {
         p.__deptCode = existingCode;
         p.__deptName = String(p.__deptName ?? p["Nom département"] ?? deptCodeToName[existingCode] ?? p.__deptName ?? "").trim();
-        p.__searchBlob = normalizeSearchText(Object.values(p).join(" "));
+        p.__searchBlob = buildProjectSearchBlob(p);
         continue;
       }
 
@@ -1165,7 +1185,7 @@ function amountNumber(v) {
         p.__deptName = inferred.name;
       }
 
-      p.__searchBlob = normalizeSearchText(Object.values(p).join(" "));
+      p.__searchBlob = buildProjectSearchBlob(p);
     }
   }
 
@@ -1187,6 +1207,32 @@ function amountNumber(v) {
     if (rawName) return rawName;
     const code = deptCodeFromProject(p);
     return code ? String(deptCodeToName[code] ?? "").trim() : "";
+  }
+
+  function buildProjectSearchBlob(p) {
+    const values = [
+      projectId(p),
+      p?.["Nom de projet"], p?.nom,
+      p?.["Adresse"], p?.adresse,
+      projectCity(p),
+      p?.["Client"], p?.client,
+      p?.["Type de projet"], p?.type,
+      p?.["Type de montage"], p?.type_montage,
+      p?.["Montant"], p?.montant,
+      p?.["Antenne"], p?.antenne,
+      p?.["Phase projet"], p?.phase,
+      p?.["Programme"], p?.programme,
+      p?.["Début"], p?.debut, p?.["Debut"], p?.deb,
+      p?.["Fin"], p?.fin,
+      p?.["Thématique"], p?.thematique,
+      p?.["CP principal"], p?.cp_principal, p?.cp,
+      p?.["Acheteur"], p?.acheteur,
+      p?.["CED principal"], p?.ced_principal, p?.ced,
+      p?.["Région"], p?.region,
+      p?.["Nom département"], p?.["Département"], p?.departement,
+      p?.__deptName, p?.__deptCode
+    ];
+    return normalizeSearchText(values.filter((value) => value != null && String(value).trim()).join(" "));
   }
 
   function projectStartYear(p) {
@@ -1240,7 +1286,7 @@ function amountNumber(v) {
     if (types.length && !types.some((x) => t.includes(x))) return false;
 
     if (q) {
-      const blob = p.__searchBlob || normalizeSearchText(Object.values(p).join(" "));
+      const blob = p.__searchBlob || buildProjectSearchBlob(p);
       if (!blob.includes(q)) return false;
     }
 
@@ -1505,13 +1551,13 @@ marker.on("click", (e) => {
     const energyHtml = renderEnergySection(p);
 
     let html = "";
-    html += `<div class="panelHeader" style="position:sticky;top:0;z-index:50;background:rgba(255,255,255,0.95);backdrop-filter:blur(6px);padding:12px 12px 10px;border-bottom:1px solid rgba(0,0,0,0.08);">`;
+    html += `<div class="panelHeader">`;
     html += `<div class="panelHeaderTitleWrap">`;
-    html += `<h2 class="panelTitle" style="font-size:32px;line-height:1.1;margin:0;">${escapeHtml(title)}</h2>`;
+    html += `<h2 class="panelTitle">${escapeHtml(title)}</h2>`;
     html += `<img class="printProjectLogo" src="assets/logo-ministere.png" alt="Ministères économiques et financiers – Secrétariat général">`;
     html += `</div>`;
     html += `<div class="panelActions">`;
-    html += `<button id="panelPrint" class="panelPrint" type="button" aria-label="Imprimer le projet">Imprimer</button>`;
+    html += `<button id="panelPrint" class="panelPrint" type="button" aria-label="Imprimer cette fiche">Imprimer</button>`;
     html += `<button id="panelClose" class="panelClose" type="button" aria-label="Fermer">✕</button>`;
     html += `</div>`;
     html += `</div>`;
@@ -1960,7 +2006,7 @@ marker.on("click", (e) => {
       if (code && key) {
         deptNameToCode.set(key, code);
         deptCodeToName[code] = String(nameRaw || "").trim();
-        const antenna = DEPT_TO_ANTENNA_BY_NAME.get(key) || "";
+        const antenna = DEPT_TO_ANTENNA_BY_CODE[code] || DEPT_TO_ANTENNA_BY_NAME.get(key) || "";
         if (antenna) deptCodeToAntenna[code] = antenna;
       }
 
