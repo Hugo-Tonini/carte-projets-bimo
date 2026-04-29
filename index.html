@@ -13,14 +13,14 @@
   <link rel="preload" href="assets/fonts/Marianne-Bold.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/fonts/Marianne-ExtraBold.woff2" as="font" type="font/woff2" crossorigin />
 
-  <link rel="stylesheet" href="style.css?v=2026-04-23c" />
+  <link rel="stylesheet" href="style.css?v=2026-04-29a" />
 </head>
-
 <body>
   <header class="topbar">
     <div class="topbarHeader">
       <div class="titleRow">
         <h1 id="pageTitle">Carte des projets en cours du BIMO</h1>
+
         <div class="titleStats" aria-live="polite">
           <span id="statCount">0</span> projet(s)
           <span id="statDept" class="statDept"></span>
@@ -34,7 +34,6 @@
     </div>
 
     <div id="toolbar" class="toolbar" role="region" aria-label="Filtres">
-
       <fieldset class="types" aria-label="Type de projet">
         <label><input class="typeFilter" type="checkbox" value="MOM" checked /> MOM</label>
         <label><input class="typeFilter" type="checkbox" value="AMO" checked /> AMO</label>
@@ -42,7 +41,6 @@
       </fieldset>
 
       <button id="clear" type="button">Réinitialiser</button>
-
       <button id="projListBtn" type="button">Liste projets</button>
 
       <div id="projectModeSwitch" class="projectModeSwitch" role="group" aria-label="Afficher les projets en cours ou les projets finis">
@@ -52,22 +50,23 @@
 
       <div id="projListMenu" class="projListMenu" hidden>
         <div class="projListTop">
-        <input id="projListSearch" class="projListSearch" type="text" placeholder="Rechercher un projet…" autocomplete="off" />
-        <select id="projListSort" class="projListSort" aria-label="Trier la liste">
-          <option value="name_asc" selected>Nom (A → Z)</option>
-          <option value="name_desc">Nom (Z → A)</option>
-          <option value="amount_desc">Montant (↓)</option>
-          <option value="amount_asc">Montant (↑)</option>
-          <option value="type_asc">Type (A → Z)</option>
-          <option value="antenna_asc">Antenne (A → Z)</option>
-        </select>
-      </div>
+          <input id="projListSearch" class="projListSearch" type="text" placeholder="Rechercher un projet…" autocomplete="off" />
+          <select id="projListSort" class="projListSort" aria-label="Trier la liste">
+            <option value="name_asc" selected>Nom (A → Z)</option>
+            <option value="name_desc">Nom (Z → A)</option>
+            <option value="amount_desc">Montant (↓)</option>
+            <option value="amount_asc">Montant (↑)</option>
+            <option value="type_asc">Type (A → Z)</option>
+            <option value="antenna_asc">Antenne (A → Z)</option>
+          </select>
+        </div>
+
         <div class="projListHead">
           <span>Nom</span><span>Type</span><span>Montant</span><span>Antenne</span>
         </div>
+
         <div id="projListItems" class="projListItems"></div>
       </div>
-
 
       <div class="brand" aria-label="Ministères économiques et financiers">
         <img class="brandLogo" src="assets/logo-ministere.png" alt="Ministères économiques et financiers – Secrétariat général" />
@@ -77,7 +76,6 @@
 
   <main id="layout" class="layout">
     <div id="map" class="map" role="application" aria-label="Carte"></div>
-
     <aside id="panel" class="panel" aria-label="Détails du projet"></aside>
 
     <div id="legend" class="legend" aria-label="Légende antennes" hidden>
@@ -89,7 +87,6 @@
       <div class="legend-row"><span class="pin-swatch" style="border-color:blue;"></span><span>MOM</span></div>
       <div class="legend-row"><span class="pin-swatch" style="border-color:green;"></span><span>EXP</span></div>
       <div class="legend-row"><span class="pin-swatch" style="border-color:yellow;"></span><span>Autres</span></div>
-
     </div>
 
     <div id="status" class="status" aria-live="polite" hidden></div>
@@ -97,7 +94,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-
   <script src="script.js?v=2026-04-23a"></script>
 </body>
 </html>
