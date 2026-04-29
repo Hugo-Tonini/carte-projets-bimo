@@ -17,7 +17,7 @@ html, body{ font-family:"Marianne", Arial, system-ui, -apple-system, Segoe UI, R
 /* Base */
 :root{
   --border: #d0d0d0;
-  --shadow: rgba(0,0,0,0.14);
+  --shadow: rgba(0,0,0,0.14);a
   --bg: #ffffff;
   --muted: #666;
   --accent: #000091;
@@ -1123,42 +1123,38 @@ select:focus-visible,
 }
 
 .kv--project .kvRow--phase{
-  display:block;
-  margin:0;
-  padding:0;
+  grid-template-columns:1fr;
+  gap:2px;
+  align-items:start;
+  margin-top:0;
+  margin-bottom:0;
 }
 
 .kv--project .kvRow--phase .kvKey{
-  display:block;
-  margin:0 0 4px 0;
-  line-height:1.1;
+  margin:0;
+  line-height:1.05;
 }
 
 .kv--project .kvVal--phase{
-  display:block;
   width:100%;
-  max-width:100%;
   overflow:visible;
   margin:0;
-  padding:0;
   line-height:1;
-  justify-self:stretch;
 }
 
 .phaseStepperWrap{
-  display:block;
   width:100%;
   margin:0;
   padding:0;
+  display:block;
 }
 
 .phaseStepper{
   display:flex;
   align-items:stretch;
   width:100%;
-  max-width:100%;
-  margin:0;
   padding:0;
+  margin:0;
   overflow:visible;
 }
 
@@ -1170,7 +1166,7 @@ select:focus-visible,
   align-items:center;
   justify-content:center;
   min-height:34px;
-  padding:0 18px;
+  padding:0 24px;
   text-align:center;
   font-size:14px;
   line-height:1;
@@ -1186,13 +1182,13 @@ select:focus-visible,
 
 .phaseStep:first-child{
   clip-path:polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%);
-  padding-left:16px;
+  padding-left:18px;
 }
 
-.phaseStep--definition{ background:#ffad33; }
-.phaseStep--conception{ background:#fff01f; color:#111; }
-.phaseStep--realisation{ background:#62dd50; color:#111; }
-.phaseStep--gpa{ background:#18b957; color:#111; }
+.phaseStep--definition{ background:#ffb347; }
+.phaseStep--conception{ background:#f0e333; color:#111; }
+.phaseStep--realisation{ background:#6edb5f; color:#111; }
+.phaseStep--gpa{ background:#25b45b; color:#111; }
 
 .phaseStep.is-upcoming{
   opacity:0.55;
@@ -1218,6 +1214,7 @@ select:focus-visible,
   .phaseStepper{
     flex-wrap:wrap;
     gap:6px;
+    padding:0;
   }
 
   .phaseStep{
@@ -1654,34 +1651,21 @@ select:focus-visible,
     font-size:10.5pt !important;
   }
   .kv--project .kvRow--phase{
-    display:block !important;
-    margin:0 !important;
-    padding:0 !important;
-  }
-  .kv--project .kvRow--phase .kvKey{
-    display:block !important;
-    margin:0 0 1.2mm 0 !important;
-    line-height:1.1 !important;
-  }
-  .kv--project .kvVal--phase{
-    display:block !important;
-    width:100% !important;
-    max-width:100% !important;
-    margin:0 !important;
-    padding:0 !important;
-    line-height:1 !important;
+    grid-template-columns:1fr !important;
+    gap:0.8mm !important;
+    margin-top:0 !important;
+    margin-bottom:0 !important;
   }
   .phaseStepper{
     display:flex !important;
     gap:0 !important;
-    width:100% !important;
-    margin:0 !important;
     padding:0 !important;
+    margin:0 !important;
   }
   .phaseStep{
-    min-height:7.4mm !important;
-    padding:0 4mm !important;
-    font-size:9.2pt !important;
+    min-height:7.6mm !important;
+    padding:0 5mm !important;
+    font-size:9.5pt !important;
     color:#111 !important;
     white-space:nowrap !important;
     transform:none !important;
@@ -1972,48 +1956,45 @@ body{
   cursor: not-allowed;
 }
 
-/* ===== Correctif final : frise Phase projet compacte sous le libellé ===== */
-.kv--project .kvRow--phase{
-  display:flex !important;
-  flex-direction:column !important;
+
+/* ===== Correctif définitif : Phase projet sous le libellé, pleine largeur, sans espace vide ===== */
+.kv--project .kvRow--phaseLabel{
+  display:block !important;
   grid-template-columns:none !important;
-  gap:3px !important;
-  align-items:stretch !important;
-  width:100% !important;
-  margin-top:-4px !important;
-  margin-bottom:-4px !important;
+  gap:0 !important;
+  margin:0 !important;
   padding:0 !important;
+  min-height:0 !important;
+  line-height:1 !important;
 }
 
-.kv--project .kvRow--phase .kvKey{
+.kv--project .kvRow--phaseLabel .kvKey{
   display:block !important;
-  width:100% !important;
   margin:0 !important;
   padding:0 !important;
   line-height:1.05 !important;
 }
 
-.kv--project .kvVal--phase{
+.kv--project .phaseFullRow{
   display:block !important;
   width:100% !important;
   max-width:100% !important;
   min-width:0 !important;
-  margin:0 !important;
+  margin:-2px 0 0 0 !important;
   padding:0 !important;
-  line-height:1 !important;
-  justify-self:stretch !important;
-  overflow:visible !important;
+  line-height:0 !important;
 }
 
-.phaseStepperWrap{
+.kv--project .phaseStepperWrap{
   display:block !important;
   width:100% !important;
+  max-width:100% !important;
   margin:0 !important;
   padding:0 !important;
-  line-height:1 !important;
+  line-height:0 !important;
 }
 
-.phaseStepper{
+.kv--project .phaseStepper{
   display:flex !important;
   align-items:stretch !important;
   width:100% !important;
@@ -2025,42 +2006,78 @@ body{
   line-height:1 !important;
 }
 
-.phaseStep{
+.kv--project .phaseStep{
+  position:relative !important;
+  flex:1 1 0 !important;
+  min-width:0 !important;
   height:34px !important;
   min-height:34px !important;
   padding:0 18px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
   font-size:14px !important;
   line-height:1 !important;
+  font-weight:800 !important;
   color:#111 !important;
+  white-space:nowrap !important;
+  text-align:center !important;
+  clip-path:polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%, 16px 50%) !important;
 }
 
-.phaseStep + .phaseStep{
+.kv--project .phaseStep:first-child{
+  clip-path:polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%) !important;
+  padding-left:16px !important;
+}
+
+.kv--project .phaseStep + .phaseStep{
   margin-left:-12px !important;
 }
 
-.phaseStep.is-current{
+.kv--project .phaseStep--definition{ background:#ffad33 !important; }
+.kv--project .phaseStep--conception{ background:#fff01f !important; }
+.kv--project .phaseStep--realisation{ background:#62dd50 !important; }
+.kv--project .phaseStep--gpa{ background:#18b957 !important; }
+
+.kv--project .phaseStep.is-upcoming{
+  opacity:0.55 !important;
+  filter:saturate(0.9) !important;
+}
+
+.kv--project .phaseStep.is-done,
+.kv--project .phaseStep.is-neutral{
+  opacity:1 !important;
+}
+
+.kv--project .phaseStep.is-current{
+  opacity:1 !important;
   outline:5px solid #111 !important;
   outline-offset:1px !important;
   z-index:3 !important;
 }
 
 @media print{
-  .kv--project .kvRow--phase{
-    display:flex !important;
-    flex-direction:column !important;
-    gap:1mm !important;
-    margin-top:0 !important;
-    margin-bottom:0 !important;
+  .kv--project .phaseFullRow{
+    margin:-0.6mm 0 0 0 !important;
   }
 
-  .phaseStepper{
+  .kv--project .phaseStepper{
     height:7.5mm !important;
   }
 
-  .phaseStep{
+  .kv--project .phaseStep{
     height:7.5mm !important;
     min-height:7.5mm !important;
     padding:0 4mm !important;
     font-size:9pt !important;
+  }
+
+  .kv--project .phaseStep + .phaseStep{
+    margin-left:-3mm !important;
+  }
+
+  .kv--project .phaseStep.is-current{
+    outline:2.4pt solid #111 !important;
+    outline-offset:0.6pt !important;
   }
 }
