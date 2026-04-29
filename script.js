@@ -19,7 +19,7 @@
   });
 
   // ---- Configuration ----
-  const DATA_VERSION = "2026-04-29g";
+  const DATA_VERSION = "2026-04-29h";
   const CURRENT_PROJECTS_URL = `export_projets_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const COMPLETED_PROJECTS_URL = `export_projets_finis_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const DEPTS_URL = `departements.geojson?v=${encodeURIComponent(DATA_VERSION)}`;
@@ -107,7 +107,7 @@
     const typeFilters = Array.from(document.querySelectorAll(".typeFilter"));
     const hasTypeFilter = typeFilters.some((cb) => !cb.checked);
     const hasAntennaFilter = !!selectedAntenna;
-    const hasCompletedYearFilter = currentProjectMode === PROJECT_MODES.completed.key && !showAllCompletedProjects;
+    const hasCompletedYearFilter = currentProjectMode === PROJECT_MODES.completed.key && !showAllCompletedProjects && completedYearFilter !== COMPLETED_YEAR_MIN;
     return hasSearch || hasTypeFilter || hasAntennaFilter || hasCompletedYearFilter;
   }
 
@@ -1329,18 +1329,10 @@ clusters.on("clustermouseout", (a) => {
   }
 
   function updateCompletedYearBounds(projects) {
-    const years = [];
-    for (const p of Array.isArray(projects) ? projects : []) {
-      const startYear = projectStartYear(p);
-      const endYear = projectEndYear(p);
-      if (Number.isFinite(startYear)) years.push(startYear);
-      if (Number.isFinite(endYear)) years.push(endYear);
-    }
-
-    if (years.length) {
-      COMPLETED_YEAR_MIN = Math.min(2008, ...years);
-      COMPLETED_YEAR_MAX = Math.max(2024, ...years);
-    }
+    // La frise des projets finis doit rester bornée à la période demandée,
+    // même si certaines données contiennent des dates aberrantes ou hors périmètre.
+    COMPLETED_YEAR_MIN = 2008;
+    COMPLETED_YEAR_MAX = 2024;
 
     completedYearFilter = clampCompletedYear(completedYearFilter);
     updateCompletedYearFilterUi();
