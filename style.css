@@ -378,7 +378,7 @@ h1{ margin: 0; font-size: 20px; }
   backdrop-filter: blur(6px);
   border-bottom: 1px solid rgba(0,0,0,0.08);
 }
-.panelTitle{ margin: 0; font-size: 23px; line-height: 1.2; }
+.panelTitle{ margin: 0; font-size: 28px; line-height: 1.2; }
 
 .panelHeaderTitleWrap{
   display:flex;
