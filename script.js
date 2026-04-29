@@ -10,8 +10,16 @@
     el.hidden = false;
   });
 
+  window.addEventListener("unhandledrejection", (e) => {
+    const el = document.getElementById("status");
+    if (!el) return;
+    const reason = e.reason?.message || e.reason || "Erreur inconnue";
+    el.textContent = `Erreur JS: ${reason}`;
+    el.hidden = false;
+  });
+
   // ---- Configuration ----
-  const DATA_VERSION = "2026-04-29d";
+  const DATA_VERSION = "2026-04-29e";
   const CURRENT_PROJECTS_URL = `export_projets_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const COMPLETED_PROJECTS_URL = `export_projets_finis_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const DEPTS_URL = `departements.geojson?v=${encodeURIComponent(DATA_VERSION)}`;
@@ -392,7 +400,7 @@
     updateDeptStyle();
     updateDeptSelectedStat();
 
-    if (elProjListMenu) elProjListMenu.hidden = true;
+    setProjectListOpen(false);
 
     closePanel();
     setActiveProjectsForMode(modeKey);
@@ -869,6 +877,25 @@ clusters.on("clustermouseout", (a) => {
     elStatus.hidden = !msg;
   }
 
+  function describeLoadError(err) {
+    if (err?.name === "AbortError") return "délai de chargement dépassé";
+    const message = String(err?.message || err || "erreur inconnue").trim();
+    if (!message) return "erreur inconnue";
+    return message.replace(/\?.*?(?=\s|$)/g, "");
+  }
+
+  function setProjectListOpen(open, { focusSearch = false } = {}) {
+    if (!elProjListMenu) return;
+    const isOpen = !!open;
+    elProjListMenu.hidden = !isOpen;
+    if (elProjListBtn) elProjListBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+
+    if (isOpen) {
+      if (projectListDirty) buildProjectList();
+      if (focusSearch) elProjListSearch?.focus();
+    }
+  }
+
   function escapeHtml(s) {
     return String(s)
       .replace(/&/g, "&amp;")
@@ -971,7 +998,7 @@ function amountNumber(v) {
     }
 
     elProjListItems.innerHTML = rows.map(r => `
-      <div class="projListRow" data-pid="${escapeAttr(r.pid)}">
+      <div class="projListRow" data-pid="${escapeAttr(r.pid)}" role="button" tabindex="0" aria-label="Ouvrir ${escapeAttr(r.nom || "ce projet")}">
         <div class="projListName">${escapeHtml(r.nom || "(sans nom)")}</div>
         <div>${escapeHtml(r.typ)}</div>
         <div>${escapeHtml(r.mnt)}</div>
@@ -987,7 +1014,7 @@ function amountNumber(v) {
     if (!marker) {
       clearSelectedMarker();
       if (p) showPanel(p);
-      if (elProjListMenu) elProjListMenu.hidden = true;
+      setProjectListOpen(false);
       return;
     }
 
@@ -999,7 +1026,7 @@ function amountNumber(v) {
 
     if (p) showPanel(p);
 
-    if (elProjListMenu) elProjListMenu.hidden = true;
+    setProjectListOpen(false);
   }
 
   function openProjectFromData(p) {
@@ -2057,7 +2084,11 @@ marker.on("click", (e) => {
       if (!r.ok) throw new Error(`HTTP ${r.status} sur ${url}`);
       const txt = await r.text();
       const clean = txt.replace(/^\uFEFF/, "");
-      return JSON.parse(clean);
+      try {
+        return JSON.parse(clean);
+      } catch (parseErr) {
+        throw new Error(`JSON invalide dans ${url}: ${parseErr.message}`);
+      }
     } finally {
       clearTimeout(t);
     }
@@ -2121,13 +2152,11 @@ marker.on("click", (e) => {
 
   // ---- Liste projets ----
   if (elProjListBtn && elProjListMenu) {
+    elProjListBtn.setAttribute("aria-expanded", "false");
+
     elProjListBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      elProjListMenu.hidden = !elProjListMenu.hidden;
-      if (!elProjListMenu.hidden) {
-        if (projectListDirty) buildProjectList();
-        elProjListSearch?.focus();
-      }
+      setProjectListOpen(elProjListMenu.hidden, { focusSearch: true });
     });
 
     elProjListSearch?.addEventListener("input", buildProjectList);
@@ -2139,13 +2168,22 @@ marker.on("click", (e) => {
       if (pid) openProjectFromList(pid);
     });
 
+    elProjListItems?.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const row = e.target?.closest?.(".projListRow");
+      const pid = row?.getAttribute?.("data-pid");
+      if (!pid) return;
+      e.preventDefault();
+      openProjectFromList(pid);
+    });
+
     document.addEventListener("click", (event) => {
       if (elProjListMenu.hidden) return;
       if (elProjListMenu.contains(event.target) || elProjListBtn.contains(event.target)) return;
-      elProjListMenu.hidden = true;
+      setProjectListOpen(false);
     });
     document.addEventListener("keydown", (ev) => {
-      if (ev.key === "Escape") elProjListMenu.hidden = true;
+      if (ev.key === "Escape") setProjectListOpen(false);
     });
     elProjListMenu.addEventListener("click", (e) => e.stopPropagation());
   }
@@ -2172,7 +2210,7 @@ marker.on("click", (e) => {
 
       if (completedResult.status !== "fulfilled") {
         console.warn("Impossible de charger les projets finis :", completedResult.reason);
-        showStatus("Les projets finis n’ont pas pu être chargés. Les projets en cours restent disponibles.");
+        showStatus(`Les projets finis n’ont pas pu être chargés (${describeLoadError(completedResult.reason)}). Les projets en cours restent disponibles.`);
       }
 
       updateCompletedYearBounds(projectsByMode.completed);
@@ -2185,7 +2223,7 @@ marker.on("click", (e) => {
       renderMarkers();
     } catch (err) {
       console.error(err);
-      showStatus(String(err?.message || err));
+      showStatus(`Erreur de chargement : ${describeLoadError(err)}. Vérifiez les fichiers JSON et la connexion.`);
     }
   })();
 
