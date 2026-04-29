@@ -1906,6 +1906,80 @@ marker.on("click", (e) => {
     `;
   }
 
+  function normalizePhaseProjectValue(value) {
+    return String(value ?? "")
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+  }
+
+  function getProjectPhaseKey(value) {
+    const normalized = normalizePhaseProjectValue(value);
+    if (!normalized) return "";
+    if (normalized.includes("gpa")) return "gpa";
+    if (
+      normalized.includes("realisation") ||
+      normalized.includes("realisation") ||
+      normalized.includes("construction") ||
+      normalized.includes("execution") ||
+      normalized.includes("travaux")
+    ) return "realisation";
+    if (
+      normalized.includes("conception") ||
+      normalized.includes("etudes") ||
+      normalized.includes("etude")
+    ) return "conception";
+    if (
+      normalized.includes("definition") ||
+      normalized.includes("programmation") ||
+      normalized.includes("faisabilite")
+    ) return "definition";
+    return "";
+  }
+
+  function renderProjectPhase(value) {
+    const raw = String(value ?? "").trim();
+    if (!raw) return "";
+
+    const steps = [
+      { key: "definition", label: "Définition" },
+      { key: "conception", label: "Conception" },
+      { key: "realisation", label: "Réalisation" },
+      { key: "gpa", label: "GPA" }
+    ];
+
+    const currentKey = getProjectPhaseKey(raw);
+    const currentIndex = steps.findIndex((step) => step.key === currentKey);
+
+    const items = steps.map((step, index) => {
+      const classes = ["phaseStep", `phaseStep--${step.key}`];
+      if (currentIndex === -1) {
+        classes.push("is-neutral");
+      } else if (index < currentIndex) {
+        classes.push("is-done");
+      } else if (index === currentIndex) {
+        classes.push("is-current");
+      } else {
+        classes.push("is-upcoming");
+      }
+      return `<span class="${classes.join(" ")}">${escapeHtml(step.label)}</span>`;
+    }).join("");
+
+    const caption = currentKey
+      ? `<div class="phaseStepperCaption">Phase actuelle : <strong>${escapeHtml(steps[currentIndex].label)}</strong></div>`
+      : `<div class="phaseStepperCaption">Valeur source : <strong>${escapeHtml(raw)}</strong></div>`;
+
+    return `
+      <div class="phaseStepperWrap" aria-label="Phase projet">
+        <div class="phaseStepper" role="img" aria-label="Phase projet : ${escapeHtml(raw)}">
+          ${items}
+        </div>
+        ${caption}
+      </div>`;
+  }
+
   // Génère le bloc d'infos du panneau avec les classes attendues par le CSS (kv/kvRow/kvKey/kvVal)
   function buildKv(fields) {
     let html = `<div class="kv kv--project">`;
@@ -1914,10 +1988,14 @@ marker.on("click", (e) => {
       const s = String(value).trim();
       if (!s) continue;
 
+      const isPhase = label === "Phase projet";
+      const rowClass = isPhase ? "kvRow kvRow--phase" : "kvRow";
+      const valueHtml = isPhase ? renderProjectPhase(s) : escapeHtml(s);
+
       html += `
-        <div class="kvRow">
+        <div class="${rowClass}">
           <div class="kvKey">${escapeHtml(label)} :</div>
-          <div class="kvVal">${escapeHtml(s)}</div>
+          <div class="kvVal${isPhase ? ' kvVal--phase' : ''}">${valueHtml}</div>
         </div>`;
     }
     html += `</div>`;
