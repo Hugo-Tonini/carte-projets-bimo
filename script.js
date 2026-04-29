@@ -11,7 +11,7 @@
   });
 
   // ---- Configuration ----
-  const DATA_VERSION = "2026-04-29c";
+  const DATA_VERSION = "2026-04-29d";
   const CURRENT_PROJECTS_URL = `export_projets_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const COMPLETED_PROJECTS_URL = `export_projets_finis_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const DEPTS_URL = `departements.geojson?v=${encodeURIComponent(DATA_VERSION)}`;
@@ -90,6 +90,7 @@
   function clearAntennaFocus() {
     selectedAntenna = null;
     updateDeptStyle();
+    updateDeptSelectedStat();
   }
 
   function hasActiveFilters() {
@@ -362,10 +363,13 @@
 
   function ensureProjectIds(projects, modeKey) {
     return projects.map((project, index) => {
-      const existingId = String(project["Code projet"] ?? project.code_projet ?? project.codeProjet ?? project.id ?? "").trim();
-      project.__projectMode = modeKey;
-      project.__projectId = existingId || `${modeKey}-${index + 1}`;
-      return project;
+      const source = project && typeof project === "object" ? project : {};
+      const existingId = String(source["Code projet"] ?? source.code_projet ?? source.codeProjet ?? source.id ?? "").trim();
+      return {
+        ...source,
+        __projectMode: modeKey,
+        __projectId: existingId || `${modeKey}-${index + 1}`
+      };
     });
   }
 
@@ -802,6 +806,7 @@ clusters.on("clustermouseout", (a) => {
         if (o.type_lieu === "antenne" && o.antenne) {
           selectedAntenna = o.antenne;
           updateDeptStyle();
+          updateDeptSelectedStat();
           renderMarkers(); // n'afficher que les projets de l'antenne
         } else {
           clearAntennaFocus();
@@ -1006,6 +1011,7 @@ function amountNumber(v) {
     selectedAntenna = null;
     renderMarkers();
     updateDeptStyle();
+    updateDeptSelectedStat();
 
     const marker = pid ? projectIdToMarker.get(pid) : null;
     if (marker) setSelectedMarker(marker);
@@ -1383,6 +1389,7 @@ marker.on("click", (e) => {
         // En cliquant sur un projet, on enlève le focus antenne (si présent)
         selectedAntenna = null;
         updateDeptStyle();
+        updateDeptSelectedStat();
         updateClearButtonState();
 
         // Zoom/centrage sur le pin cliqué
@@ -1572,13 +1579,13 @@ marker.on("click", (e) => {
     if (resumeTxt) {
       const safe = escapeHtml(resumeTxt).replace(/\n/g, "<br>");
       html += `
-        <div class="panelSubTitle" style="margin-top:12px;font-weight:800;font-size:22px;letter-spacing:.02em;transition:none;animation:none;transform:none;">Résumé</div>
-        <div class="panelResumeText" style="border-top:1px solid var(--border);padding-top:10px;">${safe}</div>
+        <div class="panelSubTitle panelSubTitle--project panelSubTitle--resume">Résumé</div>
+        <div class="panelResumeText panelSectionBody">${safe}</div>
       `;
     }
 
     html += `<section class="panelSection panelSection--general">`;
-    html += `<div class="panelSubTitle panelSectionTitle panelSectionTitle--general" style="margin-top:18px;font-weight:800;font-size:22px;letter-spacing:.02em;transition:none;animation:none;transform:none;">`;
+    html += `<div class="panelSubTitle panelSubTitle--project panelSectionTitle panelSectionTitle--general">`;
     html += `<span class="screenOnlyInline">Informations générales</span><span class="printOnlyInline">Informations générales</span>`;
     html += `</div>`;
     html += buildKv(fieldsMain);
@@ -1588,7 +1595,7 @@ marker.on("click", (e) => {
     const hasContacts = fieldsContacts.some(([, v]) => v !== undefined && v !== null && String(v).trim() !== "");
     if (hasContacts) {
       html += `<section class="panelSection panelSection--contacts">`;
-      html += `<div class="panelSubTitle panelSectionTitle panelSectionTitle--contacts" style="margin-top:20px;font-weight:800;font-size:22px;letter-spacing:.02em;transition:none;animation:none;transform:none;">Contacts</div>`;
+      html += `<div class="panelSubTitle panelSubTitle--project panelSectionTitle panelSectionTitle--contacts">Contacts</div>`;
       html += buildKv(fieldsContacts);
       html += `</section>`;
     }
@@ -1809,10 +1816,10 @@ marker.on("click", (e) => {
 
     return `
       <section class="panelSection panelSection--energy">
-        <div class="panelSubTitle panelSectionTitle panelSectionTitle--energy" style="margin-top:20px;font-weight:800;font-size:22px;transition:none;animation:none;transform:none;letter-spacing:.02em;">
+        <div class="panelSubTitle panelSubTitle--project panelSectionTitle panelSectionTitle--energy">
           <span class="screenOnlyInline">Informations énergétiques</span><span class="printOnlyInline">Informations énergétiques</span>
         </div>
-        <div style="border-top:1px solid var(--border);padding-top:10px;">
+        <div class="panelSectionBody">
         <div class="energyLegendInline" aria-label="Légende des repères">
           <span class="energyLegendInlineItem">
             <span class="energyLegendMiniMarker energyLegendMiniMarker--before" aria-hidden="true"><svg class="energyLegendMiniMarkerSvg" viewBox="0 0 28 14" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true"><polygon points="7,0 28,0 28,14 7,14 0,7" fill="#111"/></svg></span>
@@ -1834,19 +1841,16 @@ marker.on("click", (e) => {
 
   // Génère le bloc d'infos du panneau avec les classes attendues par le CSS (kv/kvRow/kvKey/kvVal)
   function buildKv(fields) {
-    let html = `<div class="kv" style="color:#000;">`;
+    let html = `<div class="kv kv--project">`;
     for (const [label, value] of fields) {
       if (value === undefined || value === null) continue;
       const s = String(value).trim();
       if (!s) continue;
 
-      // Mise en forme demandée :
-      // - libellés un peu plus grands + gras
-      // - valeurs centrées
       html += `
-        <div class="kvRow" style="display:grid;grid-template-columns: 0.64fr 1fr;gap:12px;align-items:center;">
-          <div class="kvKey" style="color:#000;font-weight:700;font-size:13px;line-height:1.25;">${escapeHtml(label)} :</div>
-          <div class="kvVal" style="color:#000;text-align:left;justify-self:start;line-height:1.25;">${escapeHtml(s)}</div>
+        <div class="kvRow">
+          <div class="kvKey">${escapeHtml(label)} :</div>
+          <div class="kvVal">${escapeHtml(s)}</div>
         </div>`;
     }
     html += `</div>`;
@@ -1855,7 +1859,7 @@ marker.on("click", (e) => {
 
   // ---- Photos (dans le panneau projet) ----
   function getProjectPhotos(p) {
-    const v = (p && (p.photos ?? p["photos"])) ?? [];
+    const v = p?.photos ?? [];
     return Array.isArray(v) ? v.filter(Boolean) : [];
   }
 
@@ -1873,8 +1877,8 @@ marker.on("click", (e) => {
       })
       .join("");
     return `
-      <div class="projPhotos" style="margin-top:16px;">
-        <div class="projPhotosTitle" style="font-weight:800;font-size:22px;transition:none;animation:none;transform:none;">Photos</div>
+      <div class="projPhotos">
+        <div class="projPhotosTitle">Photos</div>
         <div class="projPhotosGrid">
           ${items}
         </div>
@@ -2037,12 +2041,11 @@ marker.on("click", (e) => {
 
   function updateDeptSelectedStat() {
     if (!elStatDept) return;
-    elStatDept.textContent = "";
+    elStatDept.textContent = selectedAntenna ? ` — ${selectedAntenna}` : "";
   }
 
   // ---- Fetch robuste ----
   async function fetchJson(url, { timeoutMs = 15000 } = {}) {
-    showStatus("");
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort("timeout"), timeoutMs);
 
@@ -2136,7 +2139,11 @@ marker.on("click", (e) => {
       if (pid) openProjectFromList(pid);
     });
 
-    document.addEventListener("click", () => { elProjListMenu.hidden = true; });
+    document.addEventListener("click", (event) => {
+      if (elProjListMenu.hidden) return;
+      if (elProjListMenu.contains(event.target) || elProjListBtn.contains(event.target)) return;
+      elProjListMenu.hidden = true;
+    });
     document.addEventListener("keydown", (ev) => {
       if (ev.key === "Escape") elProjListMenu.hidden = true;
     });
