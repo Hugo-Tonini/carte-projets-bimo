@@ -511,11 +511,11 @@ h1{ margin: 0; font-size: 20px; }
 }
 
 .dpeScale{
-  --dpe-base-width: 150px;
-  --dpe-width-step: 34px;
+  --dpe-base-width: 128px;
+  --dpe-width-step: 29px;
   --dpe-row-height: 30px;
   --dpe-arrow-width: 18px;
-  --dpe-max-width: 354px;
+  --dpe-max-width: 301px;
   --dpe-marker-col-width: 70px;
   --dpe-gap-to-markers: 26px;
   justify-items:start;
@@ -802,6 +802,18 @@ h1{ margin: 0; font-size: 20px; }
   border: 4px solid blue;
   box-sizing: border-box;
   display: inline-block;
+}
+.pin-swatch.pin-swatch--autres,
+.pin-swatch.pin-swatch--other,
+.pin-swatch[data-type="autres"],
+.pin-swatch[data-type="other"]{
+  border-color:#D946EF !important;
+}
+.legend-row .pin-swatch[style*="orange"],
+.legend-row .pin-swatch[style*="#FF4B08"],
+.legend-row .pin-swatch[style*="#ff8c00"],
+.legend-row .pin-swatch[style*="#A855F7"]{
+  border-color:#D946EF !important;
 }
 
 /* ===== Status / errors ===== */
@@ -2017,7 +2029,7 @@ body{
   display:flex !important;
   align-items:center !important;
   justify-content:center !important;
-  font-size:14px !important;
+  font-size:18px !important;
   line-height:1 !important;
   font-weight:800 !important;
   color:#111 !important;
@@ -2184,11 +2196,11 @@ body{
 
   /* Echelles énergétiques : proportions proches du panneau d'information */
   .panelSection--energy .dpeScale{
-    --dpe-base-width: 150px !important;
-    --dpe-width-step: 34px !important;
+    --dpe-base-width: 128px !important;
+    --dpe-width-step: 29px !important;
     --dpe-row-height: 30px !important;
     --dpe-arrow-width: 18px !important;
-    --dpe-max-width: 354px !important;
+    --dpe-max-width: 301px !important;
     --dpe-marker-col-width: 70px !important;
     --dpe-gap-to-markers: 26px !important;
     gap:6px !important;
@@ -2247,17 +2259,59 @@ body{
 }
 
 
-/* ===== Ajustement final : plages DPE/GES +4 pts ===== */
+/* ===== Ajustements finaux : Autres + longueurs DPE/GES ===== */
+:root{
+  --bimo-pin-other-color: #D946EF;
+}
+
+.pin-swatch.pin-swatch--autres,
+.pin-swatch.pin-swatch--other,
+.pin-swatch[data-type="autres"],
+.pin-swatch[data-type="other"],
+.legend-row .pin-swatch[style*="orange"],
+.legend-row .pin-swatch[style*="#FF4B08"],
+.legend-row .pin-swatch[style*="#ff8c00"],
+.legend-row .pin-swatch[style*="#A855F7"]{
+  border-color:var(--bimo-pin-other-color) !important;
+}
+
+.dpeScale{
+  --dpe-base-width:128px;
+  --dpe-width-step:29px;
+  --dpe-max-width:301px;
+}
+
 .dpeRowRange{
-  font-size:16px !important;
+  font-size:18px !important;
   color:#111 !important;
   font-weight:800 !important;
 }
 
 @media print{
-  .panelSection--energy .dpeRowRange,
-  .dpeRowRange{
-    font-size:13pt !important;
+  .dpeRow--A .dpeRowShape{ width:128px !important; }
+  .dpeRow--B .dpeRowShape{ width:156px !important; }
+  .dpeRow--C .dpeRowShape{ width:185px !important; }
+  .dpeRow--D .dpeRowShape{ width:214px !important; }
+  .dpeRow--E .dpeRowShape{ width:243px !important; }
+  .dpeRow--F .dpeRowShape{ width:272px !important; }
+  .dpeRow--G .dpeRowShape{ width:301px !important; }
+
+  .panelSection--energy .dpeScale{
+    --dpe-base-width:128px !important;
+    --dpe-width-step:29px !important;
+    --dpe-max-width:301px !important;
+  }
+
+  .panelSection--energy .dpeRow--A .dpeRowShape{ width:128px !important; }
+  .panelSection--energy .dpeRow--B .dpeRowShape{ width:156px !important; }
+  .panelSection--energy .dpeRow--C .dpeRowShape{ width:185px !important; }
+  .panelSection--energy .dpeRow--D .dpeRowShape{ width:214px !important; }
+  .panelSection--energy .dpeRow--E .dpeRowShape{ width:243px !important; }
+  .panelSection--energy .dpeRow--F .dpeRowShape{ width:272px !important; }
+  .panelSection--energy .dpeRow--G .dpeRowShape{ width:301px !important; }
+
+  .panelSection--energy .dpeRowRange{
+    font-size:16px !important;
     color:#111 !important;
     font-weight:800 !important;
   }
