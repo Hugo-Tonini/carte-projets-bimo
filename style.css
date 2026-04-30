@@ -129,14 +129,14 @@ h1{ margin: 0; font-size: 20px; }
   accent-color:var(--accent);
 }
 
-#clear, #projListBtn{
+#clear, #projListBtn, #antennaSummaryBtn{
   padding: 7px 10px;
   cursor: pointer;
   border: 1px solid var(--border);
   background: #fff;
   border-radius: 10px;
 }
-#clear:hover, #projListBtn:hover{ filter: brightness(0.98); }
+#clear:hover, #projListBtn:hover, #antennaSummaryBtn:hover{ filter: brightness(0.98); }
 
 .projectModeSwitch{
   display:inline-flex;
@@ -2314,5 +2314,144 @@ body{
     font-size:16px !important;
     color:#111 !important;
     font-weight:800 !important;
+  }
+}
+
+/* ===== Mode synthèse par antenne ===== */
+#antennaSummaryBtn.is-active{
+  border-color:var(--accent);
+  background:var(--accent);
+  color:#fff;
+}
+
+.antennaSummaryOverlay{
+  position:absolute;
+  inset:14px;
+  z-index:650;
+  pointer-events:none;
+  font-family:"Marianne", Arial, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+.antennaSummaryOverlay.is-panel-open{
+  right:704px;
+}
+
+.antennaSummaryCard{
+  position:absolute;
+  min-width:168px;
+  max-width:245px;
+  padding:12px 14px;
+  border:0;
+  border-radius:0;
+  background:var(--summary-color, #fff);
+  color:#050505;
+  box-shadow:0 3px 10px rgba(0,0,0,0.16);
+  cursor:pointer;
+  pointer-events:auto;
+  text-align:center;
+  font:inherit;
+  font-size:15px;
+  line-height:1.32;
+  font-weight:800;
+}
+
+.antennaSummaryCard:hover,
+.antennaSummaryCard:focus-visible{
+  filter:brightness(0.96);
+  outline:3px solid rgba(0,0,145,0.35);
+  outline-offset:2px;
+}
+
+.antennaSummaryTitle,
+.antennaSummaryLine{
+  display:block;
+}
+
+.antennaSummaryTitle{
+  margin-bottom:4px;
+}
+
+.antennaSummaryLine + .antennaSummaryLine{
+  margin-top:2px;
+}
+
+.antennaSummaryEmpty{
+  position:absolute;
+  top:12px;
+  left:50%;
+  transform:translateX(-50%);
+  padding:10px 14px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#fff;
+  box-shadow:0 3px 10px rgba(0,0,0,0.14);
+  color:#111;
+  font-weight:700;
+  pointer-events:auto;
+}
+
+.antennaSummaryCard.summary-nw{
+  top:0;
+  left:58px;
+}
+
+.antennaSummaryCard.summary-ne{
+  top:42px;
+  right:10px;
+}
+
+.antennaSummaryCard.summary-w{
+  top:42%;
+  left:0;
+  transform:translateY(-50%);
+}
+
+.antennaSummaryCard.summary-e{
+  top:48%;
+  right:10px;
+  transform:translateY(-50%);
+}
+
+.antennaSummaryCard.summary-sw{
+  left:0;
+  bottom:24px;
+}
+
+.antennaSummaryCard.summary-se{
+  right:0;
+  bottom:24px;
+}
+
+@media (max-width: 980px){
+  .antennaSummaryOverlay,
+  .antennaSummaryOverlay.is-panel-open{
+    inset:10px;
+    right:10px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(155px, 1fr));
+    align-content:start;
+    gap:8px;
+    overflow:auto;
+    padding:0;
+  }
+
+  .antennaSummaryCard,
+  .antennaSummaryCard.summary-nw,
+  .antennaSummaryCard.summary-ne,
+  .antennaSummaryCard.summary-w,
+  .antennaSummaryCard.summary-e,
+  .antennaSummaryCard.summary-sw,
+  .antennaSummaryCard.summary-se{
+    position:static;
+    transform:none;
+    min-width:0;
+    max-width:none;
+  }
+}
+
+@media print{
+  .antennaSummaryOverlay,
+  #antennaSummaryBtn{
+    display:none !important;
   }
 }
