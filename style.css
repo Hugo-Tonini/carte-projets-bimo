@@ -110,6 +110,7 @@ h1{ margin: 0; font-size: 20px; }
   background: transparent;
 }
 .types label{ white-space: nowrap; }
+.types input{ accent-color:var(--accent); }
 
 .officesToggle{
   display:inline-flex;
