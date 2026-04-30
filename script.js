@@ -19,7 +19,7 @@
   });
 
   // ---- Configuration ----
-  const DATA_VERSION = "2026-04-30a";
+  const DATA_VERSION = "2026-04-29h";
   const CURRENT_PROJECTS_URL = `export_projets_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const COMPLETED_PROJECTS_URL = `export_projets_finis_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const DEPTS_URL = `departements.geojson?v=${encodeURIComponent(DATA_VERSION)}`;
@@ -277,6 +277,7 @@
 
     if (elCompletedShowAll) {
       elCompletedShowAll.checked = !!showAllCompletedProjects;
+      elCompletedShowAll.setAttribute("aria-checked", showAllCompletedProjects ? "true" : "false");
     }
 
     if (elCompletedPlayBtn) {
@@ -284,6 +285,7 @@
     }
 
     updateCompletedPlaybackButtonUi();
+    syncToolbarControlHeights();
   }
 
   function syncToolbarControlHeights() {
@@ -683,6 +685,10 @@
     maxZoom: 19
   }).addTo(map);
 
+  if (map.attributionControl && typeof map.attributionControl.setPrefix === "function") {
+    map.attributionControl.setPrefix("Carte créée par Hugo TONINI");
+  }
+
   const clusters = L.markerClusterGroup({
     chunkedLoading: true,
     chunkInterval: 10,
@@ -697,10 +703,10 @@
       const count = cluster.getChildCount();
 
       // Si plusieurs types => couleur "Autres", sinon couleur du type
-      let col = "#C96A00";
+      let col = "orange";
       if (types.size === 1) {
         const only = types.values().next().value;
-        col = only || "#C96A00";
+        col = only || "orange";
       }
 
       return L.divIcon({
@@ -1233,7 +1239,7 @@ clusters.on("clustermouseout", (a) => {
 
   function inferOverseasArea(project, lat, lon) {
     const cityBlob = normalizeSearchText(projectCity(project));
-    const allBlob = project?.__searchBlob || buildProjectSearchBlob(project || {});
+    const allBlob = normalizeSearchText(Object.values(project || {}).join(" "));
 
     for (const rule of OVERSEAS_AREA_RULES) {
       if (rule.matches({ cityBlob, allBlob, lat, lon })) {
@@ -1326,7 +1332,7 @@ clusters.on("clustermouseout", (a) => {
     return match ? Number(match[0]) : null;
   }
 
-  function updateCompletedYearBounds() {
+  function updateCompletedYearBounds(projects) {
     // La frise des projets finis doit rester bornée à la période demandée,
     // même si certaines données contiennent des dates aberrantes ou hors périmètre.
     COMPLETED_YEAR_MIN = 2008;
@@ -1349,7 +1355,9 @@ clusters.on("clustermouseout", (a) => {
     return fromYear <= year && year <= toYear;
   }
 
-  function matchesFilters(p, q = normalizeSearchText(elQ?.value || ""), types = getActiveTypes()) {
+  function matchesFilters(p) {
+    const q = normalizeSearchText(elQ?.value || "");
+    const types = getActiveTypes();
     const t = projectType(p);
 
     if (types.length && !types.includes(t)) return false;
@@ -1367,9 +1375,7 @@ clusters.on("clustermouseout", (a) => {
   }
 
   function filteredProjects() {
-    const q = normalizeSearchText(elQ?.value || "");
-    const types = getActiveTypes();
-    const base = allProjects.filter((p) => matchesFilters(p, q, types));
+    const base = allProjects.filter(matchesFilters);
 
     // Si une antenne est sélectionnée (clic sur pin antenne),
     // on n'affiche que les projets appartenant à cette antenne.
@@ -1404,7 +1410,7 @@ clusters.on("clustermouseout", (a) => {
     if (x.includes("amo")) return "red";
     if (x.includes("mom")) return "blue";
     if (x.includes("exp")) return "green";
-    return "#C96A00";
+    return "#ff8c00";
   }
 
   function renderMarkers() {
@@ -1919,6 +1925,7 @@ marker.on("click", (e) => {
     if (normalized.includes("gpa")) return "gpa";
     if (
       normalized.includes("realisation") ||
+      normalized.includes("realisation") ||
       normalized.includes("construction") ||
       normalized.includes("execution") ||
       normalized.includes("travaux")
@@ -2332,7 +2339,7 @@ marker.on("click", (e) => {
         showStatus(`Les projets finis n’ont pas pu être chargés (${describeLoadError(completedResult.reason)}). Les projets en cours restent disponibles.`);
       }
 
-      updateCompletedYearBounds();
+      updateCompletedYearBounds(projectsByMode.completed);
 
       enrichProjectsWithDepartments(projectsByMode.current);
       enrichProjectsWithDepartments(projectsByMode.completed);
