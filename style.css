@@ -827,13 +827,13 @@ h1{ margin: 0; font-size: 20px; }
 .pin-swatch.pin-swatch--other,
 .pin-swatch[data-type="autres"],
 .pin-swatch[data-type="other"]{
-  border-color:#D946EF !important;
+  border-color:#09e6ed !important;
 }
 .legend-row .pin-swatch[style*="orange"],
 .legend-row .pin-swatch[style*="#FF4B08"],
 .legend-row .pin-swatch[style*="#ff8c00"],
 .legend-row .pin-swatch[style*="#A855F7"]{
-  border-color:#D946EF !important;
+  border-color:#09e6ed !important;
 }
 
 /* ===== Status / errors ===== */
@@ -2301,7 +2301,7 @@ body{
 
 /* ===== Ajustements finaux : Autres + longueurs DPE/GES ===== */
 :root{
-  --bimo-pin-other-color: #f2781b;
+  --bimo-pin-other-color: #09e6ed;
 }
 
 .pin-swatch.pin-swatch--autres,
