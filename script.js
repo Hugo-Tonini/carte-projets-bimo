@@ -19,7 +19,7 @@
   });
 
   // ---- Configuration ----
-  const DATA_VERSION = "2026-04-29h";
+  const DATA_VERSION = "2026-04-30b";
   const CURRENT_PROJECTS_URL = `export_projets_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const COMPLETED_PROJECTS_URL = `export_projets_finis_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const DEPTS_URL = `departements.geojson?v=${encodeURIComponent(DATA_VERSION)}`;
@@ -42,6 +42,8 @@
   const elQ = document.getElementById("q");
   const elClear = document.getElementById("clear");
   const elPanel = document.getElementById("panel");
+  const elAntennaSummaryBtn = document.getElementById("antennaSummaryBtn");
+  const elAntennaSummaryOverlay = document.getElementById("antennaSummaryOverlay");
   const elStatus = document.getElementById("status");
   const elLegend = document.getElementById("legend");
   const elLegendAntennas = document.getElementById("legendAntennas");
@@ -76,6 +78,7 @@
   let deptCodeToName = {}; // "74" -> "Haute-Savoie"
   let deptSpatialIndex = [];
   let filteredCounts = {}; // "74" -> nb projets filtrés (tooltip)
+  let antennaSummaryEnabled = false;
 
   // Focus antenne (pour foncer les départements de l’antenne sélectionnée)
   let selectedAntenna = null;
@@ -496,6 +499,15 @@
     amo: "red",
     exp: "green",
     other: "#D946EF"
+  };
+
+  const ANTENNA_SUMMARY_POSITIONS = {
+    "Nord-Ouest Île-de-France": "summary-nw",
+    "Nord-Est": "summary-ne",
+    "Atlantique Grand-Ouest": "summary-w",
+    "Alpes Centre-Est": "summary-e",
+    "Grand Sud-Ouest": "summary-sw",
+    "Méditerranée Grand-Sud": "summary-se"
   };
 
   function syncProjectTypeLegendColors() {
@@ -1010,6 +1022,114 @@ clusters.on("clustermouseout", (a) => {
     return Number.isFinite(n) ? n : NaN;
   }
 
+  function formatMillionEuro(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n <= 0) return "";
+
+    const millions = n / 1000000;
+    const formatted = new Intl.NumberFormat("fr-FR", {
+      minimumFractionDigits: millions < 10 ? 1 : 0,
+      maximumFractionDigits: 1
+    }).format(millions);
+
+    return `${formatted} M€`;
+  }
+
+  function projectTypeKey(p) {
+    const t = projectType(p);
+    if (t.includes("mom")) return "mom";
+    if (t.includes("amo")) return "amo";
+    if (t.includes("exp")) return "exp";
+    return "other";
+  }
+
+  function getActiveSummaryTypes() {
+    return Array.from(document.querySelectorAll(".typeFilter:checked"))
+      .map((x) => String(x.value || "").toLowerCase().trim())
+      .filter((value) => ["mom", "amo", "exp"].includes(value));
+  }
+
+  function setAntennaSummaryEnabled(enabled) {
+    antennaSummaryEnabled = !!enabled;
+    if (elAntennaSummaryBtn) {
+      elAntennaSummaryBtn.classList.toggle("is-active", antennaSummaryEnabled);
+      elAntennaSummaryBtn.setAttribute("aria-pressed", antennaSummaryEnabled ? "true" : "false");
+    }
+    renderAntennaSummary();
+  }
+
+  function renderAntennaSummary() {
+    if (!elAntennaSummaryOverlay) return;
+
+    elAntennaSummaryOverlay.hidden = !antennaSummaryEnabled;
+    elAntennaSummaryOverlay.classList.toggle("is-visible", antennaSummaryEnabled);
+
+    if (!antennaSummaryEnabled) {
+      elAntennaSummaryOverlay.innerHTML = "";
+      return;
+    }
+
+    const activeTypes = getActiveSummaryTypes();
+    if (!activeTypes.length) {
+      elAntennaSummaryOverlay.innerHTML = `<div class="antennaSummaryEmpty">Cochez au moins un type de projet.</div>`;
+      return;
+    }
+
+    const activeTypeSet = new Set(activeTypes);
+    const summaries = new Map();
+    for (const antenna of ANTENNA_LEGEND_ORDER) {
+      summaries.set(antenna, { mom: 0, amo: 0, exp: 0, momAmount: 0 });
+    }
+
+    for (const project of filteredProjects()) {
+      const antenna = String(project["Antenne"] ?? project.antenne ?? "").trim();
+      if (!summaries.has(antenna)) continue;
+
+      const typeKey = projectTypeKey(project);
+      if (!activeTypeSet.has(typeKey)) continue;
+
+      const summary = summaries.get(antenna);
+      summary[typeKey] += 1;
+      if (typeKey === "mom") {
+        const amount = amountNumber(project["Montant"] ?? project.montant);
+        if (Number.isFinite(amount)) summary.momAmount += amount;
+      }
+    }
+
+    const typeLabels = { mom: "MOM", amo: "AMO", exp: "EXP" };
+    const cards = ANTENNA_LEGEND_ORDER.map((antenna) => {
+      const summary = summaries.get(antenna);
+      const lines = activeTypes
+        .map((typeKey) => {
+          const count = summary[typeKey] || 0;
+          if (!count) return "";
+          if (typeKey === "mom") {
+            const amount = formatMillionEuro(summary.momAmount);
+            return amount
+              ? `${count} MOM pour ${escapeHtml(amount)}`
+              : `${count} MOM`;
+          }
+          return `${count} ${typeLabels[typeKey]}`;
+        })
+        .filter(Boolean);
+
+      if (!lines.length) return "";
+
+      const color = ANTENNA_COLORS[antenna] || "#fff";
+      const position = ANTENNA_SUMMARY_POSITIONS[antenna] || "summary-center";
+      const title = antenna === "Nord-Ouest Île-de-France" ? "Nord-Ouest<br>Île-de-France" : escapeHtml(antenna);
+
+      return `
+        <button class="antennaSummaryCard ${position}" type="button" style="--summary-color:${escapeAttr(color)};" data-antenna="${escapeAttr(antenna)}" aria-label="Filtrer sur ${escapeAttr(antenna)}">
+          <span class="antennaSummaryTitle">${title} :</span>
+          ${lines.map((line) => `<span class="antennaSummaryLine">${line}</span>`).join("")}
+        </button>
+      `;
+    }).filter(Boolean).join("");
+
+    elAntennaSummaryOverlay.innerHTML = cards || `<div class="antennaSummaryEmpty">Aucun projet pour les filtres sélectionnés.</div>`;
+  }
+
   function projectId(p) {
     return String(p.__projectId ?? p["Code projet"] ?? p.code_projet ?? p.codeProjet ?? p.id ?? "").trim();
   }
@@ -1501,6 +1621,7 @@ marker.on("click", (e) => {
 
     if (elCount) elCount.textContent = String(list.length);
     filteredCounts = computeFilteredCounts();
+    renderAntennaSummary();
     projectListDirty = true;
     if (elProjListMenu && !elProjListMenu.hidden) buildProjectList();
     updateDeptStyle();
@@ -1608,11 +1729,13 @@ marker.on("click", (e) => {
     if (!elPanel) return;
     elPanel.innerHTML = html;
     elPanel.classList.add("open");
+    elAntennaSummaryOverlay?.classList.add("is-panel-open");
   }
 
   function closePanel({ resetView = false } = {}) {
     if (!elPanel) return;
     elPanel.classList.remove("open");
+    elAntennaSummaryOverlay?.classList.remove("is-panel-open");
     elPanel.innerHTML = "";
     clearSelectedMarker();
 
@@ -2274,6 +2397,25 @@ marker.on("click", (e) => {
     renderMarkers();
   }));
   initOfficesToggle();
+
+  if (elAntennaSummaryBtn) {
+    elAntennaSummaryBtn.addEventListener("click", () => {
+      setAntennaSummaryEnabled(!antennaSummaryEnabled);
+    });
+  }
+
+  if (elAntennaSummaryOverlay) {
+    elAntennaSummaryOverlay.addEventListener("click", (e) => {
+      const card = e.target?.closest?.(".antennaSummaryCard");
+      const antenna = card?.getAttribute?.("data-antenna");
+      if (!antenna) return;
+      selectedAntenna = selectedAntenna === antenna ? null : antenna;
+      closePanel();
+      updateDeptStyle();
+      updateDeptSelectedStat();
+      renderMarkers();
+    });
+  }
 
   if (elClear) {
     elClear.addEventListener("click", () => {
