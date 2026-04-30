@@ -12,7 +12,7 @@
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Bold_Italic.woff2") format("woff2");font-weight:700;font-style:italic;font-display:swap;}
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-ExtraBold_Italic.woff2") format("woff2");font-weight:800;font-style:italic;font-display:block;}
 /* Appliquer partout */
-html, body{ font-family:"Marianne", Arial, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+html, body{ font-family:"Marianne", Arial, systema-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
 
 /* Base */
 :root{
@@ -1919,19 +1919,22 @@ body{
 #clear,
 #projListBtn,
 #antennaSummaryBtn{
-  padding:5px 10px;
-  line-height:1.1;
-  min-height:31px;
+  padding:3px 10px;
+  line-height:1;
+  min-height:26px;
+  height:26px;
 }
 
 .projectModeSwitch{
-  height:31px;
+  height:26px;
+  min-height:26px;
 }
 
 .projectModeBtn{
-  padding-top:0;
-  padding-bottom:1px;
+  padding:0 14px;
   line-height:1;
+  height:100%;
+  min-height:100%;
 }
 
 .brand{
