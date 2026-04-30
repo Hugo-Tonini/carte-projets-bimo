@@ -709,7 +709,13 @@
     return;
   }
 
-  const map = L.map(mapEl, { preferCanvas: true, zoomControl: false }).setView([46.8, 2.5], 6);
+  const map = L.map(mapEl, {
+    preferCanvas: true,
+    zoomControl: false,
+    zoomSnap: 0.1,
+    zoomDelta: 0.25,
+    wheelPxPerZoomLevel: 120
+  }).setView([46.8, 2.5], 6);
 
   // Bounds France métropolitaine (approx.) — utilisé pour "dézoomer" à la fermeture du panneau
   const FRANCE_BOUNDS = L.latLngBounds([[41.0, -5.5], [51.6, 9.8]]);
@@ -746,7 +752,7 @@
       range.type = "range";
       range.min = String(map.getMinZoom());
       range.max = String(map.getMaxZoom());
-      range.step = "0.25";
+      range.step = "0.1";
       range.value = String(map.getZoom());
       range.setAttribute("aria-label", "Niveau de zoom de la carte");
 
@@ -758,19 +764,37 @@
       L.DomEvent.disableClickPropagation(container);
       L.DomEvent.disableScrollPropagation(container);
 
+      const clampZoom = (zoom) => {
+        const minZoom = map.getMinZoom();
+        const maxZoom = map.getMaxZoom();
+        return Math.max(minZoom, Math.min(maxZoom, zoom));
+      };
+
+      const setPreciseZoom = (zoom) => {
+        const nextZoom = clampZoom(Number(zoom));
+        if (!Number.isFinite(nextZoom)) return;
+        map.setZoom(nextZoom);
+        range.value = String(nextZoom);
+      };
+
+      const stepZoom = (delta) => {
+        setPreciseZoom(map.getZoom() + delta);
+      };
+
       const syncRange = () => {
+        range.min = String(map.getMinZoom());
+        range.max = String(map.getMaxZoom());
         range.value = String(map.getZoom());
       };
 
       range.addEventListener("input", () => {
-        const zoom = Number(range.value);
-        if (Number.isFinite(zoom)) map.setZoom(zoom);
+        setPreciseZoom(range.value);
       });
 
-      zoomIn.addEventListener("click", () => map.zoomIn(0.5));
-      zoomOut.addEventListener("click", () => map.zoomOut(0.5));
+      zoomIn.addEventListener("click", () => stepZoom(0.25));
+      zoomOut.addEventListener("click", () => stepZoom(-0.25));
 
-      map.on("zoomend", syncRange);
+      map.on("zoomend zoomlevelschange", syncRange);
       map.whenReady(syncRange);
 
       return container;
