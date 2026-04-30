@@ -709,7 +709,7 @@
     return;
   }
 
-  const map = L.map(mapEl, { preferCanvas: true }).setView([46.8, 2.5], 6);
+  const map = L.map(mapEl, { preferCanvas: true, zoomControl: false }).setView([46.8, 2.5], 6);
 
   // Bounds France métropolitaine (approx.) — utilisé pour "dézoomer" à la fermeture du panneau
   const FRANCE_BOUNDS = L.latLngBounds([[41.0, -5.5], [51.6, 9.8]]);
@@ -729,6 +729,57 @@
   if (map.attributionControl && typeof map.attributionControl.setPrefix === "function") {
     map.attributionControl.setPrefix("Carte créée par Hugo TONINI");
   }
+
+  function createZoomSliderControl() {
+    const zoomSliderControl = L.control({ position: "topleft" });
+
+    zoomSliderControl.onAdd = () => {
+      const container = L.DomUtil.create("div", "bimoZoomSlider leaflet-bar");
+      container.setAttribute("aria-label", "Contrôle de zoom");
+
+      const zoomIn = L.DomUtil.create("button", "bimoZoomSliderBtn bimoZoomSliderBtn--plus", container);
+      zoomIn.type = "button";
+      zoomIn.textContent = "+";
+      zoomIn.setAttribute("aria-label", "Zoomer");
+
+      const range = L.DomUtil.create("input", "bimoZoomSliderRange", container);
+      range.type = "range";
+      range.min = String(map.getMinZoom());
+      range.max = String(map.getMaxZoom());
+      range.step = "0.25";
+      range.value = String(map.getZoom());
+      range.setAttribute("aria-label", "Niveau de zoom de la carte");
+
+      const zoomOut = L.DomUtil.create("button", "bimoZoomSliderBtn bimoZoomSliderBtn--minus", container);
+      zoomOut.type = "button";
+      zoomOut.textContent = "−";
+      zoomOut.setAttribute("aria-label", "Dézoomer");
+
+      L.DomEvent.disableClickPropagation(container);
+      L.DomEvent.disableScrollPropagation(container);
+
+      const syncRange = () => {
+        range.value = String(map.getZoom());
+      };
+
+      range.addEventListener("input", () => {
+        const zoom = Number(range.value);
+        if (Number.isFinite(zoom)) map.setZoom(zoom);
+      });
+
+      zoomIn.addEventListener("click", () => map.zoomIn(0.5));
+      zoomOut.addEventListener("click", () => map.zoomOut(0.5));
+
+      map.on("zoomend", syncRange);
+      map.whenReady(syncRange);
+
+      return container;
+    };
+
+    zoomSliderControl.addTo(map);
+  }
+
+  createZoomSliderControl();
 
   const clusters = L.markerClusterGroup({
     chunkedLoading: true,
