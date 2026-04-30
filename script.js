@@ -738,7 +738,7 @@
       paddingTopLeft: [74, 56],
       paddingBottomRight: [42, 30],
       duration: 0.7,
-      maxZoom: 6.7
+      maxZoom: 7.1
     };
 
     if (typeof map.flyToBounds === "function") {
