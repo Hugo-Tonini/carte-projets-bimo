@@ -107,7 +107,7 @@
     const typeFilters = Array.from(document.querySelectorAll(".typeFilter"));
     const hasTypeFilter = typeFilters.some((cb) => !cb.checked);
     const hasAntennaFilter = !!selectedAntenna;
-    const hasCompletedYearFilter = currentProjectMode === PROJECT_MODES.completed.key && !showAllCompletedProjects;
+    const hasCompletedYearFilter = currentProjectMode === PROJECT_MODES.completed.key && !showAllCompletedProjects && completedYearFilter !== COMPLETED_YEAR_MIN;
     return hasSearch || hasTypeFilter || hasAntennaFilter || hasCompletedYearFilter;
   }
 
@@ -452,7 +452,6 @@
     closePanel();
     setActiveProjectsForMode(modeKey);
     updateProjectModeUi();
-    syncToolbarControlHeights();
     renderMarkers();
     updateClearButtonState();
   }
@@ -698,10 +697,10 @@
       const count = cluster.getChildCount();
 
       // Si plusieurs types => couleur "Autres", sinon couleur du type
-      let col = "orange";
+      let col = "#C96A00";
       if (types.size === 1) {
         const only = types.values().next().value;
-        col = only || "orange";
+        col = only || "#C96A00";
       }
 
       return L.divIcon({
@@ -1327,19 +1326,11 @@ clusters.on("clustermouseout", (a) => {
     return match ? Number(match[0]) : null;
   }
 
-  function updateCompletedYearBounds(projects) {
-    const years = [];
-    for (const p of Array.isArray(projects) ? projects : []) {
-      const startYear = projectStartYear(p);
-      const endYear = projectEndYear(p);
-      if (Number.isFinite(startYear)) years.push(startYear);
-      if (Number.isFinite(endYear)) years.push(endYear);
-    }
-
-    if (years.length) {
-      COMPLETED_YEAR_MIN = Math.min(2008, ...years);
-      COMPLETED_YEAR_MAX = Math.max(2024, ...years);
-    }
+  function updateCompletedYearBounds() {
+    // La frise des projets finis doit rester bornée à la période demandée,
+    // même si certaines données contiennent des dates aberrantes ou hors périmètre.
+    COMPLETED_YEAR_MIN = 2008;
+    COMPLETED_YEAR_MAX = 2024;
 
     completedYearFilter = clampCompletedYear(completedYearFilter);
     updateCompletedYearFilterUi();
@@ -1358,16 +1349,7 @@ clusters.on("clustermouseout", (a) => {
     return fromYear <= year && year <= toYear;
   }
 
-  function getFilterCriteria() {
-    return {
-      q: normalizeSearchText(elQ?.value || ""),
-      types: getActiveTypes()
-    };
-  }
-
-  function matchesFilters(p, criteria = getFilterCriteria()) {
-    const q = criteria.q || "";
-    const types = criteria.types || [];
+  function matchesFilters(p, q = normalizeSearchText(elQ?.value || ""), types = getActiveTypes()) {
     const t = projectType(p);
 
     if (types.length && !types.includes(t)) return false;
@@ -1384,8 +1366,10 @@ clusters.on("clustermouseout", (a) => {
     return true;
   }
 
-  function filteredProjects(criteria = getFilterCriteria()) {
-    const base = allProjects.filter((p) => matchesFilters(p, criteria));
+  function filteredProjects() {
+    const q = normalizeSearchText(elQ?.value || "");
+    const types = getActiveTypes();
+    const base = allProjects.filter((p) => matchesFilters(p, q, types));
 
     // Si une antenne est sélectionnée (clic sur pin antenne),
     // on n'affiche que les projets appartenant à cette antenne.
@@ -1420,7 +1404,7 @@ clusters.on("clustermouseout", (a) => {
     if (x.includes("amo")) return "red";
     if (x.includes("mom")) return "blue";
     if (x.includes("exp")) return "green";
-    return "orange";
+    return "#C96A00";
   }
 
   function renderMarkers() {
@@ -1920,6 +1904,74 @@ marker.on("click", (e) => {
     `;
   }
 
+  function normalizePhaseProjectValue(value) {
+    return String(value ?? "")
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+  }
+
+  function getProjectPhaseKey(value) {
+    const normalized = normalizePhaseProjectValue(value);
+    if (!normalized) return "";
+    if (normalized.includes("gpa")) return "gpa";
+    if (
+      normalized.includes("realisation") ||
+      normalized.includes("construction") ||
+      normalized.includes("execution") ||
+      normalized.includes("travaux")
+    ) return "realisation";
+    if (
+      normalized.includes("conception") ||
+      normalized.includes("etudes") ||
+      normalized.includes("etude")
+    ) return "conception";
+    if (
+      normalized.includes("definition") ||
+      normalized.includes("programmation") ||
+      normalized.includes("faisabilite")
+    ) return "definition";
+    return "";
+  }
+
+  function renderProjectPhase(value) {
+    const raw = String(value ?? "").trim();
+    if (!raw) return "";
+
+    const steps = [
+      { key: "definition", label: "Définition" },
+      { key: "conception", label: "Conception" },
+      { key: "realisation", label: "Réalisation" },
+      { key: "gpa", label: "GPA" }
+    ];
+
+    const currentKey = getProjectPhaseKey(raw);
+    const currentIndex = steps.findIndex((step) => step.key === currentKey);
+
+    const items = steps.map((step, index) => {
+      const classes = ["phaseStep", `phaseStep--${step.key}`];
+      if (currentIndex === -1) {
+        classes.push("is-neutral");
+      } else if (index < currentIndex) {
+        classes.push("is-done");
+      } else if (index === currentIndex) {
+        classes.push("is-current");
+      } else {
+        classes.push("is-upcoming");
+      }
+      return `<span class="${classes.join(" ")}">${escapeHtml(step.label)}</span>`;
+    }).join("");
+
+    return `
+      <div class="phaseStepperWrap" aria-label="Phase projet">
+        <div class="phaseStepper" role="img" aria-label="Phase projet : ${escapeHtml(raw)}">
+          ${items}
+        </div>
+      </div>`;
+  }
+
   // Génère le bloc d'infos du panneau avec les classes attendues par le CSS (kv/kvRow/kvKey/kvVal)
   function buildKv(fields) {
     let html = `<div class="kv kv--project">`;
@@ -1927,6 +1979,15 @@ marker.on("click", (e) => {
       if (value === undefined || value === null) continue;
       const s = String(value).trim();
       if (!s) continue;
+
+      if (label === "Phase projet") {
+        html += `
+          <div class="kvRow kvRow--phaseLabel">
+            <div class="kvKey">${escapeHtml(label)} :</div>
+          </div>
+          <div class="phaseFullRow">${renderProjectPhase(s)}</div>`;
+        continue;
+      }
 
       html += `
         <div class="kvRow">
@@ -2271,7 +2332,7 @@ marker.on("click", (e) => {
         showStatus(`Les projets finis n’ont pas pu être chargés (${describeLoadError(completedResult.reason)}). Les projets en cours restent disponibles.`);
       }
 
-      updateCompletedYearBounds(projectsByMode.completed);
+      updateCompletedYearBounds();
 
       enrichProjectsWithDepartments(projectsByMode.current);
       enrichProjectsWithDepartments(projectsByMode.completed);
