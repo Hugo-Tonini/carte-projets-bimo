@@ -1410,7 +1410,7 @@ clusters.on("clustermouseout", (a) => {
     if (x.includes("amo")) return "red";
     if (x.includes("mom")) return "blue";
     if (x.includes("exp")) return "green";
-    return "#ff8c00";
+    return "#FF4B08";
   }
 
   function renderMarkers() {
