@@ -719,12 +719,32 @@
 
   // Bounds France métropolitaine (approx.) — utilisé pour "dézoomer" à la fermeture du panneau
   const FRANCE_BOUNDS = L.latLngBounds([[41.0, -5.5], [51.6, 9.8]]);
+
+  // Vue dédiée au mode Synthèse : un peu plus large que la France,
+  // pour laisser les encarts visibles autour des antennes comme dans la maquette.
+  const ANTENNA_SUMMARY_BOUNDS = L.latLngBounds([[41.0, -6.15], [51.55, 10.35]]);
+
   function zoomToFrance() {
     // Animation douce (au lieu d'une "téléportation")
     if (typeof map.flyToBounds === "function") {
       map.flyToBounds(FRANCE_BOUNDS, { padding: [20, 20], duration: 0.6 });
     } else {
       map.fitBounds(FRANCE_BOUNDS, { padding: [20, 20] });
+    }
+  }
+
+  function zoomToAntennaSummaryView() {
+    const options = {
+      paddingTopLeft: [74, 56],
+      paddingBottomRight: [42, 30],
+      duration: 0.7,
+      maxZoom: 6.2
+    };
+
+    if (typeof map.flyToBounds === "function") {
+      map.flyToBounds(ANTENNA_SUMMARY_BOUNDS, options);
+    } else {
+      map.fitBounds(ANTENNA_SUMMARY_BOUNDS, options);
     }
   }
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -1129,13 +1149,18 @@ clusters.on("clustermouseout", (a) => {
       .filter((value) => ["mom", "amo", "exp"].includes(value));
   }
 
-  function setAntennaSummaryEnabled(enabled) {
+  function setAntennaSummaryEnabled(enabled, { adjustView = false } = {}) {
     antennaSummaryEnabled = !!enabled;
     if (elAntennaSummaryBtn) {
       elAntennaSummaryBtn.classList.toggle("is-active", antennaSummaryEnabled);
       elAntennaSummaryBtn.setAttribute("aria-pressed", antennaSummaryEnabled ? "true" : "false");
     }
     renderAntennaSummary();
+
+    if (antennaSummaryEnabled && adjustView) {
+      closePanel();
+      window.setTimeout(zoomToAntennaSummaryView, 40);
+    }
   }
 
   function renderAntennaSummary() {
@@ -2528,7 +2553,7 @@ marker.on("click", (e) => {
 
   if (elAntennaSummaryBtn) {
     elAntennaSummaryBtn.addEventListener("click", () => {
-      setAntennaSummaryEnabled(!antennaSummaryEnabled);
+      setAntennaSummaryEnabled(!antennaSummaryEnabled, { adjustView: !antennaSummaryEnabled });
     });
   }
 
