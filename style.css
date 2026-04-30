@@ -110,16 +110,15 @@ h1{ margin: 0; font-size: 20px; }
   background: transparent;
 }
 .types label{ white-space: nowrap; }
-.types input{ accent-color:var(--accent); }
 
 .officesToggle{
   display:inline-flex;
   align-items:center;
   gap:8px;
-  padding:7px 10px;
-  border:1px solid var(--border);
-  border-radius:10px;
-  background:#fff;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
   white-space:nowrap;
   cursor:pointer;
   line-height:1.1;
@@ -511,11 +510,11 @@ h1{ margin: 0; font-size: 20px; }
 }
 
 .dpeScale{
-  --dpe-base-width: 120px;
-  --dpe-width-step: 27.2px;
+  --dpe-base-width: 150px;
+  --dpe-width-step: 34px;
   --dpe-row-height: 30px;
   --dpe-arrow-width: 18px;
-  --dpe-max-width: 283.2px;
+  --dpe-max-width: 354px;
   --dpe-marker-col-width: 70px;
   --dpe-gap-to-markers: 26px;
   justify-items:start;
@@ -550,9 +549,8 @@ h1{ margin: 0; font-size: 20px; }
 .dpeRow--G{ --dpe-step: 6; }
 
 .dpeRowRange{
-  font-size:15px;
+  font-size:12px;
   font-weight:700;
-  color:#111;
 }
 
 .dpeRowLetter{
@@ -606,7 +604,7 @@ h1{ margin: 0; font-size: 20px; }
 
 .dpeMarkerLabel{
   position:absolute;
-  left:calc(50% + 3px);
+  left:50%;
   top:50%;
   transform:translate(-50%, -50%);
   z-index:2;
@@ -654,15 +652,15 @@ h1{ margin: 0; font-size: 20px; }
 .dpeCard--energy .dpeRow--D .dpeRowShape{ background:#f0da2c; }
 .dpeCard--energy .dpeRow--E .dpeRowShape{ background:#f4b63b; }
 .dpeCard--energy .dpeRow--F .dpeRowShape{ background:#f28b31; color:#111; }
-.dpeCard--energy .dpeRow--G .dpeRowShape{ background:#ea4335; color:#111; }
+.dpeCard--energy .dpeRow--G .dpeRowShape{ background:#ea4335; color:#fff; }
 
-.dpeCard--ges .dpeRow--A .dpeRowShape{ background:#ddd0ee; }
+.dpeCard--ges .dpeRow--A .dpeRowShape{ background:#f0f0f0; }
 .dpeCard--ges .dpeRow--B .dpeRowShape{ background:#d8c8ea; }
 .dpeCard--ges .dpeRow--C .dpeRowShape{ background:#c8b0e2; }
 .dpeCard--ges .dpeRow--D .dpeRowShape{ background:#b596d7; }
-.dpeCard--ges .dpeRow--E .dpeRowShape{ background:#9a77c7; color:#111; }
-.dpeCard--ges .dpeRow--F .dpeRowShape{ background:#8663ba; color:#111; }
-.dpeCard--ges .dpeRow--G .dpeRowShape{ background:#7752ae; color:#111; }
+.dpeCard--ges .dpeRow--E .dpeRowShape{ background:#9a77c7; color:#fff; }
+.dpeCard--ges .dpeRow--F .dpeRowShape{ background:#8663ba; color:#fff; }
+.dpeCard--ges .dpeRow--G .dpeRowShape{ background:#7752ae; color:#fff; }
 
 @media (max-width: 700px){
   .dpeRow{
@@ -1507,13 +1505,13 @@ select:focus-visible,
     min-width:14mm !important;
   }
 
-  .dpeRow--A .dpeRowShape{ width:141px !important; }
-  .dpeRow--B .dpeRowShape{ width:170px !important; }
-  .dpeRow--C .dpeRowShape{ width:198px !important; }
-  .dpeRow--D .dpeRowShape{ width:227px !important; }
-  .dpeRow--E .dpeRowShape{ width:256px !important; }
-  .dpeRow--F .dpeRowShape{ width:285px !important; }
-  .dpeRow--G .dpeRowShape{ width:312px !important; }
+  .dpeRow--A .dpeRowShape{ width:176px !important; }
+  .dpeRow--B .dpeRowShape{ width:212px !important; }
+  .dpeRow--C .dpeRowShape{ width:248px !important; }
+  .dpeRow--D .dpeRowShape{ width:284px !important; }
+  .dpeRow--E .dpeRowShape{ width:320px !important; }
+  .dpeRow--F .dpeRowShape{ width:356px !important; }
+  .dpeRow--G .dpeRowShape{ width:390px !important; }
 
   .dpeCard,
   .dpeRowShape,
@@ -1568,7 +1566,7 @@ select:focus-visible,
   }
 
   .panelSection--energy .dpeScale{
-    --dpe-print-shape-col-width: 312px;
+    --dpe-print-shape-col-width: 390px;
     --dpe-print-marker-col-width: 68px;
     --dpe-print-gap-to-markers: 22px;
     width:max-content !important;
@@ -1613,13 +1611,9 @@ select:focus-visible,
     line-height:1.12 !important;
   }
 
-  .panelSection--energy .dpeUnitLine{
-    font-size:10.5pt !important;
-  }
-
+  .panelSection--energy .dpeUnitLine,
   .panelSection--energy .dpeRowRange{
-    font-size:13.5pt !important;
-    color:#111 !important;
+    font-size:10.5pt !important;
   }
 
   .panelSection--energy .dpeScale{
@@ -2040,7 +2034,7 @@ body{
   margin-left:-12px !important;
 }
 
-.kv--project .phaseStep--definition{ background:#f28c28 !important; }
+.kv--project .phaseStep--definition{ background:#ffad33 !important; }
 .kv--project .phaseStep--conception{ background:#fff01f !important; }
 .kv--project .phaseStep--realisation{ background:#62dd50 !important; }
 .kv--project .phaseStep--gpa{ background:#18b957 !important; }
