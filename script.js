@@ -734,18 +734,9 @@
   }
 
   function zoomToAntennaSummaryView() {
-    const options = {
-      paddingTopLeft: [74, 56],
-      paddingBottomRight: [42, 30],
-      duration: 0.7,
-      maxZoom: 9.1
-    };
-
-    if (typeof map.flyToBounds === "function") {
-      map.flyToBounds(ANTENNA_SUMMARY_BOUNDS, options);
-    } else {
-      map.fitBounds(ANTENNA_SUMMARY_BOUNDS, options);
-    }
+    map.flyTo([46.65, 2.35], 6.7, {
+      duration: 0.7
+    });
   }
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "© OpenStreetMap",
