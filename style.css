@@ -215,6 +215,7 @@ h1{ margin: 0; font-size: 20px; }
   white-space:nowrap;
 }
 .completedYearRange{
+  width:260px;
   margin:0;
   accent-color:var(--accent);
 }
@@ -654,7 +655,7 @@ h1{ margin: 0; font-size: 20px; }
 .dpeCard--energy .dpeRow--F .dpeRowShape{ background:#f28b31; color:#111; }
 .dpeCard--energy .dpeRow--G .dpeRowShape{ background:#ea4335; color:#fff; }
 
-.dpeCard--ges .dpeRow--A .dpeRowShape{ background:#d8d8d8; }
+.dpeCard--ges .dpeRow--A .dpeRowShape{ background:#ddd0ee; }
 .dpeCard--ges .dpeRow--B .dpeRowShape{ background:#d8c8ea; }
 .dpeCard--ges .dpeRow--C .dpeRowShape{ background:#c8b0e2; }
 .dpeCard--ges .dpeRow--D .dpeRowShape{ background:#b596d7; }
@@ -1122,6 +1123,18 @@ select:focus-visible,
   line-height:1.25;
 }
 
+.kv--project .kvRow--phase{
+  grid-template-columns:1fr;
+  gap:2px;
+  align-items:start;
+  margin-top:0;
+  margin-bottom:0;
+}
+
+.kv--project .kvRow--phase .kvKey{
+  margin:0;
+  line-height:1.05;
+}
 
 .kv--project .kvVal--phase{
   width:100%;
@@ -1173,7 +1186,7 @@ select:focus-visible,
   padding-left:18px;
 }
 
-.phaseStep--definition{ background:#f28c28; }
+.phaseStep--definition{ background:#ffb347; }
 .phaseStep--conception{ background:#f0e333; color:#111; }
 .phaseStep--realisation{ background:#6edb5f; color:#111; }
 .phaseStep--gpa{ background:#25b45b; color:#111; }
@@ -1638,6 +1651,12 @@ select:focus-visible,
   .kvVal{
     font-size:10.5pt !important;
   }
+  .kv--project .kvRow--phase{
+    grid-template-columns:1fr !important;
+    gap:0.8mm !important;
+    margin-top:0 !important;
+    margin-bottom:0 !important;
+  }
   .phaseStepper{
     display:flex !important;
     gap:0 !important;
@@ -2016,10 +2035,10 @@ body{
   margin-left:-12px !important;
 }
 
-.kv--project .phaseStep--definition{ background:#f28c28; }
-.kv--project .phaseStep--conception{ background:#fff01f; }
-.kv--project .phaseStep--realisation{ background:#62dd50; }
-.kv--project .phaseStep--gpa{ background:#18b957; }
+.kv--project .phaseStep--definition{ background:#f28c28 !important; }
+.kv--project .phaseStep--conception{ background:#fff01f !important; }
+.kv--project .phaseStep--realisation{ background:#62dd50 !important; }
+.kv--project .phaseStep--gpa{ background:#18b957 !important; }
 
 .kv--project .phaseStep.is-upcoming{
   opacity:0.55 !important;
