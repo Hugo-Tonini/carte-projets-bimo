@@ -110,16 +110,15 @@ h1{ margin: 0; font-size: 20px; }
   background: transparent;
 }
 .types label{ white-space: nowrap; }
-.types input[type="checkbox"]{ accent-color:var(--accent) !important; }
 
 .officesToggle{
   display:inline-flex;
   align-items:center;
   gap:8px;
-  padding:7px 10px;
-  border:1px solid var(--border);
-  border-radius:10px;
-  background:#fff;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
   white-space:nowrap;
   cursor:pointer;
   line-height:1.1;
@@ -653,15 +652,15 @@ h1{ margin: 0; font-size: 20px; }
 .dpeCard--energy .dpeRow--D .dpeRowShape{ background:#f0da2c; }
 .dpeCard--energy .dpeRow--E .dpeRowShape{ background:#f4b63b; }
 .dpeCard--energy .dpeRow--F .dpeRowShape{ background:#f28b31; color:#111; }
-.dpeCard--energy .dpeRow--G .dpeRowShape{ background:#ea4335; color:#111; }
+.dpeCard--energy .dpeRow--G .dpeRowShape{ background:#ea4335; color:#fff; }
 
-.dpeCard--ges .dpeRow--A .dpeRowShape{ background:#ddd0ee; }
+.dpeCard--ges .dpeRow--A .dpeRowShape{ background:#f0f0f0; }
 .dpeCard--ges .dpeRow--B .dpeRowShape{ background:#d8c8ea; }
 .dpeCard--ges .dpeRow--C .dpeRowShape{ background:#c8b0e2; }
 .dpeCard--ges .dpeRow--D .dpeRowShape{ background:#b596d7; }
-.dpeCard--ges .dpeRow--E .dpeRowShape{ background:#9a77c7; color:#111; }
-.dpeCard--ges .dpeRow--F .dpeRowShape{ background:#8663ba; color:#111; }
-.dpeCard--ges .dpeRow--G .dpeRowShape{ background:#7752ae; color:#111; }
+.dpeCard--ges .dpeRow--E .dpeRowShape{ background:#9a77c7; color:#fff; }
+.dpeCard--ges .dpeRow--F .dpeRowShape{ background:#8663ba; color:#fff; }
+.dpeCard--ges .dpeRow--G .dpeRowShape{ background:#7752ae; color:#fff; }
 
 @media (max-width: 700px){
   .dpeRow{
@@ -2035,7 +2034,7 @@ body{
   margin-left:-12px !important;
 }
 
-.kv--project .phaseStep--definition{ background:#f28c28 !important; }
+.kv--project .phaseStep--definition{ background:#ffad33 !important; }
 .kv--project .phaseStep--conception{ background:#fff01f !important; }
 .kv--project .phaseStep--realisation{ background:#62dd50 !important; }
 .kv--project .phaseStep--gpa{ background:#18b957 !important; }
@@ -2080,5 +2079,152 @@ body{
   .kv--project .phaseStep.is-current{
     outline:2.4pt solid #111 !important;
     outline-offset:0.6pt !important;
+  }
+}
+
+
+/* ===== Correctifs impression : frise phase + étiquettes énergétiques ===== */
+@media print{
+  /* Frise phase projet : conserver les chevrons colorés à l'impression */
+  .kv--project .phaseFullRow,
+  .kv--project .phaseStepperWrap,
+  .kv--project .phaseStepper,
+  .kv--project .phaseStep{
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+    color-adjust:exact !important;
+  }
+
+  .kv--project .phaseStepper{
+    display:flex !important;
+    align-items:stretch !important;
+    width:100% !important;
+    height:8mm !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:visible !important;
+  }
+
+  .kv--project .phaseStep{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    height:8mm !important;
+    min-height:8mm !important;
+    padding:0 4mm !important;
+    font-size:9.5pt !important;
+    font-weight:800 !important;
+    line-height:1 !important;
+    color:#111 !important;
+    white-space:nowrap !important;
+    text-align:center !important;
+    background-clip:border-box !important;
+    clip-path:polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%, 16px 50%) !important;
+  }
+
+  .kv--project .phaseStep:first-child{
+    clip-path:polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%) !important;
+  }
+
+  .kv--project .phaseStep + .phaseStep{
+    margin-left:-3mm !important;
+  }
+
+  .kv--project .phaseStep--definition{ background:#ffad33 !important; }
+  .kv--project .phaseStep--conception{ background:#fff01f !important; }
+  .kv--project .phaseStep--realisation{ background:#62dd50 !important; }
+  .kv--project .phaseStep--gpa{ background:#18b957 !important; }
+
+  .kv--project .phaseStep.is-current{
+    outline:2.4pt solid #111 !important;
+    outline-offset:0.6pt !important;
+    z-index:3 !important;
+  }
+
+  /* Echelles énergétiques : revenir à des proportions proches du panneau */
+  .panelSection--energy .dpeScale,
+  .panelSection--energy .dpeCard,
+  .panelSection--energy .dpeRowShape,
+  .panelSection--energy .dpeMarker,
+  .panelSection--energy .dpeMarker::before,
+  .panelSection--energy .dpeMarker::after,
+  .panelSection--energy .energyLegendMiniMarker,
+  .panelSection--energy .energyLegendMiniMarkerSvg{
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+    color-adjust:exact !important;
+  }
+
+  .panelSection--energy .dpeScale{
+    --dpe-base-width: 150px !important;
+    --dpe-width-step: 34px !important;
+    --dpe-row-height: 30px !important;
+    --dpe-arrow-width: 18px !important;
+    --dpe-max-width: 354px !important;
+    --dpe-marker-col-width: 70px !important;
+    --dpe-gap-to-markers: 26px !important;
+    gap:6px !important;
+    width:max-content !important;
+    max-width:none !important;
+  }
+
+  .panelSection--energy .dpeRow{
+    grid-template-columns:var(--dpe-max-width) var(--dpe-marker-col-width) !important;
+    column-gap:var(--dpe-gap-to-markers) !important;
+    align-items:center !important;
+  }
+
+  .panelSection--energy .dpeRowMarkers{
+    width:var(--dpe-marker-col-width) !important;
+  }
+
+  .panelSection--energy .dpeRowShape{
+    height:var(--dpe-row-height) !important;
+    padding:0 14px 0 12px !important;
+    max-width:var(--dpe-max-width) !important;
+  }
+
+  .panelSection--energy .dpeRow--A .dpeRowShape{ width:150px !important; }
+  .panelSection--energy .dpeRow--B .dpeRowShape{ width:184px !important; }
+  .panelSection--energy .dpeRow--C .dpeRowShape{ width:218px !important; }
+  .panelSection--energy .dpeRow--D .dpeRowShape{ width:252px !important; }
+  .panelSection--energy .dpeRow--E .dpeRowShape{ width:286px !important; }
+  .panelSection--energy .dpeRow--F .dpeRowShape{ width:320px !important; }
+  .panelSection--energy .dpeRow--G .dpeRowShape{ width:354px !important; }
+
+  .panelSection--energy .dpeRowRange{
+    font-size:12px !important;
+    font-weight:700 !important;
+    color:#111 !important;
+  }
+
+  .panelSection--energy .dpeRowLetter{
+    font-size:22px !important;
+    font-weight:900 !important;
+    line-height:1 !important;
+    color:#111 !important;
+  }
+
+  .panelSection--energy .dpeMarker{
+    --marker-width: 64px !important;
+    --marker-height: 30px !important;
+    --marker-tip: 16px !important;
+    width:var(--marker-width) !important;
+    min-width:var(--marker-width) !important;
+    height:var(--marker-height) !important;
+    font-size:14px !important;
+    line-height:1 !important;
+  }
+
+  .panelSection--energy .dpeMarkerLabel{
+    left:calc(50% + 3px) !important;
+    top:50% !important;
+    transform:translate(-50%, -50%) !important;
+    line-height:1 !important;
+  }
+
+  .panelSection--energy .dpeUnitLine{
+    font-size:13px !important;
+    line-height:1.35 !important;
   }
 }
