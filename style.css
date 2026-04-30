@@ -511,11 +511,11 @@ h1{ margin: 0; font-size: 20px; }
 }
 
 .dpeScale{
-  --dpe-base-width: 129.6px;
-  --dpe-width-step: 29.376px;
+  --dpe-base-width: 120px;
+  --dpe-width-step: 27.2px;
   --dpe-row-height: 30px;
   --dpe-arrow-width: 18px;
-  --dpe-max-width: 305.856px;
+  --dpe-max-width: 283.2px;
   --dpe-marker-col-width: 70px;
   --dpe-gap-to-markers: 26px;
   justify-items:start;
@@ -550,7 +550,7 @@ h1{ margin: 0; font-size: 20px; }
 .dpeRow--G{ --dpe-step: 6; }
 
 .dpeRowRange{
-  font-size:17px;
+  font-size:15px;
   font-weight:700;
   color:#111;
 }
@@ -606,14 +606,13 @@ h1{ margin: 0; font-size: 20px; }
 
 .dpeMarkerLabel{
   position:absolute;
-  inset:0;
+  left:calc(50% + 3px);
+  top:50%;
+  transform:translate(-50%, -50%);
   z-index:2;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  display:block;
   text-align:center;
   min-width:0;
-  line-height:1;
 }
 
 .dpeMarker--before{
@@ -1508,13 +1507,13 @@ select:focus-visible,
     min-width:14mm !important;
   }
 
-  .dpeRow--A .dpeRowShape{ width:152px !important; }
-  .dpeRow--B .dpeRowShape{ width:184px !important; }
-  .dpeRow--C .dpeRowShape{ width:214px !important; }
-  .dpeRow--D .dpeRowShape{ width:245px !important; }
-  .dpeRow--E .dpeRowShape{ width:276px !important; }
-  .dpeRow--F .dpeRowShape{ width:308px !important; }
-  .dpeRow--G .dpeRowShape{ width:337px !important; }
+  .dpeRow--A .dpeRowShape{ width:141px !important; }
+  .dpeRow--B .dpeRowShape{ width:170px !important; }
+  .dpeRow--C .dpeRowShape{ width:198px !important; }
+  .dpeRow--D .dpeRowShape{ width:227px !important; }
+  .dpeRow--E .dpeRowShape{ width:256px !important; }
+  .dpeRow--F .dpeRowShape{ width:285px !important; }
+  .dpeRow--G .dpeRowShape{ width:312px !important; }
 
   .dpeCard,
   .dpeRowShape,
@@ -1569,7 +1568,7 @@ select:focus-visible,
   }
 
   .panelSection--energy .dpeScale{
-    --dpe-print-shape-col-width: 337px;
+    --dpe-print-shape-col-width: 312px;
     --dpe-print-marker-col-width: 68px;
     --dpe-print-gap-to-markers: 22px;
     width:max-content !important;
@@ -1619,7 +1618,7 @@ select:focus-visible,
   }
 
   .panelSection--energy .dpeRowRange{
-    font-size:15.5pt !important;
+    font-size:13.5pt !important;
     color:#111 !important;
   }
 
