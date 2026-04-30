@@ -653,15 +653,15 @@ h1{ margin: 0; font-size: 20px; }
 .dpeCard--energy .dpeRow--D .dpeRowShape{ background:#f0da2c; }
 .dpeCard--energy .dpeRow--E .dpeRowShape{ background:#f4b63b; }
 .dpeCard--energy .dpeRow--F .dpeRowShape{ background:#f28b31; color:#111; }
-.dpeCard--energy .dpeRow--G .dpeRowShape{ background:#ea4335; color:#fff; }
+.dpeCard--energy .dpeRow--G .dpeRowShape{ background:#ea4335; color:#111; }
 
 .dpeCard--ges .dpeRow--A .dpeRowShape{ background:#ddd0ee; }
 .dpeCard--ges .dpeRow--B .dpeRowShape{ background:#d8c8ea; }
 .dpeCard--ges .dpeRow--C .dpeRowShape{ background:#c8b0e2; }
 .dpeCard--ges .dpeRow--D .dpeRowShape{ background:#b596d7; }
-.dpeCard--ges .dpeRow--E .dpeRowShape{ background:#9a77c7; color:#fff; }
-.dpeCard--ges .dpeRow--F .dpeRowShape{ background:#8663ba; color:#fff; }
-.dpeCard--ges .dpeRow--G .dpeRowShape{ background:#7752ae; color:#fff; }
+.dpeCard--ges .dpeRow--E .dpeRowShape{ background:#9a77c7; color:#111; }
+.dpeCard--ges .dpeRow--F .dpeRowShape{ background:#8663ba; color:#111; }
+.dpeCard--ges .dpeRow--G .dpeRowShape{ background:#7752ae; color:#111; }
 
 @media (max-width: 700px){
   .dpeRow{
