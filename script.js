@@ -491,6 +491,32 @@
     }).join("");
   }
 
+  const PROJECT_TYPE_COLORS = {
+    mom: "blue",
+    amo: "red",
+    exp: "green",
+    other: "#D946EF"
+  };
+
+  function syncProjectTypeLegendColors() {
+    if (!elLegend) return;
+
+    const rows = Array.from(elLegend.querySelectorAll(".legend-row"));
+    for (const row of rows) {
+      const swatch = row.querySelector(".pin-swatch");
+      if (!swatch) continue;
+
+      const text = normalizeForLookup(row.textContent || "");
+      let color = "";
+      if (text.includes("mom")) color = PROJECT_TYPE_COLORS.mom;
+      else if (text.includes("amo")) color = PROJECT_TYPE_COLORS.amo;
+      else if (text.includes("exp")) color = PROJECT_TYPE_COLORS.exp;
+      else if (text.includes("autre")) color = PROJECT_TYPE_COLORS.other;
+
+      if (color) swatch.style.borderColor = color;
+    }
+  }
+
   // Table “corrigée” : département (nom) -> antenne
   const DEPT_TO_ANTENNA_BY_NAME = new Map(Object.entries({
     // Alpes Centre-Est
@@ -703,10 +729,10 @@
       const count = cluster.getChildCount();
 
       // Si plusieurs types => couleur "Autres", sinon couleur du type
-      let col = "#A855F7";
+      let col = PROJECT_TYPE_COLORS.other;
       if (types.size === 1) {
         const only = types.values().next().value;
-        col = only || "#A855F7";
+        col = only || PROJECT_TYPE_COLORS.other;
       }
 
       return L.divIcon({
@@ -1405,12 +1431,12 @@ clusters.on("clustermouseout", (a) => {
 
   // ---- Pins projets ----
   function colorByType(t) {
-    if (!t) return "blue";
+    if (!t) return PROJECT_TYPE_COLORS.mom;
     const x = String(t).toLowerCase();
-    if (x.includes("amo")) return "red";
-    if (x.includes("mom")) return "blue";
-    if (x.includes("exp")) return "green";
-    return "#A855F7";
+    if (x.includes("amo")) return PROJECT_TYPE_COLORS.amo;
+    if (x.includes("mom")) return PROJECT_TYPE_COLORS.mom;
+    if (x.includes("exp")) return PROJECT_TYPE_COLORS.exp;
+    return PROJECT_TYPE_COLORS.other;
   }
 
   function renderMarkers() {
@@ -2227,6 +2253,7 @@ marker.on("click", (e) => {
 
   // ---- Init UI ----
   renderLegendAntennas();
+  syncProjectTypeLegendColors();
   createCompletedYearFilterUi();
   updateCompletedYearFilterUi();
   syncToolbarControlHeights();
