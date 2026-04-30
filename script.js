@@ -498,7 +498,7 @@
     mom: "blue",
     amo: "red",
     exp: "green",
-    other: "#f9fc47"
+    other: "#f2781b"
   };
 
   const ANTENNA_SUMMARY_PLACEMENTS = {
