@@ -703,10 +703,10 @@
       const count = cluster.getChildCount();
 
       // Si plusieurs types => couleur "Autres", sinon couleur du type
-      let col = "#FF4B08";
+      let col = "#A855F7";
       if (types.size === 1) {
         const only = types.values().next().value;
-        col = only || "#FF4B08";
+        col = only || "#A855F7";
       }
 
       return L.divIcon({
@@ -1410,7 +1410,7 @@ clusters.on("clustermouseout", (a) => {
     if (x.includes("amo")) return "red";
     if (x.includes("mom")) return "blue";
     if (x.includes("exp")) return "green";
-    return "#FF4B08";
+    return "#A855F7";
   }
 
   function renderMarkers() {
