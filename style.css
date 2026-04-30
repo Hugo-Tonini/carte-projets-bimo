@@ -2502,9 +2502,23 @@ body{
 
 .antennaSummaryCard--map{
   position:relative !important;
-  transform:translate(-50%, -50%) !important;
   display:block !important;
+  transform:translate(-50%, -50%) !important;
 }
+
+/*
+  Le point Leaflet est placé près de la limite extérieure de l'antenne.
+  Ces classes font ensuite partir l'encart vers l'extérieur, afin qu'il ne
+  recouvre pas les départements colorés.
+*/
+.antennaSummaryCard--outside-west{ transform:translate(-100%, -50%) !important; }
+.antennaSummaryCard--outside-east{ transform:translate(0, -50%) !important; }
+.antennaSummaryCard--outside-north{ transform:translate(-50%, -100%) !important; }
+.antennaSummaryCard--outside-south{ transform:translate(-50%, 0) !important; }
+.antennaSummaryCard--outside-north-west{ transform:translate(-100%, -100%) !important; }
+.antennaSummaryCard--outside-north-east{ transform:translate(0, -100%) !important; }
+.antennaSummaryCard--outside-south-west{ transform:translate(-100%, 0) !important; }
+.antennaSummaryCard--outside-south-east{ transform:translate(0, 0) !important; }
 
 .antennaSummaryCard--map.is-selected{
   outline:3px solid rgba(0,0,145,0.58) !important;
@@ -2514,7 +2528,6 @@ body{
 @media (max-width: 980px){
   .antennaSummaryCard--map{
     position:relative !important;
-    transform:translate(-50%, -50%) !important;
     min-width:150px !important;
     max-width:210px !important;
   }
