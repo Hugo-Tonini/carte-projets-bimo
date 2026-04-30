@@ -1917,9 +1917,11 @@ body{
 }
 
 #clear,
-#projListBtn{
+#projListBtn,
+#antennaSummaryBtn{
   padding:5px 10px;
   line-height:1.1;
+  min-height:31px;
 }
 
 .projectModeSwitch{
@@ -2613,4 +2615,18 @@ body{
   border-radius:50%;
   border:2px solid #fff;
   box-shadow:0 1px 5px rgba(0,0,0,0.28);
+}
+
+
+/* ===== Ajustement du switch En cours / Finis ===== */
+.projectModeBtn{
+  transition:flex .18s ease, background-color .18s ease, color .18s ease;
+}
+
+.projectModeBtn.is-active{
+  flex:1.16 1 0;
+}
+
+.projectModeBtn:not(.is-active){
+  flex:.84 1 0;
 }
