@@ -501,15 +501,16 @@
     other: "#D946EF"
   };
 
-  const ANTENNA_SUMMARY_POINTS = {
-    // Points géographiques placés vers l’extérieur des zones d’antennes :
-    // les encarts bougent donc avec la carte (zoom / déplacement).
-    "Nord-Ouest Île-de-France": [49.75, -2.95],
-    "Nord-Est": [49.35, 8.25],
-    "Atlantique Grand-Ouest": [46.85, -5.35],
-    "Alpes Centre-Est": [45.35, 7.85],
-    "Grand Sud-Ouest": [43.55, -2.65],
-    "Méditerranée Grand-Sud": [43.05, 7.25]
+  const ANTENNA_SUMMARY_PLACEMENTS = {
+    // Chaque point sert de point d'accroche géographique Leaflet.
+    // La classe "outside-*" fait partir l'encart vers l'extérieur de la France,
+    // pour éviter qu'il recouvre les départements de son antenne.
+    "Nord-Ouest Île-de-France": { point: [49.72, -1.95], align: "outside-west" },
+    "Nord-Est": { point: [48.95, 8.15], align: "outside-east" },
+    "Atlantique Grand-Ouest": { point: [47.05, -4.75], align: "outside-west" },
+    "Alpes Centre-Est": { point: [45.35, 7.75], align: "outside-east" },
+    "Grand Sud-Ouest": { point: [44.05, -2.55], align: "outside-west" },
+    "Méditerranée Grand-Sud": { point: [42.85, 6.30], align: "outside-south" }
   };
 
   function syncProjectTypeLegendColors() {
@@ -1126,21 +1127,22 @@ clusters.on("clustermouseout", (a) => {
 
       if (!lines.length) continue;
 
-      const point = ANTENNA_SUMMARY_POINTS[antenna];
-      if (!point) continue;
+      const placement = ANTENNA_SUMMARY_PLACEMENTS[antenna];
+      if (!placement?.point) continue;
 
       visibleCards += 1;
       const color = ANTENNA_COLORS[antenna] || "#fff";
       const isSelected = selectedAntenna === antenna;
       const title = antenna === "Nord-Ouest Île-de-France" ? "Nord-Ouest<br>Île-de-France" : escapeHtml(antenna);
+      const alignClass = `antennaSummaryCard--${placement.align || "outside-center"}`;
       const html = `
-        <button class="antennaSummaryCard antennaSummaryCard--map${isSelected ? " is-selected" : ""}" type="button" style="--summary-color:${escapeAttr(color)};" data-antenna="${escapeAttr(antenna)}" aria-label="Filtrer sur ${escapeAttr(antenna)}">
+        <button class="antennaSummaryCard antennaSummaryCard--map ${alignClass}${isSelected ? " is-selected" : ""}" type="button" style="--summary-color:${escapeAttr(color)};" data-antenna="${escapeAttr(antenna)}" aria-label="Filtrer sur ${escapeAttr(antenna)}">
           <span class="antennaSummaryTitle">${title} :</span>
           ${lines.map((line) => `<span class="antennaSummaryLine">${line}</span>`).join("")}
         </button>
       `;
 
-      const marker = L.marker(point, {
+      const marker = L.marker(placement.point, {
         interactive: true,
         keyboard: true,
         icon: L.divIcon({
