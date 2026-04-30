@@ -2532,3 +2532,85 @@ body{
     max-width:210px !important;
   }
 }
+
+/* ===== Barre de zoom discrète ===== */
+.bimoZoomSlider.leaflet-bar{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  width:34px;
+  padding:6px 4px;
+  border:1px solid rgba(0,0,0,0.18);
+  border-radius:14px;
+  background:rgba(255,255,255,0.82);
+  box-shadow:0 4px 14px rgba(0,0,0,0.16);
+  backdrop-filter:blur(6px);
+  opacity:0.72;
+  transform-origin:top left;
+  transition:width .18s ease, padding .18s ease, opacity .18s ease, box-shadow .18s ease;
+}
+.bimoZoomSlider.leaflet-bar:hover,
+.bimoZoomSlider.leaflet-bar:focus-within{
+  width:46px;
+  padding:8px 6px;
+  opacity:1;
+  box-shadow:0 8px 22px rgba(0,0,0,0.22);
+}
+.bimoZoomSliderBtn{
+  width:24px;
+  height:24px;
+  padding:0;
+  border:0;
+  border-radius:999px;
+  background:rgba(255,255,255,0.92);
+  color:#111;
+  font:700 18px/1 "Marianne", Arial, sans-serif;
+  cursor:pointer;
+  box-shadow:0 1px 4px rgba(0,0,0,0.16);
+}
+.bimoZoomSliderBtn:hover,
+.bimoZoomSliderBtn:focus-visible{
+  background:#fff;
+  outline:2px solid rgba(0,0,145,0.28);
+  outline-offset:1px;
+}
+.bimoZoomSliderRange{
+  width:22px;
+  height:126px;
+  margin:2px 0;
+  padding:0;
+  writing-mode:vertical-lr;
+  direction:rtl;
+  accent-color:var(--accent);
+  cursor:pointer;
+}
+.bimoZoomSlider:hover .bimoZoomSliderRange,
+.bimoZoomSlider:focus-within .bimoZoomSliderRange{
+  height:190px;
+}
+.bimoZoomSliderRange::-webkit-slider-runnable-track{
+  width:6px;
+  border-radius:999px;
+  background:rgba(0,0,0,0.16);
+}
+.bimoZoomSliderRange::-webkit-slider-thumb{
+  width:16px;
+  height:16px;
+  margin-left:-5px;
+  border-radius:50%;
+  border:2px solid #fff;
+  box-shadow:0 1px 5px rgba(0,0,0,0.28);
+}
+.bimoZoomSliderRange::-moz-range-track{
+  width:6px;
+  border-radius:999px;
+  background:rgba(0,0,0,0.16);
+}
+.bimoZoomSliderRange::-moz-range-thumb{
+  width:14px;
+  height:14px;
+  border-radius:50%;
+  border:2px solid #fff;
+  box-shadow:0 1px 5px rgba(0,0,0,0.28);
+}
