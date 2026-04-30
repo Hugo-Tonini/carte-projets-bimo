@@ -734,7 +734,7 @@
   }
 
   function zoomToAntennaSummaryView() {
-    map.flyTo([46.05, 2.35], 6.3, {
+    map.flyTo([46.45, 2.35], 6.3, {
       duration: 0.7
     });
   }
