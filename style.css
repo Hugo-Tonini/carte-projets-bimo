@@ -2296,7 +2296,7 @@ body{
 
 /* ===== Ajustements finaux : Autres + longueurs DPE/GES ===== */
 :root{
-  --bimo-pin-other-color: #600fd1;
+  --bimo-pin-other-color: #b683fc;
 }
 
 .pin-swatch.pin-swatch--autres,
