@@ -2245,3 +2245,20 @@ body{
     line-height:1.35 !important;
   }
 }
+
+
+/* ===== Ajustement final : plages DPE/GES +4 pts ===== */
+.dpeRowRange{
+  font-size:16px !important;
+  color:#111 !important;
+  font-weight:800 !important;
+}
+
+@media print{
+  .panelSection--energy .dpeRowRange,
+  .dpeRowRange{
+    font-size:13pt !important;
+    color:#111 !important;
+    font-weight:800 !important;
+  }
+}
