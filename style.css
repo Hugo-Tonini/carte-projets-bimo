@@ -511,11 +511,11 @@ h1{ margin: 0; font-size: 20px; }
 }
 
 .dpeScale{
-  --dpe-base-width: 150px;
-  --dpe-width-step: 34px;
+  --dpe-base-width: 120px;
+  --dpe-width-step: 27.2px;
   --dpe-row-height: 30px;
   --dpe-arrow-width: 18px;
-  --dpe-max-width: 354px;
+  --dpe-max-width: 283.2px;
   --dpe-marker-col-width: 70px;
   --dpe-gap-to-markers: 26px;
   justify-items:start;
@@ -550,8 +550,9 @@ h1{ margin: 0; font-size: 20px; }
 .dpeRow--G{ --dpe-step: 6; }
 
 .dpeRowRange{
-  font-size:12px;
+  font-size:15px;
   font-weight:700;
+  color:#111;
 }
 
 .dpeRowLetter{
@@ -1506,13 +1507,13 @@ select:focus-visible,
     min-width:14mm !important;
   }
 
-  .dpeRow--A .dpeRowShape{ width:176px !important; }
-  .dpeRow--B .dpeRowShape{ width:212px !important; }
-  .dpeRow--C .dpeRowShape{ width:248px !important; }
-  .dpeRow--D .dpeRowShape{ width:284px !important; }
-  .dpeRow--E .dpeRowShape{ width:320px !important; }
-  .dpeRow--F .dpeRowShape{ width:356px !important; }
-  .dpeRow--G .dpeRowShape{ width:390px !important; }
+  .dpeRow--A .dpeRowShape{ width:141px !important; }
+  .dpeRow--B .dpeRowShape{ width:170px !important; }
+  .dpeRow--C .dpeRowShape{ width:198px !important; }
+  .dpeRow--D .dpeRowShape{ width:227px !important; }
+  .dpeRow--E .dpeRowShape{ width:256px !important; }
+  .dpeRow--F .dpeRowShape{ width:285px !important; }
+  .dpeRow--G .dpeRowShape{ width:312px !important; }
 
   .dpeCard,
   .dpeRowShape,
@@ -1567,7 +1568,7 @@ select:focus-visible,
   }
 
   .panelSection--energy .dpeScale{
-    --dpe-print-shape-col-width: 390px;
+    --dpe-print-shape-col-width: 312px;
     --dpe-print-marker-col-width: 68px;
     --dpe-print-gap-to-markers: 22px;
     width:max-content !important;
@@ -1612,9 +1613,13 @@ select:focus-visible,
     line-height:1.12 !important;
   }
 
-  .panelSection--energy .dpeUnitLine,
-  .panelSection--energy .dpeRowRange{
+  .panelSection--energy .dpeUnitLine{
     font-size:10.5pt !important;
+  }
+
+  .panelSection--energy .dpeRowRange{
+    font-size:13.5pt !important;
+    color:#111 !important;
   }
 
   .panelSection--energy .dpeScale{
