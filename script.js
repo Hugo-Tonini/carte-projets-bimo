@@ -501,13 +501,15 @@
     other: "#D946EF"
   };
 
-  const ANTENNA_SUMMARY_POSITIONS = {
-    "Nord-Ouest Île-de-France": "summary-nw",
-    "Nord-Est": "summary-ne",
-    "Atlantique Grand-Ouest": "summary-w",
-    "Alpes Centre-Est": "summary-e",
-    "Grand Sud-Ouest": "summary-sw",
-    "Méditerranée Grand-Sud": "summary-se"
+  const ANTENNA_SUMMARY_POINTS = {
+    // Points géographiques placés vers l’extérieur des zones d’antennes :
+    // les encarts bougent donc avec la carte (zoom / déplacement).
+    "Nord-Ouest Île-de-France": [49.75, -2.95],
+    "Nord-Est": [49.35, 8.25],
+    "Atlantique Grand-Ouest": [46.85, -5.35],
+    "Alpes Centre-Est": [45.35, 7.85],
+    "Grand Sud-Ouest": [43.55, -2.65],
+    "Méditerranée Grand-Sud": [43.05, 7.25]
   };
 
   function syncProjectTypeLegendColors() {
@@ -757,6 +759,8 @@
   });
 
   map.addLayer(clusters);
+
+  const antennaSummaryLayer = L.layerGroup().addTo(map);
 
 // Tooltip (survol) : liste des projets dans un cluster
 clusters.on("clustermouseover", (a) => {
@@ -1061,8 +1065,11 @@ clusters.on("clustermouseout", (a) => {
   function renderAntennaSummary() {
     if (!elAntennaSummaryOverlay) return;
 
+    // L'ancien conteneur HTML reste présent pour l’accessibilité et les messages,
+    // mais les encarts sont maintenant des marqueurs Leaflet : ils bougent avec la carte.
     elAntennaSummaryOverlay.hidden = !antennaSummaryEnabled;
     elAntennaSummaryOverlay.classList.toggle("is-visible", antennaSummaryEnabled);
+    antennaSummaryLayer.clearLayers();
 
     if (!antennaSummaryEnabled) {
       elAntennaSummaryOverlay.innerHTML = "";
@@ -1075,13 +1082,15 @@ clusters.on("clustermouseout", (a) => {
       return;
     }
 
+    elAntennaSummaryOverlay.innerHTML = "";
+
     const activeTypeSet = new Set(activeTypes);
     const summaries = new Map();
     for (const antenna of ANTENNA_LEGEND_ORDER) {
       summaries.set(antenna, { mom: 0, amo: 0, exp: 0, momAmount: 0 });
     }
 
-    for (const project of filteredProjects()) {
+    for (const project of filteredProjectsForAntennaSummary()) {
       const antenna = String(project["Antenne"] ?? project.antenne ?? "").trim();
       if (!summaries.has(antenna)) continue;
 
@@ -1097,7 +1106,9 @@ clusters.on("clustermouseout", (a) => {
     }
 
     const typeLabels = { mom: "MOM", amo: "AMO", exp: "EXP" };
-    const cards = ANTENNA_LEGEND_ORDER.map((antenna) => {
+    let visibleCards = 0;
+
+    for (const antenna of ANTENNA_LEGEND_ORDER) {
       const summary = summaries.get(antenna);
       const lines = activeTypes
         .map((typeKey) => {
@@ -1113,21 +1124,55 @@ clusters.on("clustermouseout", (a) => {
         })
         .filter(Boolean);
 
-      if (!lines.length) return "";
+      if (!lines.length) continue;
 
+      const point = ANTENNA_SUMMARY_POINTS[antenna];
+      if (!point) continue;
+
+      visibleCards += 1;
       const color = ANTENNA_COLORS[antenna] || "#fff";
-      const position = ANTENNA_SUMMARY_POSITIONS[antenna] || "summary-center";
+      const isSelected = selectedAntenna === antenna;
       const title = antenna === "Nord-Ouest Île-de-France" ? "Nord-Ouest<br>Île-de-France" : escapeHtml(antenna);
-
-      return `
-        <button class="antennaSummaryCard ${position}" type="button" style="--summary-color:${escapeAttr(color)};" data-antenna="${escapeAttr(antenna)}" aria-label="Filtrer sur ${escapeAttr(antenna)}">
+      const html = `
+        <button class="antennaSummaryCard antennaSummaryCard--map${isSelected ? " is-selected" : ""}" type="button" style="--summary-color:${escapeAttr(color)};" data-antenna="${escapeAttr(antenna)}" aria-label="Filtrer sur ${escapeAttr(antenna)}">
           <span class="antennaSummaryTitle">${title} :</span>
           ${lines.map((line) => `<span class="antennaSummaryLine">${line}</span>`).join("")}
         </button>
       `;
-    }).filter(Boolean).join("");
 
-    elAntennaSummaryOverlay.innerHTML = cards || `<div class="antennaSummaryEmpty">Aucun projet pour les filtres sélectionnés.</div>`;
+      const marker = L.marker(point, {
+        interactive: true,
+        keyboard: true,
+        icon: L.divIcon({
+          className: "antennaSummaryMarker",
+          html,
+          iconSize: null
+        })
+      });
+
+      marker.on("add", () => {
+        const el = marker.getElement();
+        if (el) {
+          L.DomEvent.disableClickPropagation(el);
+          L.DomEvent.disableScrollPropagation(el);
+        }
+      });
+
+      marker.on("click", (e) => {
+        L.DomEvent.stopPropagation(e);
+        selectedAntenna = selectedAntenna === antenna ? null : antenna;
+        closePanel();
+        updateDeptStyle();
+        updateDeptSelectedStat();
+        renderMarkers();
+      });
+
+      antennaSummaryLayer.addLayer(marker);
+    }
+
+    if (!visibleCards) {
+      elAntennaSummaryOverlay.innerHTML = `<div class="antennaSummaryEmpty">Aucun projet pour les filtres sélectionnés.</div>`;
+    }
   }
 
   function projectId(p) {
@@ -1537,6 +1582,12 @@ clusters.on("clustermouseout", (a) => {
     return allProjects
       .filter((p) => normalizeForLookup(p["Antenne"] ?? p.antenne) === a)
       .sort((aProj, bProj) => String(aProj["Nom de projet"] ?? aProj.nom ?? "").localeCompare(String(bProj["Nom de projet"] ?? bProj.nom ?? ""), "fr", { sensitivity: "base" }));
+  }
+
+  function filteredProjectsForAntennaSummary() {
+    // La synthèse doit tenir compte des filtres de recherche / type / année,
+    // mais pas du focus antenne créé quand on clique sur un encart.
+    return allProjects.filter(matchesFilters);
   }
 
   function computeFilteredCounts() {
