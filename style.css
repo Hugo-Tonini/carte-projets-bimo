@@ -110,7 +110,6 @@ h1{ margin: 0; font-size: 20px; }
   background: transparent;
 }
 .types label{ white-space: nowrap; }
-.types input{ accent-color:var(--accent); }
 
 .officesToggle{
   display:inline-flex;
@@ -215,7 +214,6 @@ h1{ margin: 0; font-size: 20px; }
   white-space:nowrap;
 }
 .completedYearRange{
-  width:260px;
   margin:0;
   accent-color:var(--accent);
 }
@@ -366,25 +364,13 @@ h1{ margin: 0; font-size: 20px; }
 .panel.open{ display: block; }
 
 .panelHeader{
-  position: sticky;
-  top: 0;
-  z-index: 50;
   display: flex;
   align-items: start;
   justify-content: space-between;
   gap: 10px;
-  margin: 0 -12px 10px -12px;
-  padding: 12px 12px 10px;
-  background: rgba(248,246,242,0.96);
-  backdrop-filter: blur(6px);
-  border-bottom: 1px solid rgba(0,0,0,0.08);
+  margin-bottom: 10px;
 }
-.panelTitle{
-  margin: 0;
-  font-size: 28px;
-  line-height: 1.2;
-  font-weight: 800;
-}
+.panelTitle{ margin: 0; font-size: 18px; line-height: 1.2; }
 
 .panelHeaderTitleWrap{
   display:flex;
@@ -655,7 +641,7 @@ h1{ margin: 0; font-size: 20px; }
 .dpeCard--energy .dpeRow--F .dpeRowShape{ background:#f28b31; color:#111; }
 .dpeCard--energy .dpeRow--G .dpeRowShape{ background:#ea4335; color:#fff; }
 
-.dpeCard--ges .dpeRow--A .dpeRowShape{ background:#d8d8d8; }
+.dpeCard--ges .dpeRow--A .dpeRowShape{ background:#f0f0f0; }
 .dpeCard--ges .dpeRow--B .dpeRowShape{ background:#d8c8ea; }
 .dpeCard--ges .dpeRow--C .dpeRowShape{ background:#c8b0e2; }
 .dpeCard--ges .dpeRow--D .dpeRowShape{ background:#b596d7; }
@@ -1110,7 +1096,7 @@ select:focus-visible,
 .kv--project .kvKey{
   color:#000;
   font-weight:700;
-  font-size:18px;
+  font-size:13px;
   line-height:1.25;
   text-transform:none;
   letter-spacing:0;
@@ -1121,110 +1107,6 @@ select:focus-visible,
   text-align:left;
   justify-self:start;
   line-height:1.25;
-}
-
-.kv--project .kvRow--phase{
-  grid-template-columns:1fr;
-  gap:2px;
-  align-items:start;
-  margin-top:0;
-  margin-bottom:0;
-}
-
-.kv--project .kvRow--phase .kvKey{
-  margin:0;
-  line-height:1.05;
-}
-
-.kv--project .kvVal--phase{
-  width:100%;
-  overflow:visible;
-  margin:0;
-  line-height:1;
-}
-
-.phaseStepperWrap{
-  width:100%;
-  margin:0;
-  padding:0;
-  display:block;
-}
-
-.phaseStepper{
-  display:flex;
-  align-items:stretch;
-  width:100%;
-  padding:0;
-  margin:0;
-  overflow:visible;
-}
-
-.phaseStep{
-  position:relative;
-  flex:1 1 0;
-  min-width:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  min-height:34px;
-  padding:0 24px;
-  text-align:center;
-  font-size:14px;
-  line-height:1;
-  font-weight:800;
-  color:#111;
-  white-space:nowrap;
-  clip-path:polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%, 16px 50%);
-}
-
-.phaseStep + .phaseStep{
-  margin-left:-12px;
-}
-
-.phaseStep:first-child{
-  clip-path:polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%);
-  padding-left:18px;
-}
-
-.phaseStep--definition{ background:#ffb347; }
-.phaseStep--conception{ background:#f0e333; color:#111; }
-.phaseStep--realisation{ background:#6edb5f; color:#111; }
-.phaseStep--gpa{ background:#25b45b; color:#111; }
-
-.phaseStep.is-upcoming{
-  opacity:0.55;
-  filter:saturate(0.9);
-}
-
-.phaseStep.is-done{
-  opacity:1;
-}
-
-.phaseStep.is-current{
-  opacity:1;
-  outline:5px solid #111;
-  outline-offset:1px;
-  z-index:3;
-}
-
-.phaseStep.is-neutral{
-  opacity:1;
-}
-
-@media (max-width: 760px){
-  .phaseStepper{
-    flex-wrap:wrap;
-    gap:6px;
-    padding:0;
-  }
-
-  .phaseStep{
-    flex:1 1 calc(50% - 6px);
-  }
-
-  .phaseStep + .phaseStep{
-    margin-left:0;
-  }
 }
 
 .projPhotos{
@@ -1434,10 +1316,9 @@ select:focus-visible,
     display:none !important;
   }
   .panelTitle{
-    font-size:28pt !important;
+    font-size:24pt !important;
     line-height:1.15 !important;
     flex:1 1 auto !important;
-    font-weight:800 !important;
   }
   .screenOnlyInline{
     display:none !important;
@@ -1506,13 +1387,13 @@ select:focus-visible,
     min-width:14mm !important;
   }
 
-  .dpeRow--A .dpeRowShape{ width:176px !important; }
-  .dpeRow--B .dpeRowShape{ width:212px !important; }
-  .dpeRow--C .dpeRowShape{ width:248px !important; }
-  .dpeRow--D .dpeRowShape{ width:284px !important; }
-  .dpeRow--E .dpeRowShape{ width:320px !important; }
-  .dpeRow--F .dpeRowShape{ width:356px !important; }
-  .dpeRow--G .dpeRowShape{ width:390px !important; }
+  .dpeRow--A .dpeRowShape{ width:188px !important; }
+  .dpeRow--B .dpeRowShape{ width:226px !important; }
+  .dpeRow--C .dpeRowShape{ width:264px !important; }
+  .dpeRow--D .dpeRowShape{ width:302px !important; }
+  .dpeRow--E .dpeRowShape{ width:340px !important; }
+  .dpeRow--F .dpeRowShape{ width:378px !important; }
+  .dpeRow--G .dpeRowShape{ width:416px !important; }
 
   .dpeCard,
   .dpeRowShape,
@@ -1566,25 +1447,17 @@ select:focus-visible,
     width:100% !important;
   }
 
-  .panelSection--energy .dpeScale{
-    --dpe-print-shape-col-width: 390px;
-    --dpe-print-marker-col-width: 68px;
-    --dpe-print-gap-to-markers: 22px;
-    width:max-content !important;
-    max-width:none !important;
-  }
-
   .panelSection--energy .dpeRow{
-    grid-template-columns:var(--dpe-print-shape-col-width) var(--dpe-print-marker-col-width) !important;
-    column-gap:var(--dpe-print-gap-to-markers) !important;
+    grid-template-columns:1fr auto !important;
+    column-gap:4.2mm !important;
   }
 
-  .panelSection--energy .dpeRowMarkers{
-    width:var(--dpe-print-marker-col-width) !important;
+  .panelSection--energy .dpeScale{
+    width:100% !important;
   }
 
   .panelSection--energy .dpeRowShape{
-    max-width:var(--dpe-print-shape-col-width) !important;
+    max-width:100% !important;
   }
 
 
@@ -1650,33 +1523,6 @@ select:focus-visible,
   }
   .kvVal{
     font-size:10.5pt !important;
-  }
-  .kv--project .kvRow--phase{
-    grid-template-columns:1fr !important;
-    gap:0.8mm !important;
-    margin-top:0 !important;
-    margin-bottom:0 !important;
-  }
-  .phaseStepper{
-    display:flex !important;
-    gap:0 !important;
-    padding:0 !important;
-    margin:0 !important;
-  }
-  .phaseStep{
-    min-height:7.6mm !important;
-    padding:0 5mm !important;
-    font-size:9.5pt !important;
-    color:#111 !important;
-    white-space:nowrap !important;
-    transform:none !important;
-  }
-  .phaseStep + .phaseStep{
-    margin-left:-3mm !important;
-  }
-  .phaseStep.is-current{
-    outline:2.4pt solid #111 !important;
-    outline-offset:0.6pt !important;
   }
   .projHero{
     margin:0 0 5mm 0 !important;
@@ -1778,14 +1624,19 @@ select:focus-visible,
 }
 
 .panelHeader--office{
-  background:rgba(248,246,242,0.96);
+  position:sticky;
+  top:0;
+  z-index:50;
+  background:rgba(255,255,255,0.95);
+  backdrop-filter:blur(6px);
+  padding:12px 12px 10px;
+  border-bottom:1px solid rgba(0,0,0,0.08);
 }
 
 .panelTitle--office{
   font-size:32px;
   line-height:1.1;
   margin:0;
-  font-weight:800;
 }
 
 .panelSubTitle--office{
@@ -1955,130 +1806,4 @@ body{
 .projectModeBtn:disabled{
   opacity: .55;
   cursor: not-allowed;
-}
-
-
-/* ===== Correctif définitif : Phase projet sous le libellé, pleine largeur, sans espace vide ===== */
-.kv--project .kvRow--phaseLabel{
-  display:block !important;
-  grid-template-columns:none !important;
-  gap:0 !important;
-  margin:0 !important;
-  padding:0 !important;
-  min-height:0 !important;
-  line-height:1 !important;
-}
-
-.kv--project .kvRow--phaseLabel .kvKey{
-  display:block !important;
-  margin:0 !important;
-  padding:0 !important;
-  line-height:1.05 !important;
-}
-
-.kv--project .phaseFullRow{
-  display:block !important;
-  width:100% !important;
-  max-width:100% !important;
-  min-width:0 !important;
-  margin:-2px 0 0 0 !important;
-  padding:0 !important;
-  line-height:0 !important;
-}
-
-.kv--project .phaseStepperWrap{
-  display:block !important;
-  width:100% !important;
-  max-width:100% !important;
-  margin:0 !important;
-  padding:0 !important;
-  line-height:0 !important;
-}
-
-.kv--project .phaseStepper{
-  display:flex !important;
-  align-items:stretch !important;
-  width:100% !important;
-  max-width:100% !important;
-  height:34px !important;
-  margin:0 !important;
-  padding:0 !important;
-  overflow:visible !important;
-  line-height:1 !important;
-}
-
-.kv--project .phaseStep{
-  position:relative !important;
-  flex:1 1 0 !important;
-  min-width:0 !important;
-  height:34px !important;
-  min-height:34px !important;
-  padding:0 18px !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  font-size:14px !important;
-  line-height:1 !important;
-  font-weight:800 !important;
-  color:#111 !important;
-  white-space:nowrap !important;
-  text-align:center !important;
-  clip-path:polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%, 16px 50%) !important;
-}
-
-.kv--project .phaseStep:first-child{
-  clip-path:polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%) !important;
-  padding-left:16px !important;
-}
-
-.kv--project .phaseStep + .phaseStep{
-  margin-left:-12px !important;
-}
-
-.kv--project .phaseStep--definition{ background:#f28c28 !important; }
-.kv--project .phaseStep--conception{ background:#fff01f !important; }
-.kv--project .phaseStep--realisation{ background:#62dd50 !important; }
-.kv--project .phaseStep--gpa{ background:#18b957 !important; }
-
-.kv--project .phaseStep.is-upcoming{
-  opacity:0.55 !important;
-  filter:saturate(0.9) !important;
-}
-
-.kv--project .phaseStep.is-done,
-.kv--project .phaseStep.is-neutral{
-  opacity:1 !important;
-}
-
-.kv--project .phaseStep.is-current{
-  opacity:1 !important;
-  outline:5px solid #111 !important;
-  outline-offset:1px !important;
-  z-index:3 !important;
-}
-
-@media print{
-  .kv--project .phaseFullRow{
-    margin:-0.6mm 0 0 0 !important;
-  }
-
-  .kv--project .phaseStepper{
-    height:7.5mm !important;
-  }
-
-  .kv--project .phaseStep{
-    height:7.5mm !important;
-    min-height:7.5mm !important;
-    padding:0 4mm !important;
-    font-size:9pt !important;
-  }
-
-  .kv--project .phaseStep + .phaseStep{
-    margin-left:-3mm !important;
-  }
-
-  .kv--project .phaseStep.is-current{
-    outline:2.4pt solid #111 !important;
-    outline-offset:0.6pt !important;
-  }
 }
