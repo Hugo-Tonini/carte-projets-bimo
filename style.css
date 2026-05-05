@@ -72,6 +72,7 @@ h1{ margin: 0; font-size: 20px; }
 
 /* ===== Toolbar ===== */
 .toolbar{
+  position: relative;
   display: flex;
   gap: 10px;
   align-items: center;
@@ -129,14 +130,73 @@ h1{ margin: 0; font-size: 20px; }
   accent-color:var(--accent);
 }
 
-#clear, #projListBtn, #antennaSummaryBtn{
+#clear, #projListBtn, #antennaSummaryBtn, #advancedFiltersBtn{
   padding: 7px 10px;
   cursor: pointer;
   border: 1px solid var(--border);
   background: #fff;
   border-radius: 10px;
 }
-#clear:hover, #projListBtn:hover, #antennaSummaryBtn:hover{ filter: brightness(0.98); }
+#clear:hover, #projListBtn:hover, #antennaSummaryBtn:hover, #advancedFiltersBtn:hover{ filter: brightness(0.98); }
+
+
+#clear.is-active,
+#advancedFiltersBtn.is-active{
+  border-color:var(--accent);
+  color:var(--accent);
+  font-weight:700;
+}
+
+.advancedFiltersPanel{
+  position:absolute;
+  z-index:900;
+  top:calc(100% - 4px);
+  left:14px;
+  width:min(920px, calc(100vw - 28px));
+  padding:14px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:#fff;
+  box-shadow:0 12px 34px rgba(0,0,0,0.16);
+}
+.advancedFiltersGrid{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(170px, 1fr));
+  gap:10px;
+}
+.advancedFiltersGrid label{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  font-size:12px;
+  font-weight:700;
+  color:#333;
+}
+.advancedFiltersGrid input,
+.advancedFiltersGrid select{
+  width:100%;
+  min-height:34px;
+  padding:6px 8px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:#fff;
+  font:inherit;
+  font-weight:400;
+  color:#111;
+}
+.panelShare{
+  padding:7px 10px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#fff;
+  cursor:pointer;
+}
+.panelShare:hover{ filter:brightness(0.98); }
+
+@media (max-width: 760px){
+  .advancedFiltersGrid{ grid-template-columns:1fr; }
+  .advancedFiltersPanel{ left:10px; width:calc(100vw - 20px); }
+}
 
 .projectModeSwitch{
   display:inline-flex;
@@ -1434,7 +1494,8 @@ select:focus-visible,
   .toolbar,
   .leaflet-control-container,
   .lightbox,
-  #projListMenu{
+  #projListMenu,
+  #advancedFiltersPanel{
     display:none !important;
   }
   .layout{
@@ -1918,7 +1979,8 @@ body{
 
 #clear,
 #projListBtn,
-#antennaSummaryBtn{
+#antennaSummaryBtn,
+#advancedFiltersBtn{
   padding:3px 10px;
   line-height:1;
   min-height:26px;
