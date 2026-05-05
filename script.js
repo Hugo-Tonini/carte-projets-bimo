@@ -19,7 +19,7 @@
   });
 
   // ---- Configuration ----
-  const DATA_VERSION = "2026-04-30b";
+  const DATA_VERSION = "2026-05-05a";
   const CURRENT_PROJECTS_URL = `export_projets_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const COMPLETED_PROJECTS_URL = `export_projets_finis_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const DEPTS_URL = `departements.geojson?v=${encodeURIComponent(DATA_VERSION)}`;
@@ -56,6 +56,17 @@
   const elProjListSearch = document.getElementById("projListSearch");
   const elProjListSort = document.getElementById("projListSort");
   const elProjListItems = document.getElementById("projListItems");
+  const elAdvancedFiltersBtn = document.getElementById("advancedFiltersBtn");
+  const elAdvancedFiltersPanel = document.getElementById("advancedFiltersPanel");
+  const elAmountMin = document.getElementById("amountMin");
+  const elAmountMax = document.getElementById("amountMax");
+  const elPhaseFilter = document.getElementById("phaseFilter");
+  const elClientFilter = document.getElementById("clientFilter");
+  const elProgrammeFilter = document.getElementById("programmeFilter");
+  const elThemeFilter = document.getElementById("themeFilter");
+  const elDeptFilter = document.getElementById("deptFilter");
+  const elPhotosFilter = document.getElementById("photosFilter");
+  const elEnergyFilter = document.getElementById("energyFilter");
   let elCompletedYearFilter = null;
   let elCompletedYearRange = null;
   let elCompletedYearValue = null;
@@ -89,6 +100,7 @@
   let projectIdToName = new Map();  // "Code projet" -> Nom du projet (tooltips clusters)
   let projectListDirty = true;
   let completedProjectsLoadFailed = false;
+  let suppressProjectUrlUpdate = false;
   function clearSelectedMarker() {
     if (selectedMarker) selectedMarker.getElement()?.classList.remove("selected");
     selectedMarker = null;
@@ -110,8 +122,9 @@
     const typeFilters = Array.from(document.querySelectorAll(".typeFilter"));
     const hasTypeFilter = typeFilters.some((cb) => !cb.checked);
     const hasAntennaFilter = !!selectedAntenna;
+    const hasAdvancedFilter = hasActiveAdvancedFilters();
     const hasCompletedYearFilter = currentProjectMode === PROJECT_MODES.completed.key && !showAllCompletedProjects && completedYearFilter !== COMPLETED_YEAR_MIN;
-    return hasSearch || hasTypeFilter || hasAntennaFilter || hasCompletedYearFilter;
+    return hasSearch || hasTypeFilter || hasAntennaFilter || hasAdvancedFilter || hasCompletedYearFilter;
   }
 
   function updateClearButtonState() {
@@ -382,7 +395,7 @@
   function ensureProjectIds(projects, modeKey) {
     return projects.map((project, index) => {
       const source = project && typeof project === "object" ? project : {};
-      const existingId = String(source["Code projet"] ?? source.code_projet ?? source.codeProjet ?? source.id ?? "").trim();
+      const existingId = String(source["Code projet"] ?? source["ID"] ?? source.code_projet ?? source.codeProjet ?? source.id ?? "").trim();
       return {
         ...source,
         __projectMode: modeKey,
@@ -457,6 +470,7 @@
     closePanel();
     setActiveProjectsForMode(modeKey);
     updateProjectModeUi();
+    refreshAdvancedFilterOptions();
     renderMarkers();
     updateClearButtonState();
   }
@@ -1269,7 +1283,7 @@ clusters.on("clustermouseout", (a) => {
   }
 
   function projectId(p) {
-    return String(p.__projectId ?? p["Code projet"] ?? p.code_projet ?? p.codeProjet ?? p.id ?? "").trim();
+    return String(p.__projectId ?? p["Code projet"] ?? p["ID"] ?? p.code_projet ?? p.codeProjet ?? p.id ?? "").trim();
   }
 
   function projectListLabel(p) {
@@ -1639,6 +1653,193 @@ clusters.on("clustermouseout", (a) => {
     return fromYear <= year && year <= toYear;
   }
 
+  function hasProjectPhotos(p) {
+    return getProjectPhotos(p).length > 0;
+  }
+
+  function hasProjectEnergyData(p) {
+    const fields = [
+      "Consommation énergetique - avant travaux",
+      "Consommation énergetique - Après travaux",
+      "Émission GES - avant travaux",
+      "Émission GES - Après travaux"
+    ];
+    return fields.some((key) => p?.[key] != null && String(p[key]).trim() !== "");
+  }
+
+  function selectedValue(el) {
+    return String(el?.value ?? "").trim();
+  }
+
+  function hasActiveAdvancedFilters() {
+    return !!(
+      selectedValue(elAmountMin) ||
+      selectedValue(elAmountMax) ||
+      selectedValue(elPhaseFilter) ||
+      selectedValue(elClientFilter) ||
+      selectedValue(elProgrammeFilter) ||
+      selectedValue(elThemeFilter) ||
+      selectedValue(elDeptFilter) ||
+      selectedValue(elPhotosFilter) ||
+      selectedValue(elEnergyFilter)
+    );
+  }
+
+  function syncAdvancedFiltersButtonState() {
+    if (!elAdvancedFiltersBtn) return;
+    const active = hasActiveAdvancedFilters();
+    elAdvancedFiltersBtn.classList.toggle("is-active", active);
+    elAdvancedFiltersBtn.title = active ? "Des filtres avancés sont actifs" : "Afficher les filtres avancés";
+  }
+
+  function setAdvancedFiltersOpen(open) {
+    if (!elAdvancedFiltersPanel || !elAdvancedFiltersBtn) return;
+    elAdvancedFiltersPanel.hidden = !open;
+    elAdvancedFiltersBtn.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+
+  function uniqueSortedValues(projects, getter) {
+    const map = new Map();
+    for (const project of projects) {
+      const value = String(getter(project) ?? "").trim();
+      if (!value) continue;
+      const key = normalizeForLookup(value);
+      if (!map.has(key)) map.set(key, value);
+    }
+    return Array.from(map.values()).sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base", numeric: true }));
+  }
+
+  function fillSelectOptions(select, values, emptyLabel) {
+    if (!select) return;
+    const current = select.value;
+    select.innerHTML = `<option value="">${escapeHtml(emptyLabel)}</option>` + values.map((value) => `<option value="${escapeAttr(value)}">${escapeHtml(value)}</option>`).join("");
+    if (values.includes(current)) select.value = current;
+  }
+
+  function refreshAdvancedFilterOptions() {
+    const projects = allProjects || [];
+    fillSelectOptions(elPhaseFilter, uniqueSortedValues(projects, (p) => p["Phase projet"] ?? p.phase), "Toutes");
+    fillSelectOptions(elClientFilter, uniqueSortedValues(projects, (p) => p["Client"] ?? p.client), "Tous");
+    fillSelectOptions(elProgrammeFilter, uniqueSortedValues(projects, (p) => p["Programme"] ?? p.programme), "Tous");
+    fillSelectOptions(elThemeFilter, uniqueSortedValues(projects, (p) => p["Thématique"] ?? p.thematique), "Toutes");
+    const deptValues = uniqueSortedValues(projects, (p) => {
+      const code = deptCodeFromProject(p);
+      const name = deptNameFromProject(p);
+      if (code && name) return `${code} - ${name}`;
+      return name || code;
+    });
+    fillSelectOptions(elDeptFilter, deptValues, "Tous");
+  }
+
+  function matchesAdvancedFilters(p) {
+    const minAmount = Number(selectedValue(elAmountMin));
+    const maxAmount = Number(selectedValue(elAmountMax));
+    const amount = amountNumber(p["Montant"] ?? p.montant);
+
+    if (Number.isFinite(minAmount) && selectedValue(elAmountMin) && (!Number.isFinite(amount) || amount < minAmount)) return false;
+    if (Number.isFinite(maxAmount) && selectedValue(elAmountMax) && (!Number.isFinite(amount) || amount > maxAmount)) return false;
+
+    const exactChecks = [
+      [elPhaseFilter, p["Phase projet"] ?? p.phase],
+      [elClientFilter, p["Client"] ?? p.client],
+      [elProgrammeFilter, p["Programme"] ?? p.programme],
+      [elThemeFilter, p["Thématique"] ?? p.thematique]
+    ];
+
+    for (const [el, raw] of exactChecks) {
+      const wanted = selectedValue(el);
+      if (wanted && normalizeForLookup(raw) !== normalizeForLookup(wanted)) return false;
+    }
+
+    const deptWanted = selectedValue(elDeptFilter);
+    if (deptWanted) {
+      const code = deptCodeFromProject(p);
+      const name = deptNameFromProject(p);
+      const label = code && name ? `${code} - ${name}` : (name || code);
+      if (normalizeForLookup(label) !== normalizeForLookup(deptWanted)) return false;
+    }
+
+    const photosWanted = selectedValue(elPhotosFilter);
+    if (photosWanted === "yes" && !hasProjectPhotos(p)) return false;
+    if (photosWanted === "no" && hasProjectPhotos(p)) return false;
+
+    const energyWanted = selectedValue(elEnergyFilter);
+    if (energyWanted === "yes" && !hasProjectEnergyData(p)) return false;
+    if (energyWanted === "no" && hasProjectEnergyData(p)) return false;
+
+    return true;
+  }
+
+  function clearAdvancedFilters() {
+    [elAmountMin, elAmountMax, elPhaseFilter, elClientFilter, elProgrammeFilter, elThemeFilter, elDeptFilter, elPhotosFilter, elEnergyFilter]
+      .forEach((el) => { if (el) el.value = ""; });
+    syncAdvancedFiltersButtonState();
+  }
+
+  function projectModeFromProject(p) {
+    return String(p?.__projectMode || currentProjectMode || PROJECT_MODES.current.key);
+  }
+
+  function updateProjectUrl(p) {
+    if (suppressProjectUrlUpdate || !p) return;
+    const pid = projectId(p);
+    if (!pid || !window.history?.replaceState) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("mode", projectModeFromProject(p));
+    url.searchParams.set("projet", pid);
+    window.history.replaceState(null, "", url);
+  }
+
+  function clearProjectUrl() {
+    if (!window.history?.replaceState) return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("projet");
+    url.searchParams.delete("mode");
+    window.history.replaceState(null, "", url);
+  }
+
+  function findProjectByUrlParams() {
+    const params = new URLSearchParams(window.location.search);
+    const pid = String(params.get("projet") || params.get("project") || params.get("id") || "").trim();
+    if (!pid) return null;
+    const requestedMode = String(params.get("mode") || "").trim();
+    const modes = requestedMode && projectsByMode[requestedMode]
+      ? [requestedMode]
+      : [PROJECT_MODES.current.key, PROJECT_MODES.completed.key];
+
+    for (const modeKey of modes) {
+      const project = (projectsByMode[modeKey] || []).find((candidate) => projectId(candidate) === pid);
+      if (project) return { project, modeKey };
+    }
+    return null;
+  }
+
+  function openProjectFromUrl() {
+    const match = findProjectByUrlParams();
+    if (!match) return;
+
+    suppressProjectUrlUpdate = true;
+    try {
+      if (match.modeKey !== currentProjectMode) {
+        setProjectMode(match.modeKey);
+      }
+
+      if (match.modeKey === PROJECT_MODES.completed.key) {
+        const startYear = projectStartYear(match.project);
+        const endYear = projectEndYear(match.project);
+        const year = Number.isFinite(endYear) ? endYear : startYear;
+        if (Number.isFinite(year)) setCompletedYearFilter(clampCompletedYear(year), { rerender: false });
+        else setCompletedShowAll(true, { rerender: false });
+      }
+
+      renderMarkers();
+      openProjectFromData(match.project);
+    } finally {
+      suppressProjectUrlUpdate = false;
+      updateProjectUrl(match.project);
+    }
+  }
+
   function matchesFilters(p) {
     const q = normalizeSearchText(elQ?.value || "");
     const types = getActiveTypes();
@@ -1650,6 +1851,8 @@ clusters.on("clustermouseout", (a) => {
       const blob = p.__searchBlob || buildProjectSearchBlob(p);
       if (!blob.includes(q)) return false;
     }
+
+    if (!matchesAdvancedFilters(p)) return false;
 
     if (currentProjectMode === PROJECT_MODES.completed.key) {
       if (!showAllCompletedProjects && !isProjectPresentInYear(p, completedYearFilter)) return false;
@@ -1888,11 +2091,13 @@ marker.on("click", (e) => {
     // ou un autre filtre est encore en cours.
     updateDeptStyle();
     updateClearButtonState();
+    clearProjectUrl();
 
     if (resetView) zoomToFrance();
   }
 
   function showPanel(p) {
+    updateProjectUrl(p);
     const title = p["Nom de projet"] ?? p.nom ?? "Projet";
 
     // Ordre demandé
@@ -1928,6 +2133,7 @@ marker.on("click", (e) => {
     html += `<img class="printProjectLogo" src="assets/logo-ministere.png" alt="Ministères économiques et financiers – Secrétariat général">`;
     html += `</div>`;
     html += `<div class="panelActions">`;
+    html += `<button id="panelShare" class="panelShare" type="button" aria-label="Copier le lien de cette fiche">Copier le lien</button>`;
     html += `<button id="panelPrint" class="panelPrint" type="button" aria-label="Imprimer cette fiche">Imprimer</button>`;
     html += `<button id="panelClose" class="panelClose" type="button" aria-label="Fermer">✕</button>`;
     html += `</div>`;
@@ -1983,6 +2189,21 @@ marker.on("click", (e) => {
 
     const btn = document.getElementById("panelClose");
     if (btn) btn.addEventListener("click", () => closePanel({ resetView: true }), { once: true });
+
+    const shareBtn = document.getElementById("panelShare");
+    if (shareBtn) {
+      shareBtn.addEventListener("click", async () => {
+        updateProjectUrl(p);
+        const link = window.location.href;
+        try {
+          await navigator.clipboard.writeText(link);
+          shareBtn.textContent = "Lien copié";
+          window.setTimeout(() => { shareBtn.textContent = "Copier le lien"; }, 1400);
+        } catch {
+          window.prompt("Copiez le lien de cette fiche projet :", link);
+        }
+      });
+    }
 
     const printBtn = document.getElementById("panelPrint");
     if (printBtn) {
@@ -2565,6 +2786,7 @@ marker.on("click", (e) => {
     elClear.addEventListener("click", () => {
       if (elQ) elQ.value = "";
       document.querySelectorAll(".typeFilter").forEach((cb) => (cb.checked = true));
+      clearAdvancedFilters();
       selectedAntenna = null;
       stopCompletedYearPlayback();
       setCompletedYearFilter(COMPLETED_YEAR_MIN, { rerender: false });
@@ -2584,6 +2806,23 @@ marker.on("click", (e) => {
       if (modeKey) setProjectMode(modeKey);
     });
   }
+
+  if (elAdvancedFiltersBtn && elAdvancedFiltersPanel) {
+    elAdvancedFiltersBtn.addEventListener("click", () => {
+      setAdvancedFiltersOpen(elAdvancedFiltersPanel.hidden);
+    });
+  }
+
+  [elAmountMin, elAmountMax, elPhaseFilter, elClientFilter, elProgrammeFilter, elThemeFilter, elDeptFilter, elPhotosFilter, elEnergyFilter]
+    .filter(Boolean)
+    .forEach((el) => {
+      const eventName = el.tagName === "INPUT" ? "input" : "change";
+      el.addEventListener(eventName, () => {
+        syncAdvancedFiltersButtonState();
+        updateClearButtonState();
+        renderMarkers();
+      });
+    });
 
   // ---- Liste projets ----
   if (elProjListBtn && elProjListMenu) {
@@ -2659,7 +2898,9 @@ marker.on("click", (e) => {
 
       setActiveProjectsForMode(currentProjectMode);
       updateProjectModeUi();
+      refreshAdvancedFilterOptions();
       renderMarkers();
+      openProjectFromUrl();
     } catch (err) {
       console.error(err);
       showStatus(`Erreur de chargement : ${describeLoadError(err)}. Vérifiez les fichiers JSON et la connexion.`);
