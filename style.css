@@ -2695,3 +2695,120 @@ body{
 .projectModeBtn:not(.is-active){
   flex:.84 1 0;
 }
+
+/* ===== Timeline projets finis améliorée + logo topbar ===== */
+.completedYearFilter{
+  align-items:stretch;
+  gap:8px;
+  padding:6px 10px;
+  height:auto;
+}
+.completedTimelineMain{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+.completedTimelineStats{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:var(--muted);
+  font-size:12px;
+  white-space:nowrap;
+  border-left:1px solid #e5e5e5;
+  padding-left:10px;
+}
+.completedTimelineStats span{
+  display:inline-flex;
+  align-items:baseline;
+  gap:3px;
+}
+.completedTimelineStats strong{
+  color:#111;
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+}
+.completedTimelineBars{
+  display:flex;
+  align-items:flex-end;
+  gap:2px;
+  height:42px;
+  padding-left:2px;
+  border-left:1px solid #e5e5e5;
+}
+.completedTimelineBar{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-end;
+  gap:2px;
+  width:14px;
+  height:42px;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:var(--muted);
+  cursor:pointer;
+}
+.completedTimelineBar span{
+  display:block;
+  width:8px;
+  min-height:4px;
+  border-radius:999px 999px 2px 2px;
+  background:#c7c7d9;
+  transition:background-color .16s ease, transform .16s ease;
+}
+.completedTimelineBar em{
+  display:none;
+  font-style:normal;
+  font-size:9px;
+  line-height:1;
+}
+.completedTimelineBar:hover span{
+  background:rgba(0,0,145,0.45);
+  transform:scaleX(1.15);
+}
+.completedTimelineBar.is-active span{
+  background:var(--accent);
+  transform:scaleX(1.25);
+}
+.completedYearFilter.is-show-all .completedTimelineBar.is-active span{
+  background:#c7c7d9;
+  transform:none;
+}
+
+/* Le logo est volontairement rattaché visuellement au haut de la barre, pas au milieu de la deuxième ligne. */
+.brand{
+  top:-40px;
+  bottom:auto;
+  height:66px;
+  align-items:flex-start;
+  padding-top:2px;
+}
+.brandLogo{
+  height:62px;
+  max-height:62px;
+  object-fit:contain;
+}
+
+@media (max-width: 1180px){
+  .completedTimelineBars{ display:none; }
+}
+@media (max-width: 980px){
+  .completedYearFilter{ width:100%; }
+  .completedTimelineMain{ flex-wrap:wrap; }
+  .completedTimelineStats{ border-left:0; padding-left:0; }
+}
+@media (max-width: 900px){
+  .brand{
+    position:static;
+    height:auto;
+    padding-top:0;
+    margin-left:auto;
+  }
+  .brandLogo{
+    height:48px;
+    max-height:48px;
+  }
+}
