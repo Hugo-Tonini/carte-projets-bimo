@@ -14,7 +14,7 @@
   <link rel="preload" href="assets/fonts/Marianne-Bold.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/fonts/Marianne-ExtraBold.woff2" as="font" type="font/woff2" crossorigin />
 
-  <link rel="stylesheet" href="style.css?v=2026-04-30b" />
+  <link rel="stylesheet" href="style.css?v=2026-05-05a" />
 </head>
 <body>
   <header class="topbar">
@@ -45,9 +45,52 @@
       <button id="antennaSummaryBtn" type="button" aria-pressed="false" aria-controls="antennaSummaryOverlay">Synthèse</button>
       <button id="projListBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="projListMenu">Liste projets</button>
 
+      <button id="advancedFiltersBtn" type="button" aria-expanded="false" aria-controls="advancedFiltersPanel">Filtres avancés</button>
+
       <div id="projectModeSwitch" class="projectModeSwitch" role="group" aria-label="Afficher les projets en cours ou les projets finis">
         <button id="currentProjectsBtn" class="projectModeBtn is-active" type="button" data-project-mode="current" aria-pressed="true">En cours</button>
         <button id="completedProjectsBtn" class="projectModeBtn" type="button" data-project-mode="completed" aria-pressed="false">Finis</button>
+      </div>
+
+
+      <div id="advancedFiltersPanel" class="advancedFiltersPanel" hidden role="region" aria-label="Filtres avancés">
+        <div class="advancedFiltersGrid">
+          <label>Montant min.
+            <input id="amountMin" type="number" min="0" step="1000" inputmode="numeric" placeholder="Ex. 1000000" />
+          </label>
+          <label>Montant max.
+            <input id="amountMax" type="number" min="0" step="1000" inputmode="numeric" placeholder="Ex. 5000000" />
+          </label>
+          <label>Phase
+            <select id="phaseFilter"><option value="">Toutes</option></select>
+          </label>
+          <label>Client
+            <select id="clientFilter"><option value="">Tous</option></select>
+          </label>
+          <label>Programme
+            <select id="programmeFilter"><option value="">Tous</option></select>
+          </label>
+          <label>Thématique
+            <select id="themeFilter"><option value="">Toutes</option></select>
+          </label>
+          <label>Département
+            <select id="deptFilter"><option value="">Tous</option></select>
+          </label>
+          <label>Photos
+            <select id="photosFilter">
+              <option value="">Tous</option>
+              <option value="yes">Avec photos</option>
+              <option value="no">Sans photos</option>
+            </select>
+          </label>
+          <label>Données énergie
+            <select id="energyFilter">
+              <option value="">Tous</option>
+              <option value="yes">Avec données énergie</option>
+              <option value="no">Sans données énergie</option>
+            </select>
+          </label>
+        </div>
       </div>
 
       <div id="projListMenu" class="projListMenu" hidden role="region" aria-label="Liste des projets">
@@ -97,6 +140,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin="anonymous"></script>
-  <script src="script.js?v=2026-04-30b"></script>
+  <script src="script.js?v=2026-05-05a"></script>
 </body>
 </html>
