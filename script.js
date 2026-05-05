@@ -19,7 +19,7 @@
   });
 
   // ---- Configuration ----
-  const DATA_VERSION = "2026-05-05c";
+  const DATA_VERSION = "2026-05-05d";
   const CURRENT_PROJECTS_URL = `export_projets_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const COMPLETED_PROJECTS_URL = `export_projets_finis_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const DEPTS_URL = `departements.geojson?v=${encodeURIComponent(DATA_VERSION)}`;
@@ -72,8 +72,8 @@
   let elCompletedYearValue = null;
   let elCompletedShowAll = null;
   let elCompletedPlayBtn = null;
-  let elCompletedTimelineStats = null;
-  let elCompletedTimelineBars = null;
+  let elCompletedYearStats = null;
+  let elCompletedYearHistogram = null;
 
 
   // ---- State ----
@@ -242,8 +242,8 @@
           <span class="playToggleIcon playToggleIcon--play" aria-hidden="true"></span>
         </button>
       </div>
-      <div id="completedTimelineStats" class="completedTimelineStats" aria-live="polite"></div>
-      <div id="completedTimelineBars" class="completedTimelineBars" aria-label="Histogramme des projets finis par année"></div>
+      <div id="completedYearStats" class="completedYearStats" aria-live="polite"></div>
+      <div id="completedYearHistogram" class="completedYearHistogram" role="list" aria-label="Histogramme des projets finis par année"></div>
     `;
 
     elProjectModeSwitch.insertAdjacentElement("afterend", wrap);
@@ -253,8 +253,8 @@
     elCompletedYearValue = wrap.querySelector("#completedYearValue");
     elCompletedShowAll = wrap.querySelector("#completedShowAll");
     elCompletedPlayBtn = wrap.querySelector("#completedYearPlayBtn");
-    elCompletedTimelineStats = wrap.querySelector("#completedTimelineStats");
-    elCompletedTimelineBars = wrap.querySelector("#completedTimelineBars");
+    elCompletedYearStats = wrap.querySelector("#completedYearStats");
+    elCompletedYearHistogram = wrap.querySelector("#completedYearHistogram");
 
     elCompletedYearRange?.addEventListener("input", () => {
       setCompletedYearFilter(elCompletedYearRange.value);
@@ -268,62 +268,15 @@
       toggleCompletedYearPlayback();
     });
 
-    elCompletedTimelineBars?.addEventListener("click", (event) => {
-      const bar = event.target.closest?.("[data-completed-year]");
-      if (!bar) return;
-      setCompletedShowAll(false, { rerender: false });
-      setCompletedYearFilter(bar.getAttribute("data-completed-year"));
+    elCompletedYearHistogram?.addEventListener("click", (e) => {
+      const btn = e.target?.closest?.("[data-year]");
+      if (!btn) return;
+      stopCompletedYearPlayback();
+      if (showAllCompletedProjects) setCompletedShowAll(false, { rerender: false });
+      setCompletedYearFilter(btn.getAttribute("data-year"));
     });
 
     updateCompletedPlaybackButtonUi();
-    updateCompletedTimelineStatsUi();
-  }
-
-  function getCompletedTimelineProjects() {
-    return Array.isArray(projectsByMode.completed) && projectsByMode.completed.length
-      ? projectsByMode.completed
-      : allProjects;
-  }
-
-  function completedProjectAmountTotal(projects) {
-    return projects.reduce((total, project) => {
-      const amount = amountNumber(project?.["Montant"] ?? project?.montant);
-      return Number.isFinite(amount) ? total + amount : total;
-    }, 0);
-  }
-
-  function updateCompletedTimelineStatsUi() {
-    if (!elCompletedTimelineStats && !elCompletedTimelineBars) return;
-
-    const projects = getCompletedTimelineProjects();
-    const years = [];
-    for (let year = COMPLETED_YEAR_MIN; year <= COMPLETED_YEAR_MAX; year += 1) years.push(year);
-
-    const yearCounts = years.map((year) => ({
-      year,
-      count: projects.filter((project) => isProjectPresentInYear(project, year)).length
-    }));
-    const maxCount = Math.max(1, ...yearCounts.map((item) => item.count));
-    const selectedProjects = showAllCompletedProjects
-      ? projects
-      : projects.filter((project) => isProjectPresentInYear(project, completedYearFilter));
-    const endedThisYear = projects.filter((project) => projectEndYear(project) === completedYearFilter).length;
-    const amountLabel = formatMillionEuro(completedProjectAmountTotal(selectedProjects)) || "—";
-
-    if (elCompletedTimelineStats) {
-      elCompletedTimelineStats.innerHTML = showAllCompletedProjects
-        ? `<span><strong>${projects.length}</strong> projets finis</span><span><strong>${amountLabel}</strong> cumulés</span>`
-        : `<span><strong>${selectedProjects.length}</strong> présents</span><span><strong>${endedThisYear}</strong> livrés</span><span><strong>${amountLabel}</strong> cumulés</span>`;
-    }
-
-    if (elCompletedTimelineBars) {
-      elCompletedTimelineBars.innerHTML = yearCounts.map(({ year, count }) => {
-        const height = Math.max(8, Math.round((count / maxCount) * 34));
-        const active = !showAllCompletedProjects && year === completedYearFilter;
-        const label = `${count} projet${count > 1 ? "s" : ""} présent${count > 1 ? "s" : ""} en ${year}`;
-        return `<button type="button" class="completedTimelineBar${active ? " is-active" : ""}" data-completed-year="${year}" title="${escapeAttr(label)}" aria-label="${escapeAttr(label)}"><span style="height:${height}px"></span><em>${year}</em></button>`;
-      }).join("");
-    }
   }
 
   function updateCompletedYearFilterUi() {
@@ -364,7 +317,7 @@
     }
 
     updateCompletedPlaybackButtonUi();
-    updateCompletedTimelineStatsUi();
+    updateCompletedTimelineUi();
     syncToolbarControlHeights();
   }
 
@@ -385,7 +338,7 @@
     });
 
     if (elCompletedYearFilter) {
-      elCompletedYearFilter.style.height = "";
+      elCompletedYearFilter.style.height = "auto";
       elCompletedYearFilter.style.minHeight = `${referenceHeight}px`;
     }
 
@@ -1719,6 +1672,111 @@ clusters.on("clustermouseout", (a) => {
     return fromYear <= year && year <= toYear;
   }
 
+  function isProjectDeliveredInYear(p, year) {
+    const endYear = projectEndYear(p);
+    return Number.isFinite(endYear) && endYear === Number(year);
+  }
+
+  function matchesFiltersWithoutCompletedYear(p) {
+    const q = normalizeSearchText(elQ?.value || "");
+    const types = getActiveTypes();
+    const t = projectType(p);
+
+    if (types.length && !types.includes(t)) return false;
+
+    if (q) {
+      const blob = p.__searchBlob || buildProjectSearchBlob(p);
+      if (!blob.includes(q)) return false;
+    }
+
+    if (hasActiveAdvancedFilters() && !matchesAdvancedFilters(p)) return false;
+
+    return true;
+  }
+
+  function completedTimelineBaseProjects() {
+    let projects = allProjects.filter(matchesFiltersWithoutCompletedYear);
+
+    // Important : l'histogramme suit aussi les filtres MOM / AMO / EXP,
+    // la recherche, les filtres avancés et le focus antenne, mais pas le curseur d'année.
+    if (selectedAntenna) {
+      const a = normalizeForLookup(selectedAntenna);
+      projects = projects.filter((p) => normalizeForLookup(p["Antenne"] ?? p.antenne) === a);
+    }
+
+    return projects;
+  }
+
+  function computeCompletedYearStats(projects = completedTimelineBaseProjects()) {
+    const stats = new Map();
+
+    for (let year = COMPLETED_YEAR_MIN; year <= COMPLETED_YEAR_MAX; year += 1) {
+      stats.set(year, { year, present: 0, delivered: 0, amountPresent: 0, amountDelivered: 0 });
+    }
+
+    for (const project of projects) {
+      const amount = amountNumber(project["Montant"] ?? project.montant);
+      const safeAmount = Number.isFinite(amount) ? amount : 0;
+
+      for (let year = COMPLETED_YEAR_MIN; year <= COMPLETED_YEAR_MAX; year += 1) {
+        if (!isProjectPresentInYear(project, year)) continue;
+        const entry = stats.get(year);
+        entry.present += 1;
+        entry.amountPresent += safeAmount;
+      }
+
+      const deliveredYear = projectEndYear(project);
+      if (Number.isFinite(deliveredYear) && stats.has(deliveredYear)) {
+        const entry = stats.get(deliveredYear);
+        entry.delivered += 1;
+        entry.amountDelivered += safeAmount;
+      }
+    }
+
+    return Array.from(stats.values());
+  }
+
+  function updateCompletedTimelineUi() {
+    if (!elCompletedYearFilter || currentProjectMode !== PROJECT_MODES.completed.key) return;
+
+    const stats = computeCompletedYearStats();
+    const selectedStats = stats.find((entry) => entry.year === completedYearFilter) || { present: 0, delivered: 0, amountPresent: 0, amountDelivered: 0 };
+    const maxPresent = Math.max(1, ...stats.map((entry) => entry.present));
+
+    if (elCompletedYearStats) {
+      const amountLabel = formatMillionEuro(showAllCompletedProjects
+        ? stats.reduce((sum, entry) => sum + entry.amountDelivered, 0)
+        : selectedStats.amountPresent
+      );
+      const totalVisible = showAllCompletedProjects
+        ? completedTimelineBaseProjects().length
+        : selectedStats.present;
+      const deliveredVisible = showAllCompletedProjects
+        ? stats.reduce((sum, entry) => sum + entry.delivered, 0)
+        : selectedStats.delivered;
+
+      elCompletedYearStats.innerHTML = `
+        <span><strong>${totalVisible}</strong> présent(s)</span>
+        <span><strong>${deliveredVisible}</strong> livré(s)</span>
+        ${amountLabel ? `<span><strong>${escapeHtml(amountLabel)}</strong></span>` : ""}
+      `;
+    }
+
+    if (!elCompletedYearHistogram) return;
+
+    elCompletedYearHistogram.innerHTML = stats.map((entry) => {
+      const height = Math.max(8, Math.round((entry.present / maxPresent) * 32));
+      const active = !showAllCompletedProjects && entry.year === completedYearFilter;
+      const title = `${entry.year} : ${entry.present} présent(s), ${entry.delivered} livré(s)`;
+      return `
+        <button type="button" class="completedYearBar${active ? " is-active" : ""}" data-year="${entry.year}" title="${escapeAttr(title)}" aria-label="${escapeAttr(title)}" role="listitem">
+          <span class="completedYearBarFill" style="height:${height}px"></span>
+          <span class="completedYearBarLabel">${entry.year}</span>
+        </button>
+      `;
+    }).join("");
+  }
+
   function hasProjectPhotos(p) {
     return getProjectPhotos(p).length > 0;
   }
@@ -1907,18 +1965,7 @@ clusters.on("clustermouseout", (a) => {
   }
 
   function matchesFilters(p) {
-    const q = normalizeSearchText(elQ?.value || "");
-    const types = getActiveTypes();
-    const t = projectType(p);
-
-    if (types.length && !types.includes(t)) return false;
-
-    if (q) {
-      const blob = p.__searchBlob || buildProjectSearchBlob(p);
-      if (!blob.includes(q)) return false;
-    }
-
-    if (hasActiveAdvancedFilters() && !matchesAdvancedFilters(p)) return false;
+    if (!matchesFiltersWithoutCompletedYear(p)) return false;
 
     if (currentProjectMode === PROJECT_MODES.completed.key) {
       if (!showAllCompletedProjects && !isProjectPresentInYear(p, completedYearFilter)) return false;
@@ -2033,6 +2080,7 @@ marker.on("click", (e) => {
     }
 
     if (elCount) elCount.textContent = String(list.length);
+    updateCompletedTimelineUi();
     filteredCounts = computeFilteredCounts();
     renderAntennaSummary();
     projectListDirty = true;
