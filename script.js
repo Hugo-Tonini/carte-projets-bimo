@@ -19,7 +19,7 @@
   });
 
   // ---- Configuration ----
-  const DATA_VERSION = "2026-05-05a";
+  const DATA_VERSION = "2026-05-05b";
   const CURRENT_PROJECTS_URL = `export_projets_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const COMPLETED_PROJECTS_URL = `export_projets_finis_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const DEPTS_URL = `departements.geojson?v=${encodeURIComponent(DATA_VERSION)}`;
@@ -470,8 +470,10 @@
     closePanel();
     setActiveProjectsForMode(modeKey);
     updateProjectModeUi();
-    refreshAdvancedFilterOptions();
     renderMarkers();
+    window.setTimeout(() => {
+      refreshAdvancedFilterOptions();
+    }, 0);
     updateClearButtonState();
   }
 
@@ -2133,7 +2135,7 @@ marker.on("click", (e) => {
     html += `<img class="printProjectLogo" src="assets/logo-ministere.png" alt="Ministères économiques et financiers – Secrétariat général">`;
     html += `</div>`;
     html += `<div class="panelActions">`;
-    html += `<button id="panelShare" class="panelShare" type="button" aria-label="Partage de cette fiche">Partager</button>`;
+    html += `<button id="panelShare" class="panelShare" type="button" aria-label="Partager le lien de cette fiche">Partager</button>`;
     html += `<button id="panelPrint" class="panelPrint" type="button" aria-label="Imprimer cette fiche">Imprimer</button>`;
     html += `<button id="panelClose" class="panelClose" type="button" aria-label="Fermer">✕</button>`;
     html += `</div>`;
@@ -2898,9 +2900,12 @@ marker.on("click", (e) => {
 
       setActiveProjectsForMode(currentProjectMode);
       updateProjectModeUi();
-      refreshAdvancedFilterOptions();
       renderMarkers();
       openProjectFromUrl();
+
+      window.setTimeout(() => {
+        refreshAdvancedFilterOptions();
+      }, 0);
     } catch (err) {
       console.error(err);
       showStatus(`Erreur de chargement : ${describeLoadError(err)}. Vérifiez les fichiers JSON et la connexion.`);
