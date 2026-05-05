@@ -1852,7 +1852,7 @@ clusters.on("clustermouseout", (a) => {
       if (!blob.includes(q)) return false;
     }
 
-    if (!matchesAdvancedFilters(p)) return false;
+    if (hasActiveAdvancedFilters() && !matchesAdvancedFilters(p)) return false;
 
     if (currentProjectMode === PROJECT_MODES.completed.key) {
       if (!showAllCompletedProjects && !isProjectPresentInYear(p, completedYearFilter)) return false;
