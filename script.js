@@ -2133,7 +2133,7 @@ marker.on("click", (e) => {
     html += `<img class="printProjectLogo" src="assets/logo-ministere.png" alt="Ministères économiques et financiers – Secrétariat général">`;
     html += `</div>`;
     html += `<div class="panelActions">`;
-    html += `<button id="panelShare" class="panelShare" type="button" aria-label="Copier le lien de cette fiche">Copier le lien</button>`;
+    html += `<button id="panelShare" class="panelShare" type="button" aria-label="Partage de cette fiche">Partager</button>`;
     html += `<button id="panelPrint" class="panelPrint" type="button" aria-label="Imprimer cette fiche">Imprimer</button>`;
     html += `<button id="panelClose" class="panelClose" type="button" aria-label="Fermer">✕</button>`;
     html += `</div>`;
@@ -2198,7 +2198,7 @@ marker.on("click", (e) => {
         try {
           await navigator.clipboard.writeText(link);
           shareBtn.textContent = "Lien copié";
-          window.setTimeout(() => { shareBtn.textContent = "Copier le lien"; }, 1400);
+          window.setTimeout(() => { shareBtn.textContent = "Partager"; }, 1400);
         } catch {
           window.prompt("Copiez le lien de cette fiche projet :", link);
         }
