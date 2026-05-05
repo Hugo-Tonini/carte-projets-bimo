@@ -19,7 +19,7 @@
   });
 
   // ---- Configuration ----
-  const DATA_VERSION = "2026-05-05b";
+  const DATA_VERSION = "2026-05-05c";
   const CURRENT_PROJECTS_URL = `export_projets_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const COMPLETED_PROJECTS_URL = `export_projets_finis_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const DEPTS_URL = `departements.geojson?v=${encodeURIComponent(DATA_VERSION)}`;
@@ -72,6 +72,8 @@
   let elCompletedYearValue = null;
   let elCompletedShowAll = null;
   let elCompletedPlayBtn = null;
+  let elCompletedTimelineStats = null;
+  let elCompletedTimelineBars = null;
 
 
   // ---- State ----
@@ -225,19 +227,23 @@
     wrap.hidden = true;
     wrap.setAttribute("aria-hidden", "true");
     wrap.innerHTML = `
-      <span class="completedYearFilterLabel">Présents en <strong id="completedYearValue" class="completedYearValue">${completedYearFilter}</strong></span>
-      <div class="completedYearRangeWrap">
-        <span class="completedYearBound" data-completed-bound="min">${COMPLETED_YEAR_MIN}</span>
-        <input id="completedYearRange" class="completedYearRange" type="range" min="${COMPLETED_YEAR_MIN}" max="${COMPLETED_YEAR_MAX}" step="1" value="${completedYearFilter}" aria-label="Afficher les projets finis présents pendant cette année" />
-        <span class="completedYearBound" data-completed-bound="max">${COMPLETED_YEAR_MAX}</span>
+      <div class="completedTimelineMain">
+        <span class="completedYearFilterLabel">Présents en <strong id="completedYearValue" class="completedYearValue">${completedYearFilter}</strong></span>
+        <div class="completedYearRangeWrap">
+          <span class="completedYearBound" data-completed-bound="min">${COMPLETED_YEAR_MIN}</span>
+          <input id="completedYearRange" class="completedYearRange" type="range" min="${COMPLETED_YEAR_MIN}" max="${COMPLETED_YEAR_MAX}" step="1" value="${completedYearFilter}" aria-label="Afficher les projets finis présents pendant cette année" />
+          <span class="completedYearBound" data-completed-bound="max">${COMPLETED_YEAR_MAX}</span>
+        </div>
+        <label class="completedShowAll" for="completedShowAll">
+          <input id="completedShowAll" class="completedShowAllInput" type="checkbox" />
+          <span>Tout afficher</span>
+        </label>
+        <button id="completedYearPlayBtn" class="completedYearPlayBtn" type="button" aria-label="Lecture automatique" title="Lecture automatique">
+          <span class="playToggleIcon playToggleIcon--play" aria-hidden="true"></span>
+        </button>
       </div>
-      <label class="completedShowAll" for="completedShowAll">
-        <input id="completedShowAll" class="completedShowAllInput" type="checkbox" />
-        <span>Tout afficher</span>
-      </label>
-      <button id="completedYearPlayBtn" class="completedYearPlayBtn" type="button" aria-label="Lecture automatique" title="Lecture automatique">
-        <span class="playToggleIcon playToggleIcon--play" aria-hidden="true"></span>
-      </button>
+      <div id="completedTimelineStats" class="completedTimelineStats" aria-live="polite"></div>
+      <div id="completedTimelineBars" class="completedTimelineBars" aria-label="Histogramme des projets finis par année"></div>
     `;
 
     elProjectModeSwitch.insertAdjacentElement("afterend", wrap);
@@ -247,6 +253,8 @@
     elCompletedYearValue = wrap.querySelector("#completedYearValue");
     elCompletedShowAll = wrap.querySelector("#completedShowAll");
     elCompletedPlayBtn = wrap.querySelector("#completedYearPlayBtn");
+    elCompletedTimelineStats = wrap.querySelector("#completedTimelineStats");
+    elCompletedTimelineBars = wrap.querySelector("#completedTimelineBars");
 
     elCompletedYearRange?.addEventListener("input", () => {
       setCompletedYearFilter(elCompletedYearRange.value);
@@ -260,7 +268,62 @@
       toggleCompletedYearPlayback();
     });
 
+    elCompletedTimelineBars?.addEventListener("click", (event) => {
+      const bar = event.target.closest?.("[data-completed-year]");
+      if (!bar) return;
+      setCompletedShowAll(false, { rerender: false });
+      setCompletedYearFilter(bar.getAttribute("data-completed-year"));
+    });
+
     updateCompletedPlaybackButtonUi();
+    updateCompletedTimelineStatsUi();
+  }
+
+  function getCompletedTimelineProjects() {
+    return Array.isArray(projectsByMode.completed) && projectsByMode.completed.length
+      ? projectsByMode.completed
+      : allProjects;
+  }
+
+  function completedProjectAmountTotal(projects) {
+    return projects.reduce((total, project) => {
+      const amount = amountNumber(project?.["Montant"] ?? project?.montant);
+      return Number.isFinite(amount) ? total + amount : total;
+    }, 0);
+  }
+
+  function updateCompletedTimelineStatsUi() {
+    if (!elCompletedTimelineStats && !elCompletedTimelineBars) return;
+
+    const projects = getCompletedTimelineProjects();
+    const years = [];
+    for (let year = COMPLETED_YEAR_MIN; year <= COMPLETED_YEAR_MAX; year += 1) years.push(year);
+
+    const yearCounts = years.map((year) => ({
+      year,
+      count: projects.filter((project) => isProjectPresentInYear(project, year)).length
+    }));
+    const maxCount = Math.max(1, ...yearCounts.map((item) => item.count));
+    const selectedProjects = showAllCompletedProjects
+      ? projects
+      : projects.filter((project) => isProjectPresentInYear(project, completedYearFilter));
+    const endedThisYear = projects.filter((project) => projectEndYear(project) === completedYearFilter).length;
+    const amountLabel = formatMillionEuro(completedProjectAmountTotal(selectedProjects)) || "—";
+
+    if (elCompletedTimelineStats) {
+      elCompletedTimelineStats.innerHTML = showAllCompletedProjects
+        ? `<span><strong>${projects.length}</strong> projets finis</span><span><strong>${amountLabel}</strong> cumulés</span>`
+        : `<span><strong>${selectedProjects.length}</strong> présents</span><span><strong>${endedThisYear}</strong> livrés</span><span><strong>${amountLabel}</strong> cumulés</span>`;
+    }
+
+    if (elCompletedTimelineBars) {
+      elCompletedTimelineBars.innerHTML = yearCounts.map(({ year, count }) => {
+        const height = Math.max(8, Math.round((count / maxCount) * 34));
+        const active = !showAllCompletedProjects && year === completedYearFilter;
+        const label = `${count} projet${count > 1 ? "s" : ""} présent${count > 1 ? "s" : ""} en ${year}`;
+        return `<button type="button" class="completedTimelineBar${active ? " is-active" : ""}" data-completed-year="${year}" title="${escapeAttr(label)}" aria-label="${escapeAttr(label)}"><span style="height:${height}px"></span><em>${year}</em></button>`;
+      }).join("");
+    }
   }
 
   function updateCompletedYearFilterUi() {
@@ -301,6 +364,7 @@
     }
 
     updateCompletedPlaybackButtonUi();
+    updateCompletedTimelineStatsUi();
     syncToolbarControlHeights();
   }
 
@@ -321,7 +385,7 @@
     });
 
     if (elCompletedYearFilter) {
-      elCompletedYearFilter.style.height = `${referenceHeight}px`;
+      elCompletedYearFilter.style.height = "";
       elCompletedYearFilter.style.minHeight = `${referenceHeight}px`;
     }
 
