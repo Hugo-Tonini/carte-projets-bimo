@@ -2803,3 +2803,64 @@ body{
   .completedYearStats{ width:100%; }
   .completedYearHistogram{ width:100%; max-width:100%; }
 }
+
+/* ===== Correction centrage boutons zoom + / - ===== */
+.bimoZoomSliderBtn{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  box-sizing:border-box !important;
+  padding:0 !important;
+  line-height:1 !important;
+  text-align:center !important;
+  appearance:none !important;
+  -webkit-appearance:none !important;
+}
+
+.bimoZoomSliderBtn--plus{
+  font-size:20px !important;
+  line-height:0 !important;
+  padding-bottom:2px !important;
+}
+
+.bimoZoomSliderBtn--minus{
+  font-size:22px !important;
+  line-height:0 !important;
+  padding-bottom:4px !important;
+}
+
+/* ===== Correction centrage boutons photos / lightbox ===== */
+.lightbox button,
+.lightboxClose,
+.lightboxNav{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  box-sizing:border-box !important;
+  padding:0 !important;
+  margin:0 !important;
+  line-height:1 !important;
+  text-align:center !important;
+  appearance:none !important;
+  -webkit-appearance:none !important;
+}
+
+.lightboxClose{
+  font-size:22px !important;
+  line-height:0 !important;
+  padding-bottom:2px !important;
+}
+
+.lightboxNav{
+  font-size:44px !important;
+  line-height:0 !important;
+  padding-bottom:5px !important;
+}
+
+.lightboxNav[data-nav="-1"]{
+  padding-right:3px !important;
+}
+
+.lightboxNav[data-nav="1"]{
+  padding-left:3px !important;
+}
