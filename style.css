@@ -2804,91 +2804,36 @@ body{
   .completedYearHistogram{ width:100%; max-width:100%; }
 }
 
-/* ===== Correction centrage boutons zoom + / - ===== */
-.bimoZoomSliderBtn{
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  box-sizing:border-box !important;
-  padding:0 !important;
-  line-height:1 !important;
-  text-align:center !important;
-  appearance:none !important;
-  -webkit-appearance:none !important;
-}
-
-.bimoZoomSliderBtn--plus{
-  font-size:20px !important;
-  line-height:0 !important;
-  padding-bottom:2px !important;
-}
-
-.bimoZoomSliderBtn--minus{
-  font-size:22px !important;
-  line-height:0 !important;
-  padding-bottom:4px !important;
-}
-
-/* ===== Correction centrage boutons photos / lightbox ===== */
-.lightbox button,
-.lightboxClose,
-.lightboxNav{
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  box-sizing:border-box !important;
-  padding:0 !important;
-  margin:0 !important;
-  line-height:1 !important;
-  text-align:center !important;
-  appearance:none !important;
-  -webkit-appearance:none !important;
-}
-
-.lightboxClose{
-  font-size:22px !important;
-  line-height:0 !important;
-  padding-bottom:2px !important;
-}
-
-.lightboxNav{
-  font-size:44px !important;
-  line-height:0 !important;
-  padding-bottom:5px !important;
-}
-
-.lightboxNav[data-nav="-1"]{
-  padding-right:3px !important;
-}
-
-.lightboxNav[data-nav="1"]{
-  padding-left:3px !important;
-}
-
 /* ========================================================================== */
-/* ===== CORRECTIF FINAL : boutons centrés par pictogrammes CSS vectoriels ===== */
+/* ===== CORRECTIF FINAL : boutons zoom + lightbox centrés proprement ===== */
 /* ========================================================================== */
-/* On masque les caractères texte (+, -, ‹, ›, ×) et on redessine les icônes
-   avec des pseudo-éléments parfaitement centrés dans leur bouton. */
 
-/* --- Zoom + / - --- */
+/* -------------------------------------------------------------------------- */
+/* Zoom carte : boutons + / - centrés sans dépendre de la police              */
+/* -------------------------------------------------------------------------- */
+
 .bimoZoomSliderBtn{
   position:relative !important;
-  display:grid !important;
-  place-items:center !important;
+  display:block !important;
   width:24px !important;
   height:24px !important;
   min-width:24px !important;
   min-height:24px !important;
   padding:0 !important;
   margin:0 auto !important;
+  border:0 !important;
+  border-radius:999px !important;
   box-sizing:border-box !important;
-  line-height:0 !important;
+  background:rgba(255,255,255,0.92) !important;
+  color:#111 !important;
   font-size:0 !important;
+  line-height:0 !important;
   text-align:center !important;
   overflow:hidden !important;
+  cursor:pointer !important;
   appearance:none !important;
   -webkit-appearance:none !important;
+  box-shadow:0 1px 4px rgba(0,0,0,0.16) !important;
   transform:none !important;
 }
 
@@ -2899,12 +2844,15 @@ body{
   left:50% !important;
   top:50% !important;
   display:block !important;
-  width:11px !important;
-  height:2px !important;
   border-radius:999px !important;
   background:#111 !important;
-  transform:translate(-50%, -50%) !important;
   pointer-events:none !important;
+  transform:translate(-50%, -50%) !important;
+}
+
+.bimoZoomSliderBtn::before{
+  width:11px !important;
+  height:2px !important;
 }
 
 .bimoZoomSliderBtn--plus::after{
@@ -2916,112 +2864,18 @@ body{
   display:none !important;
 }
 
-/* --- Lightbox : boutons précédent / suivant / fermer --- */
-.lightboxClose,
-.lightboxNav,
-.lightbox button[data-nav],
-.lightbox button[data-close]{
-  position:relative !important;
-  display:grid !important;
-  place-items:center !important;
-  padding:0 !important;
-  margin:0 !important;
-  box-sizing:border-box !important;
-  line-height:0 !important;
-  font-size:0 !important;
-  text-align:center !important;
-  overflow:hidden !important;
-  appearance:none !important;
-  -webkit-appearance:none !important;
-  transform:none !important;
-}
-
-.lightboxClose,
-.lightbox button[data-close]{
-  width:40px !important;
-  height:40px !important;
-  min-width:40px !important;
-  min-height:40px !important;
-}
-
-.lightboxNav,
-.lightbox button[data-nav]{
-  width:52px !important;
-  height:52px !important;
-  min-width:52px !important;
-  min-height:52px !important;
-}
-
-/* Croix centrée */
-.lightboxClose::before,
-.lightboxClose::after,
-.lightbox button[data-close]::before,
-.lightbox button[data-close]::after{
-  content:"" !important;
-  position:absolute !important;
-  left:50% !important;
-  top:50% !important;
-  display:block !important;
-  width:18px !important;
-  height:2px !important;
-  border-radius:999px !important;
+.bimoZoomSliderBtn:hover,
+.bimoZoomSliderBtn:focus-visible{
   background:#fff !important;
-  pointer-events:none !important;
+  outline:2px solid rgba(0,0,145,0.28) !important;
+  outline-offset:1px !important;
 }
 
-.lightboxClose::before,
-.lightbox button[data-close]::before{
-  transform:translate(-50%, -50%) rotate(45deg) !important;
-}
 
-.lightboxClose::after,
-.lightbox button[data-close]::after{
-  transform:translate(-50%, -50%) rotate(-45deg) !important;
-}
+/* -------------------------------------------------------------------------- */
+/* Lightbox photos : boutons bleus + icônes SVG parfaitement centrées          */
+/* -------------------------------------------------------------------------- */
 
-/* Chevrons centrés */
-.lightboxNav::before,
-.lightbox button[data-nav]::before{
-  content:"" !important;
-  position:absolute !important;
-  left:50% !important;
-  top:50% !important;
-  display:block !important;
-  width:14px !important;
-  height:14px !important;
-  border-style:solid !important;
-  border-color:#fff !important;
-  border-width:0 4px 4px 0 !important;
-  border-radius:1px !important;
-  pointer-events:none !important;
-}
-
-.lightboxNav[data-nav="-1"]::before,
-.lightbox button[data-nav="-1"]::before,
-.lightboxPrev::before{
-  transform:translate(-50%, -50%) rotate(135deg) !important;
-}
-
-.lightboxNav[data-nav="1"]::before,
-.lightbox button[data-nav="1"]::before,
-.lightboxNext::before{
-  transform:translate(-50%, -50%) rotate(-45deg) !important;
-}
-
-/* Supprime les anciens décalages optiques appliqués sur ces boutons. */
-.lightboxNav[data-nav="-1"],
-.lightbox button[data-nav="-1"],
-.lightboxNav[data-nav="1"],
-.lightbox button[data-nav="1"],
-.lightboxClose,
-.lightbox button[data-close],
-.bimoZoomSliderBtn--plus,
-.bimoZoomSliderBtn--minus{
-  padding:0 !important;
-  transform:none !important;
-}
-
-/* Bouton fermer : retour en haut à droite */
 .lightboxClose,
 .lightbox button[data-close]{
   position:absolute !important;
@@ -3032,61 +2886,84 @@ body{
 
   width:40px !important;
   height:40px !important;
+  min-width:40px !important;
+  min-height:40px !important;
+
   padding:0 !important;
   margin:0 !important;
-
-  display:block !important;
   box-sizing:border-box !important;
+
   border-radius:999px !important;
   border:1px solid rgba(255,255,255,0.28) !important;
 
-  background:var(--accent) !important;
-  color:#fff !important;
+  background-color:var(--accent) !important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M13 13 L27 27 M27 13 L13 27' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") !important;
+  background-repeat:no-repeat !important;
+  background-position:center center !important;
+  background-size:40px 40px !important;
 
+  color:#fff !important;
   font-size:0 !important;
   line-height:0 !important;
-  text-align:center !important;
+  text-indent:-9999px !important;
   overflow:hidden !important;
 
   cursor:pointer !important;
   appearance:none !important;
   -webkit-appearance:none !important;
+  transform:none !important;
 }
 
-/* Boutons précédent / suivant */
 .lightboxNav,
 .lightbox button[data-nav]{
   position:relative !important;
 
   width:52px !important;
   height:52px !important;
+  min-width:52px !important;
+  min-height:52px !important;
+
   padding:0 !important;
   margin:0 !important;
+  box-sizing:border-box !important;
 
   display:block !important;
-  box-sizing:border-box !important;
+  justify-self:center !important;
+  align-self:center !important;
+
   border-radius:999px !important;
   border:1px solid rgba(255,255,255,0.28) !important;
 
-  background:var(--accent) !important;
-  color:#fff !important;
+  background-color:var(--accent) !important;
+  background-repeat:no-repeat !important;
+  background-position:center center !important;
+  background-size:52px 52px !important;
 
+  color:#fff !important;
   font-size:0 !important;
   line-height:0 !important;
+  text-indent:-9999px !important;
   text-align:center !important;
   overflow:hidden !important;
 
   cursor:pointer !important;
   appearance:none !important;
   -webkit-appearance:none !important;
-
-  justify-self:center !important;
-  align-self:center !important;
-
   transform:none !important;
 }
 
-/* Supprime les anciens pseudo-éléments */
+.lightboxNav[data-nav="-1"],
+.lightbox button[data-nav="-1"],
+.lightboxPrev{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 52'%3E%3Cpath d='M31 14 L19 26 L31 38' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+}
+
+.lightboxNav[data-nav="1"],
+.lightbox button[data-nav="1"],
+.lightboxNext{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 52'%3E%3Cpath d='M21 14 L33 26 L21 38' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+}
+
 .lightboxClose::before,
 .lightboxClose::after,
 .lightboxNav::before,
@@ -3095,80 +2972,20 @@ body{
 .lightbox button[data-close]::after,
 .lightbox button[data-nav]::before,
 .lightbox button[data-nav]::after{
-  content:"" !important;
-  position:absolute !important;
-  display:block !important;
-  pointer-events:none !important;
-}
-
-/* Croix parfaitement centrée */
-.lightboxClose::before,
-.lightbox button[data-close]::before{
-  left:50% !important;
-  top:50% !important;
-  width:20px !important;
-  height:2px !important;
-  background:#fff !important;
-  border:0 !important;
-  border-radius:999px !important;
-  transform:translate(-50%, -50%) rotate(45deg) !important;
-}
-
-.lightboxClose::after,
-.lightbox button[data-close]::after{
-  left:50% !important;
-  top:50% !important;
-  width:20px !important;
-  height:2px !important;
-  background:#fff !important;
-  border:0 !important;
-  border-radius:999px !important;
-  transform:translate(-50%, -50%) rotate(-45deg) !important;
-}
-
-/* Flèches : forme CSS centrée dans le bouton */
-.lightboxNav::before,
-.lightbox button[data-nav]::before{
-  left:50% !important;
-  top:50% !important;
-  width:15px !important;
-  height:15px !important;
-  background:transparent !important;
-  border:0 !important;
-  border-top:4px solid #fff !important;
-  border-right:4px solid #fff !important;
-  border-radius:2px !important;
-}
-
-/* Flèche gauche centrée */
-.lightboxNav[data-nav="-1"]::before,
-.lightbox button[data-nav="-1"]::before{
-  transform:translate(-50%, -50%) rotate(-135deg) !important;
-}
-
-/* Flèche droite centrée */
-.lightboxNav[data-nav="1"]::before,
-.lightbox button[data-nav="1"]::before{
-  transform:translate(-50%, -50%) rotate(45deg) !important;
-}
-
-/* Aucun deuxième trait sur les flèches */
-.lightboxNav::after,
-.lightbox button[data-nav]::after{
+  content:none !important;
   display:none !important;
 }
 
-/* Désactivé */
 .lightboxNav:disabled,
 .lightbox button[data-nav]:disabled{
   opacity:0.38 !important;
   cursor:default !important;
 }
 
-/* Hover */
 .lightboxNav:not(:disabled):hover,
 .lightboxClose:hover,
 .lightbox button[data-nav]:not(:disabled):hover,
 .lightbox button[data-close]:hover{
-  background:#00006f !important;
+  background-color:#00006f !important;
 }
+
