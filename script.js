@@ -3028,28 +3028,3 @@ marker.on("click", (e) => {
     return escapeHtml(s);
   }
 })();
-
-/* ===== Correction centrage boutons zoom + / - ===== */
-.bimoZoomSliderBtn{
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  box-sizing:border-box !important;
-  padding:0 !important;
-  line-height:1 !important;
-  text-align:center !important;
-  appearance:none !important;
-  -webkit-appearance:none !important;
-}
-
-.bimoZoomSliderBtn--plus{
-  font-size:20px !important;
-  line-height:0 !important;
-  padding-bottom:2px !important;
-}
-
-.bimoZoomSliderBtn--minus{
-  font-size:22px !important;
-  line-height:0 !important;
-  padding-bottom:4px !important;
-}
