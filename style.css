@@ -3020,3 +3020,155 @@ body{
   padding:0 !important;
   transform:none !important;
 }
+
+/* Bouton fermer : retour en haut à droite */
+.lightboxClose,
+.lightbox button[data-close]{
+  position:absolute !important;
+  top:-6px !important;
+  right:0 !important;
+  left:auto !important;
+  bottom:auto !important;
+
+  width:40px !important;
+  height:40px !important;
+  padding:0 !important;
+  margin:0 !important;
+
+  display:block !important;
+  box-sizing:border-box !important;
+  border-radius:999px !important;
+  border:1px solid rgba(255,255,255,0.28) !important;
+
+  background:var(--accent) !important;
+  color:#fff !important;
+
+  font-size:0 !important;
+  line-height:0 !important;
+  text-align:center !important;
+  overflow:hidden !important;
+
+  cursor:pointer !important;
+  appearance:none !important;
+  -webkit-appearance:none !important;
+}
+
+/* Boutons précédent / suivant */
+.lightboxNav,
+.lightbox button[data-nav]{
+  position:relative !important;
+
+  width:52px !important;
+  height:52px !important;
+  padding:0 !important;
+  margin:0 !important;
+
+  display:block !important;
+  box-sizing:border-box !important;
+  border-radius:999px !important;
+  border:1px solid rgba(255,255,255,0.28) !important;
+
+  background:var(--accent) !important;
+  color:#fff !important;
+
+  font-size:0 !important;
+  line-height:0 !important;
+  text-align:center !important;
+  overflow:hidden !important;
+
+  cursor:pointer !important;
+  appearance:none !important;
+  -webkit-appearance:none !important;
+
+  justify-self:center !important;
+  align-self:center !important;
+
+  transform:none !important;
+}
+
+/* Supprime les anciens pseudo-éléments */
+.lightboxClose::before,
+.lightboxClose::after,
+.lightboxNav::before,
+.lightboxNav::after,
+.lightbox button[data-close]::before,
+.lightbox button[data-close]::after,
+.lightbox button[data-nav]::before,
+.lightbox button[data-nav]::after{
+  content:"" !important;
+  position:absolute !important;
+  display:block !important;
+  pointer-events:none !important;
+}
+
+/* Croix parfaitement centrée */
+.lightboxClose::before,
+.lightbox button[data-close]::before{
+  left:50% !important;
+  top:50% !important;
+  width:20px !important;
+  height:2px !important;
+  background:#fff !important;
+  border:0 !important;
+  border-radius:999px !important;
+  transform:translate(-50%, -50%) rotate(45deg) !important;
+}
+
+.lightboxClose::after,
+.lightbox button[data-close]::after{
+  left:50% !important;
+  top:50% !important;
+  width:20px !important;
+  height:2px !important;
+  background:#fff !important;
+  border:0 !important;
+  border-radius:999px !important;
+  transform:translate(-50%, -50%) rotate(-45deg) !important;
+}
+
+/* Flèches : forme CSS centrée dans le bouton */
+.lightboxNav::before,
+.lightbox button[data-nav]::before{
+  left:50% !important;
+  top:50% !important;
+  width:15px !important;
+  height:15px !important;
+  background:transparent !important;
+  border:0 !important;
+  border-top:4px solid #fff !important;
+  border-right:4px solid #fff !important;
+  border-radius:2px !important;
+}
+
+/* Flèche gauche centrée */
+.lightboxNav[data-nav="-1"]::before,
+.lightbox button[data-nav="-1"]::before{
+  transform:translate(-50%, -50%) rotate(-135deg) !important;
+}
+
+/* Flèche droite centrée */
+.lightboxNav[data-nav="1"]::before,
+.lightbox button[data-nav="1"]::before{
+  transform:translate(-50%, -50%) rotate(45deg) !important;
+}
+
+/* Aucun deuxième trait sur les flèches */
+.lightboxNav::after,
+.lightbox button[data-nav]::after{
+  display:none !important;
+}
+
+/* Désactivé */
+.lightboxNav:disabled,
+.lightbox button[data-nav]:disabled{
+  opacity:0.38 !important;
+  cursor:default !important;
+}
+
+/* Hover */
+.lightboxNav:not(:disabled):hover,
+.lightboxClose:hover,
+.lightbox button[data-nav]:not(:disabled):hover,
+.lightbox button[data-close]:hover{
+  background:#00006f !important;
+}
