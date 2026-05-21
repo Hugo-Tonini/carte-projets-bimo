@@ -20,7 +20,7 @@
   });
 
   // ---- Configuration ----
-  const DATA_VERSION = "2026-05-21a";
+  const DATA_VERSION = "2026-05-21b";
   const CURRENT_PROJECTS_URL = `export_projets_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const COMPLETED_PROJECTS_URL = `export_projets_finis_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const DEPTS_URL = `departements.geojson?v=${encodeURIComponent(DATA_VERSION)}`;
@@ -104,6 +104,8 @@
   let projectIdToName = new Map();  // "Code projet" -> Nom du projet (tooltips clusters)
   let projectListDirty = true;
   let completedProjectsLoadFailed = false;
+  let completedProjectsLoaded = false;
+  let completedProjectsLoadPromise = null;
   let suppressProjectUrlUpdate = false;
   function clearSelectedMarker() {
     if (selectedMarker) selectedMarker.getElement()?.classList.remove("selected");
@@ -393,12 +395,16 @@
     elProjectModeButtons.forEach((btn) => {
       const modeKey = btn.getAttribute("data-project-mode");
       const isActive = modeKey === currentProjectMode;
-      const isUnavailable = modeKey === PROJECT_MODES.completed.key && completedProjectsLoadFailed;
+      const isCompleted = modeKey === PROJECT_MODES.completed.key;
+      const isUnavailable = isCompleted && completedProjectsLoadFailed;
+      const isLoading = isCompleted && !!completedProjectsLoadPromise;
 
       btn.classList.toggle("is-active", isActive);
       btn.setAttribute("aria-pressed", isActive ? "true" : "false");
-      btn.disabled = isUnavailable;
-      btn.title = isUnavailable ? "Les projets finis n’ont pas pu être chargés." : "";
+      btn.disabled = isUnavailable || isLoading;
+      btn.title = isUnavailable
+        ? "Les projets finis n’ont pas pu être chargés."
+        : (isLoading ? "Chargement des projets finis…" : "");
     });
 
     updateCompletedYearFilterUi();
@@ -470,12 +476,55 @@
     }
   }
 
-  function setProjectMode(modeKey) {
-    if (!PROJECT_MODES[modeKey] || modeKey === currentProjectMode) return;
-    if (modeKey === PROJECT_MODES.completed.key && completedProjectsLoadFailed) {
-      showStatus("Les projets finis sont indisponibles pour le moment.");
+  async function ensureCompletedProjectsLoaded({ silent = false } = {}) {
+    if (completedProjectsLoaded) return true;
+    if (completedProjectsLoadFailed) return false;
+
+    if (!completedProjectsLoadPromise) {
+      if (!silent) showStatus("Chargement des projets finis…");
+
+      completedProjectsLoadPromise = fetchJson(COMPLETED_PROJECTS_URL)
+        .then((data) => {
+          projectsByMode.completed = ensureProjectIds(normalizeProjectsPayload(data), PROJECT_MODES.completed.key);
+          completedProjectsLoaded = true;
+          completedProjectsLoadFailed = false;
+
+          reportProjectDataQuality(projectsByMode.completed, PROJECT_MODES.completed.key);
+          updateCompletedYearBounds();
+          enrichProjectsWithDepartments(projectsByMode.completed);
+          if (!silent) showStatus("");
+          return true;
+        })
+        .catch((err) => {
+          completedProjectsLoadFailed = true;
+          projectsByMode.completed = [];
+          console.warn("Impossible de charger les projets finis :", err);
+          showStatus(`Les projets finis n’ont pas pu être chargés (${describeLoadError(err)}). Les projets en cours restent disponibles.`);
+          return false;
+        })
+        .finally(() => {
+          completedProjectsLoadPromise = null;
+          updateProjectModeUi();
+          window.setTimeout(() => {
+            refreshAdvancedFilterOptions();
+          }, 0);
+        });
+
       updateProjectModeUi();
-      return;
+    }
+
+    return completedProjectsLoadPromise;
+  }
+
+  async function setProjectMode(modeKey) {
+    if (!PROJECT_MODES[modeKey] || modeKey === currentProjectMode) return;
+    if (modeKey === PROJECT_MODES.completed.key) {
+      const loaded = await ensureCompletedProjectsLoaded();
+      if (!loaded || completedProjectsLoadFailed) {
+        showStatus("Les projets finis sont indisponibles pour le moment.");
+        updateProjectModeUi();
+        return;
+      }
     }
 
     stopCompletedYearPlayback();
@@ -1942,14 +1991,22 @@ clusters.on("clustermouseout", (a) => {
     return null;
   }
 
-  function openProjectFromUrl() {
+  async function openProjectFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const requestedMode = String(params.get("mode") || "").trim();
+
+    if (requestedMode === PROJECT_MODES.completed.key && !completedProjectsLoaded && !completedProjectsLoadFailed) {
+      const loaded = await ensureCompletedProjectsLoaded({ silent: true });
+      if (!loaded) return;
+    }
+
     const match = findProjectByUrlParams();
     if (!match) return;
 
     suppressProjectUrlUpdate = true;
     try {
       if (match.modeKey !== currentProjectMode) {
-        setProjectMode(match.modeKey);
+        await setProjectMode(match.modeKey);
       }
 
       if (match.modeKey === PROJECT_MODES.completed.key) {
@@ -3017,36 +3074,19 @@ clusters.on("clustermouseout", (a) => {
     try {
       await loadDepartements();
 
-      const [currentResult, completedResult] = await Promise.allSettled([
-        fetchJson(CURRENT_PROJECTS_URL),
-        fetchJson(COMPLETED_PROJECTS_URL)
-      ]);
+      const currentProjects = await fetchJson(CURRENT_PROJECTS_URL);
 
-      if (currentResult.status !== "fulfilled") throw currentResult.reason;
-
-      projectsByMode.current = ensureProjectIds(normalizeProjectsPayload(currentResult.value), PROJECT_MODES.current.key);
-      projectsByMode.completed = completedResult.status === "fulfilled"
-        ? ensureProjectIds(normalizeProjectsPayload(completedResult.value), PROJECT_MODES.completed.key)
-        : [];
-      completedProjectsLoadFailed = completedResult.status !== "fulfilled";
+      projectsByMode.current = ensureProjectIds(normalizeProjectsPayload(currentProjects), PROJECT_MODES.current.key);
 
       reportProjectDataQuality(projectsByMode.current, PROJECT_MODES.current.key);
-      reportProjectDataQuality(projectsByMode.completed, PROJECT_MODES.completed.key);
-
-      if (completedProjectsLoadFailed) {
-        console.warn("Impossible de charger les projets finis :", completedResult.reason);
-        showStatus(`Les projets finis n’ont pas pu être chargés (${describeLoadError(completedResult.reason)}). Les projets en cours restent disponibles.`);
-      }
-
       updateCompletedYearBounds();
 
       enrichProjectsWithDepartments(projectsByMode.current);
-      enrichProjectsWithDepartments(projectsByMode.completed);
 
       setActiveProjectsForMode(currentProjectMode);
       updateProjectModeUi();
       renderMarkers();
-      openProjectFromUrl();
+      await openProjectFromUrl();
 
       window.setTimeout(() => {
         refreshAdvancedFilterOptions();
