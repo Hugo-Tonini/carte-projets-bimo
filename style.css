@@ -2986,6 +2986,5 @@ body{
 .lightboxClose:hover,
 .lightbox button[data-nav]:not(:disabled):hover,
 .lightbox button[data-close]:hover{
-  background-color:#00006f !important;
+  background-color:var(--accent) !important;
 }
-
