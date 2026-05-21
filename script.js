@@ -2,24 +2,25 @@
 (() => {
   "use strict";
 
-  // Affiche les erreurs JS dans la bannière (pratique sur GitHub Pages)
+  // Affiche une erreur générique dans l'interface et garde le détail en console.
   window.addEventListener("error", (e) => {
+    console.error("[BIMO] Erreur JavaScript", e.error || e.message || e);
     const el = document.getElementById("status");
     if (!el) return;
-    el.textContent = `Erreur JS: ${e.message}`;
+    el.textContent = "Une erreur est survenue pendant l’affichage de la carte. Consultez la console pour le détail technique.";
     el.hidden = false;
   });
 
   window.addEventListener("unhandledrejection", (e) => {
+    console.error("[BIMO] Promesse rejetée", e.reason || e);
     const el = document.getElementById("status");
     if (!el) return;
-    const reason = e.reason?.message || e.reason || "Erreur inconnue";
-    el.textContent = `Erreur JS: ${reason}`;
+    el.textContent = "Une erreur est survenue pendant le chargement des données. Consultez la console pour le détail technique.";
     el.hidden = false;
   });
 
   // ---- Configuration ----
-  const DATA_VERSION = "2026-05-05d";
+  const DATA_VERSION = "2026-05-21a";
   const CURRENT_PROJECTS_URL = `export_projets_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const COMPLETED_PROJECTS_URL = `export_projets_finis_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const DEPTS_URL = `departements.geojson?v=${encodeURIComponent(DATA_VERSION)}`;
@@ -48,6 +49,7 @@
   const elLegend = document.getElementById("legend");
   const elLegendAntennas = document.getElementById("legendAntennas");
   const elCount = document.getElementById("statCount");
+  const elStatLocated = document.getElementById("statLocated");
   const elStatDept = document.getElementById("statDept");
   const elProjListBtn = document.getElementById("projListBtn");
   const elProjectModeSwitch = document.getElementById("projectModeSwitch");
@@ -767,9 +769,11 @@
   }
 
   function zoomToAntennaSummaryView() {
-    map.flyTo([46.45, 2.35], 6.3, {
-      duration: 0.7
-    });
+    if (typeof map.flyToBounds === "function") {
+      map.flyToBounds(ANTENNA_SUMMARY_BOUNDS, { padding: [18, 18], duration: 0.7 });
+    } else {
+      map.fitBounds(ANTENNA_SUMMARY_BOUNDS, { padding: [18, 18] });
+    }
   }
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "© OpenStreetMap",
@@ -1367,12 +1371,12 @@ clusters.on("clustermouseout", (a) => {
     }
 
     elProjListItems.innerHTML = rows.map(r => `
-      <div class="projListRow" data-pid="${escapeAttr(r.pid)}" role="button" tabindex="0" aria-label="Ouvrir ${escapeAttr(r.nom || "ce projet")}">
-        <div class="projListName">${escapeHtml(r.nom || "(sans nom)")}</div>
-        <div>${escapeHtml(r.typ)}</div>
-        <div>${escapeHtml(r.mnt)}</div>
-        <div>${escapeHtml(r.ant)}</div>
-      </div>
+      <button class="projListRow" type="button" data-pid="${escapeAttr(r.pid)}" aria-label="Ouvrir ${escapeAttr(r.nom || "ce projet")}">
+        <span class="projListName">${escapeHtml(r.nom || "(sans nom)")}</span>
+        <span>${escapeHtml(r.typ)}</span>
+        <span>${escapeHtml(r.mnt)}</span>
+        <span>${escapeHtml(r.ant)}</span>
+      </button>
     `).join("");
   }
 
@@ -1649,9 +1653,9 @@ clusters.on("clustermouseout", (a) => {
     return match ? Number(match[0]) : null;
   }
 
-  function updateCompletedYearBounds(projects) {
-    // La frise des projets finis doit rester bornée à la période demandée,
-    // même si certaines données contiennent des dates aberrantes ou hors périmètre.
+  function updateCompletedYearBounds() {
+    // La frise des projets finis reste volontairement bornée à la période métier demandée,
+    // même si certaines données contiennent des dates hors périmètre.
     COMPLETED_YEAR_MIN = 2008;
     COMPLETED_YEAR_MAX = 2024;
 
@@ -1725,9 +1729,9 @@ clusters.on("clustermouseout", (a) => {
         entry.amountPresent += safeAmount;
       }
 
-      const deliveredYear = projectEndYear(project);
-      if (Number.isFinite(deliveredYear) && stats.has(deliveredYear)) {
-        const entry = stats.get(deliveredYear);
+      for (let year = COMPLETED_YEAR_MIN; year <= COMPLETED_YEAR_MAX; year += 1) {
+        if (!isProjectDeliveredInYear(project, year)) continue;
+        const entry = stats.get(year);
         entry.delivered += 1;
         entry.amountDelivered += safeAmount;
       }
@@ -2025,6 +2029,7 @@ clusters.on("clustermouseout", (a) => {
     clearSelectedMarker();
 
     const list = filteredProjects();
+    let markerCount = 0;
 
     for (const p of list) {
       const ll = projectLatLon(p);
@@ -2059,7 +2064,7 @@ clusters.on("clustermouseout", (a) => {
           sticky: true
         });
       }
-marker.on("click", (e) => {
+      marker.on("click", (e) => {
         L.DomEvent.stopPropagation(e);
         setSelectedMarker(marker);
 
@@ -2077,9 +2082,13 @@ marker.on("click", (e) => {
       });
 
       clusters.addLayer(marker);
+      markerCount += 1;
     }
 
     if (elCount) elCount.textContent = String(list.length);
+    if (elStatLocated) {
+      elStatLocated.textContent = markerCount === list.length ? "" : ` (${markerCount} localisé(s))`;
+    }
     updateCompletedTimelineUi();
     filteredCounts = computeFilteredCounts();
     renderAntennaSummary();
@@ -2096,6 +2105,7 @@ marker.on("click", (e) => {
   let lightboxItems = [];
   let lightboxIndex = 0;
   let lightboxKeyHandler = null;
+  let lightboxPreviouslyFocused = null;
 
   function renderLightboxImage() {
     if (!lightboxEl) return;
@@ -2130,6 +2140,7 @@ marker.on("click", (e) => {
     if (!arr.length) return;
 
     closeLightbox();
+    lightboxPreviouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     lightboxItems = arr;
     lightboxIndex = Math.max(0, Math.min(Number(index) || 0, arr.length - 1));
 
@@ -2153,6 +2164,7 @@ marker.on("click", (e) => {
     `;
     document.body.appendChild(lightboxEl);
     renderLightboxImage();
+    lightboxEl.querySelector(".lightboxClose")?.focus();
 
     lightboxEl.addEventListener("click", (e) => {
       const t = e.target;
@@ -2166,9 +2178,26 @@ marker.on("click", (e) => {
     });
 
     lightboxKeyHandler = (e) => {
-      if (e.key === "Escape") closeLightbox();
-      else if (e.key === "ArrowLeft") stepLightbox(-1);
-      else if (e.key === "ArrowRight") stepLightbox(1);
+      if (e.key === "Escape") {
+        closeLightbox();
+      } else if (e.key === "ArrowLeft") {
+        stepLightbox(-1);
+      } else if (e.key === "ArrowRight") {
+        stepLightbox(1);
+      } else if (e.key === "Tab" && lightboxEl) {
+        const focusables = Array.from(lightboxEl.querySelectorAll('button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+          .filter((node) => node instanceof HTMLElement && node.offsetParent !== null);
+        if (!focusables.length) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     document.addEventListener("keydown", lightboxKeyHandler);
   }
@@ -2182,6 +2211,10 @@ marker.on("click", (e) => {
     lightboxEl = null;
     lightboxItems = [];
     lightboxIndex = 0;
+    if (lightboxPreviouslyFocused && document.contains(lightboxPreviouslyFocused)) {
+      lightboxPreviouslyFocused.focus();
+    }
+    lightboxPreviouslyFocused = null;
   }
 
   window.addEventListener("beforeprint", closeLightbox);
@@ -3005,7 +3038,7 @@ marker.on("click", (e) => {
         showStatus(`Les projets finis n’ont pas pu être chargés (${describeLoadError(completedResult.reason)}). Les projets en cours restent disponibles.`);
       }
 
-      updateCompletedYearBounds(projectsByMode.completed);
+      updateCompletedYearBounds();
 
       enrichProjectsWithDepartments(projectsByMode.current);
       enrichProjectsWithDepartments(projectsByMode.completed);
