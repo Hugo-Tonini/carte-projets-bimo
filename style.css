@@ -4,15 +4,15 @@
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Regular.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap;}
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Medium.woff2") format("woff2");font-weight:500;font-style:normal;font-display:swap;}
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Bold.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap;}
-@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-ExtraBold.woff2") format("woff2");font-weight:800;font-style:normal;font-display:block;}
+@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-ExtraBold.woff2") format("woff2");font-weight:800;font-style:normal;font-display:swap;}
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Thin_Italic.woff2") format("woff2");font-weight:100;font-style:italic;font-display:swap;}
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Light_Italic.woff2") format("woff2");font-weight:300;font-style:italic;font-display:swap;}
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Regular_Italic.woff2") format("woff2");font-weight:400;font-style:italic;font-display:swap;}
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Medium_Italic.woff2") format("woff2");font-weight:500;font-style:italic;font-display:swap;}
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Bold_Italic.woff2") format("woff2");font-weight:700;font-style:italic;font-display:swap;}
-@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-ExtraBold_Italic.woff2") format("woff2");font-weight:800;font-style:italic;font-display:block;}
+@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-ExtraBold_Italic.woff2") format("woff2");font-weight:800;font-style:italic;font-display:swap;}
 /* Appliquer partout */
-html, body{ font-family:"Marianne", Arial, systema-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+html, body{ font-family:"Marianne", Arial, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
 
 /* Base */
 :root{
@@ -983,6 +983,13 @@ select:focus-visible,
 }
 .projListItems{ max-height:min(52vh,520px); overflow:auto; }
 .projListRow{
+  appearance:none;
+  width:100%;
+  border:0;
+  background:transparent;
+  color:inherit;
+  font:inherit;
+  text-align:left;
   display:grid;
   grid-template-columns:2.2fr 0.8fr 0.9fr 1.3fr;
   gap:10px;
@@ -991,7 +998,7 @@ select:focus-visible,
   cursor:pointer;
 }
 .projListRow:hover{ background:rgba(0,0,0,0.03); }
-.projListRow[role="button"]{ user-select:none; }
+.projListRow{ user-select:none; }
 .projListName{ font-weight:700; }
 .projListEmpty{ padding:10px 8px; color:var(--muted); }
 
