@@ -201,47 +201,59 @@ h1{ margin: 0; font-size: 20px; }
 }
 
 .projectModeSwitch{
-  display:inline-flex;
-  align-items:stretch;
-  width:192px;
-  height:39px;
-  border:1px solid var(--border);
-  border-radius:10px;
-  overflow:hidden;
-  background:#fff;
+  display:inline-grid;
+  grid-template-columns:1fr 1fr;
+  align-items:center;
+  width:196px;
+  height:34px;
+  min-height:34px;
+  padding:3px;
+  gap:3px;
+  border:1px solid rgba(0,0,145,0.22);
+  border-radius:999px;
+  background:rgba(255,255,255,0.96);
+  box-shadow:0 1px 4px rgba(0,0,0,0.10);
+  overflow:visible;
   flex:0 0 auto;
 }
 .projectModeBtn{
-  flex:1 1 0;
-  min-width:0;
-  height:100%;
-  padding:0 16px 1px;
-  cursor:pointer;
-  border:0;
-  background:transparent;
-  font:inherit;
-  font-weight:600;
-  line-height:1;
-  color:#111;
-  display:flex;
+  display:inline-flex;
   align-items:center;
   justify-content:center;
+  flex:1 1 0;
+  width:auto;
+  min-width:0;
+  height:28px;
+  min-height:28px;
+  padding:0 16px;
+  cursor:pointer;
+  border:0;
+  border-radius:999px;
+  background:transparent;
+  font:inherit;
+  font-weight:700;
+  line-height:1;
+  color:#111;
   text-align:center;
   white-space:nowrap;
   appearance:none;
   -webkit-appearance:none;
+  transform:none;
+  transition:background-color .16s ease, color .16s ease, box-shadow .16s ease;
 }
 .projectModeBtn + .projectModeBtn{
-  border-left:1px solid var(--border);
+  border-left:0;
 }
 .projectModeBtn:hover{
   background:rgba(0,0,145,0.06);
+  color:var(--accent);
 }
 .projectModeBtn.is-active,
 .projectModeBtn.is-active:hover{
   background:var(--accent);
   color:#fff;
   font-weight:700;
+  box-shadow:0 2px 7px rgba(0,0,145,0.28);
 }
 
 
@@ -1999,15 +2011,18 @@ body{
 }
 
 .projectModeSwitch{
-  height:26px;
-  min-height:26px;
+  width:196px;
+  height:34px;
+  min-height:34px;
+  padding:3px;
+  gap:3px;
 }
 
 .projectModeBtn{
-  padding:0 14px;
+  padding:0 16px;
   line-height:1;
-  height:100%;
-  min-height:100%;
+  height:28px;
+  min-height:28px;
 }
 
 .brand{
@@ -2701,15 +2716,8 @@ body{
 
 /* ===== Ajustement du switch En cours / Finis ===== */
 .projectModeBtn{
-  transition:flex .18s ease, background-color .18s ease, color .18s ease;
-}
-
-.projectModeBtn.is-active{
-  flex:1.16 1 0;
-}
-
-.projectModeBtn:not(.is-active){
-  flex:.84 1 0;
+  flex:1 1 0;
+  transition:background-color .16s ease, color .16s ease, box-shadow .16s ease;
 }
 
 /* Timeline projets finis améliorée : histogramme synchronisé avec les filtres actifs. */
