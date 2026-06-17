@@ -200,26 +200,22 @@ h1{ margin: 0; font-size: 20px; }
 
 .projectModeSwitch{
   display:inline-flex;
-  align-items:center;
-  gap:2px;
+  align-items:stretch;
   width:192px;
-  height:30px;
-  padding:2px;
+  height:39px;
   border:1px solid var(--border);
-  border-radius:999px;
+  border-radius:10px;
   overflow:hidden;
   background:#fff;
   flex:0 0 auto;
-  box-shadow:0 1px 3px rgba(0,0,0,0.08);
 }
 .projectModeBtn{
   flex:1 1 0;
   min-width:0;
   height:100%;
-  padding:0 14px;
+  padding:0 16px 1px;
   cursor:pointer;
   border:0;
-  border-radius:999px;
   background:transparent;
   font:inherit;
   font-weight:600;
@@ -232,10 +228,9 @@ h1{ margin: 0; font-size: 20px; }
   white-space:nowrap;
   appearance:none;
   -webkit-appearance:none;
-  transition:background-color .16s ease, color .16s ease, box-shadow .16s ease;
 }
 .projectModeBtn + .projectModeBtn{
-  border-left:0;
+  border-left:1px solid var(--border);
 }
 .projectModeBtn:hover{
   background:rgba(0,0,145,0.06);
@@ -245,7 +240,6 @@ h1{ margin: 0; font-size: 20px; }
   background:var(--accent);
   color:#fff;
   font-weight:700;
-  box-shadow:0 1px 4px rgba(0,0,0,0.18);
 }
 
 
@@ -378,25 +372,18 @@ h1{ margin: 0; font-size: 20px; }
 .brand{
   position: absolute;
   right: 14px;
-  top: 4px;
-  bottom: 4px;
+  top: 0;
+  bottom: 0;
   margin-left: 0;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  width: 132px;
   padding: 0;
-  overflow: visible;
-  z-index: 2;
 }
 .brandLogo{
-  display: block;
+  height: calc(100% - 10px);
+  max-height: 80px;
   width: auto;
-  height: 100%;
-  max-width: 132px;
-  max-height: 100%;
-  object-fit: contain;
-  object-position: center center;
+  display: block;
 }
 
 
@@ -1955,7 +1942,7 @@ body{
 }
 
 .titleRow{
-  padding:5px 146px 3px 14px;
+  padding:5px 168px 3px 14px;
   gap:10px;
   align-items:center;
 }
@@ -1971,7 +1958,7 @@ body{
 }
 
 .toolbar{
-  padding:0 146px 5px 14px;
+  padding:0 168px 5px 14px;
   gap:8px;
   align-items:center;
 }
@@ -2008,46 +1995,39 @@ body{
 }
 
 .projectModeSwitch{
-  height:30px;
-  min-height:30px;
-  padding:2px;
-  border-radius:999px;
-  align-items:center;
-  gap:2px;
+  height:26px;
+  min-height:26px;
 }
 
 .projectModeBtn{
-  padding:0 12px;
+  padding:0 14px;
   line-height:1;
   height:100%;
-  min-height:0;
-  border-radius:999px;
+  min-height:100%;
 }
 
 .brand{
   position:absolute;
-  top:4px;
+  top:2px;
   right:14px;
-  bottom:4px;
   display:flex;
-  align-items:center;
+  align-items:flex-start;
   justify-content:flex-end;
-  width:132px;
-  height:auto;
+  width:150px;
+  height:58px;
   margin:0;
   padding:0;
-  overflow:visible;
   z-index:2;
 }
 
 .brandLogo{
   display:block;
-  max-width:132px;
-  max-height:100%;
   width:auto;
-  height:100%;
+  height:58px;
+  max-width:150px;
+  max-height:58px;
   object-fit:contain;
-  object-position:center center;
+  margin-top:0;
 }
 
 .layout{
@@ -2085,14 +2065,11 @@ body{
 
   .brand{
     position:static;
-    bottom:auto;
     width:auto;
-    height:auto;
     margin-left:auto;
   }
 
   .brandLogo{
-    height:auto;
     max-height:38px;
   }
 }
@@ -2714,6 +2691,19 @@ body{
 }
 
 
+/* ===== Ajustement du switch En cours / Finis ===== */
+.projectModeBtn{
+  transition:flex .18s ease, background-color .18s ease, color .18s ease;
+}
+
+.projectModeBtn.is-active{
+  flex:1.16 1 0;
+}
+
+.projectModeBtn:not(.is-active){
+  flex:.84 1 0;
+}
+
 /* Timeline projets finis améliorée : histogramme synchronisé avec les filtres actifs. */
 .completedYearFilter{
   height:auto;
@@ -2799,6 +2789,21 @@ body{
 
 .completedYearFilter.is-show-all .completedYearHistogram .completedYearBarFill{
   opacity:.65;
+}
+
+/* Logo ministère : taille augmentée sans agrandir la barre du haut. */
+.brand{
+  top:2px;
+  align-items:flex-start;
+  width:150px;
+  height:58px;
+}
+
+.brandLogo{
+  margin-top:0;
+  height:58px;
+  max-width:150px;
+  max-height:58px;
 }
 
 @media (max-width: 1180px){
