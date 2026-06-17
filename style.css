@@ -1,4 +1,4 @@
-a/* ===== Marianne (global) ===== */
+/* ===== Marianne (global) ===== */
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Thin.woff2") format("woff2");font-weight:100;font-style:normal;font-display:swap;}
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Light.woff2") format("woff2");font-weight:300;font-style:normal;font-display:swap;}
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Regular.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap;}
@@ -39,6 +39,8 @@ h1{ margin: 0; font-size: 20px; }
   background: #f8f6f2;
   border-bottom: 1px solid var(--border);
   position: relative;
+  z-index: 1000;
+  overflow: visible;
 }
 
 .topbarHeader{
@@ -1932,6 +1934,8 @@ body{
   flex:0 0 auto;
   margin:0;
   padding:0;
+  z-index:1000;
+  overflow:visible;
 }
 
 .topbarHeader,
@@ -2008,24 +2012,25 @@ body{
 
 .brand{
   position:absolute;
-  top:-6px;
+  top:-28px;
   right:14px;
   display:flex;
   align-items:flex-start;
   justify-content:flex-end;
   width:150px;
-  height:58px;
+  height:54px;
   margin:0;
   padding:0;
-  z-index:2;
+  z-index:20;
+  overflow:visible;
 }
 
 .brandLogo{
   display:block;
   width:auto;
-  height:58px;
+  height:54px;
   max-width:150px;
-  max-height:58px;
+  max-height:54px;
   object-fit:contain;
   margin-top:0;
 }
@@ -2066,10 +2071,13 @@ body{
   .brand{
     position:static;
     width:auto;
+    height:auto;
     margin-left:auto;
+    overflow:visible;
   }
 
   .brandLogo{
+    height:auto;
     max-height:38px;
   }
 }
@@ -2791,19 +2799,21 @@ body{
   opacity:.65;
 }
 
-/* Logo ministère : taille augmentée sans agrandir la barre du haut, remonté pour éviter toute coupe. */
+/* Logo ministère : remonté au-dessus de la ligne des filtres pour éviter toute coupe. */
 .brand{
-  top:-6px;
+  top:-28px;
   align-items:flex-start;
   width:150px;
-  height:58px;
+  height:54px;
+  z-index:20;
+  overflow:visible;
 }
 
 .brandLogo{
   margin-top:0;
-  height:58px;
+  height:54px;
   max-width:150px;
-  max-height:58px;
+  max-height:54px;
 }
 
 @media (max-width: 1180px){
