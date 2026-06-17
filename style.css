@@ -200,22 +200,26 @@ h1{ margin: 0; font-size: 20px; }
 
 .projectModeSwitch{
   display:inline-flex;
-  align-items:stretch;
+  align-items:center;
+  gap:2px;
   width:192px;
-  height:39px;
+  height:30px;
+  padding:2px;
   border:1px solid var(--border);
-  border-radius:10px;
+  border-radius:999px;
   overflow:hidden;
   background:#fff;
   flex:0 0 auto;
+  box-shadow:0 1px 3px rgba(0,0,0,0.08);
 }
 .projectModeBtn{
   flex:1 1 0;
   min-width:0;
   height:100%;
-  padding:0 16px 1px;
+  padding:0 14px;
   cursor:pointer;
   border:0;
+  border-radius:999px;
   background:transparent;
   font:inherit;
   font-weight:600;
@@ -228,9 +232,10 @@ h1{ margin: 0; font-size: 20px; }
   white-space:nowrap;
   appearance:none;
   -webkit-appearance:none;
+  transition:background-color .16s ease, color .16s ease, box-shadow .16s ease;
 }
 .projectModeBtn + .projectModeBtn{
-  border-left:1px solid var(--border);
+  border-left:0;
 }
 .projectModeBtn:hover{
   background:rgba(0,0,145,0.06);
@@ -240,6 +245,7 @@ h1{ margin: 0; font-size: 20px; }
   background:var(--accent);
   color:#fff;
   font-weight:700;
+  box-shadow:0 1px 4px rgba(0,0,0,0.18);
 }
 
 
@@ -372,18 +378,25 @@ h1{ margin: 0; font-size: 20px; }
 .brand{
   position: absolute;
   right: 14px;
-  top: 0;
-  bottom: 0;
+  top: 4px;
+  bottom: 4px;
   margin-left: 0;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  width: 132px;
   padding: 0;
+  overflow: visible;
+  z-index: 2;
 }
 .brandLogo{
-  height: calc(100% - 10px);
-  max-height: 80px;
-  width: auto;
   display: block;
+  width: auto;
+  height: 100%;
+  max-width: 132px;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center center;
 }
 
 
@@ -1995,38 +2008,46 @@ body{
 }
 
 .projectModeSwitch{
-  height:26px;
-  min-height:26px;
+  height:30px;
+  min-height:30px;
+  padding:2px;
+  border-radius:999px;
+  align-items:center;
+  gap:2px;
 }
 
 .projectModeBtn{
-  padding:0 14px;
+  padding:0 12px;
   line-height:1;
   height:100%;
-  min-height:100%;
+  min-height:0;
+  border-radius:999px;
 }
 
 .brand{
   position:absolute;
   top:4px;
   right:14px;
+  bottom:4px;
   display:flex;
   align-items:center;
   justify-content:flex-end;
-  width:122px;
+  width:132px;
   height:auto;
   margin:0;
   padding:0;
+  overflow:visible;
   z-index:2;
 }
 
 .brandLogo{
   display:block;
-  max-width:122px;
-  max-height:52px;
+  max-width:132px;
+  max-height:100%;
   width:auto;
-  height:auto;
+  height:100%;
   object-fit:contain;
+  object-position:center center;
 }
 
 .layout{
@@ -2064,11 +2085,14 @@ body{
 
   .brand{
     position:static;
+    bottom:auto;
     width:auto;
+    height:auto;
     margin-left:auto;
   }
 
   .brandLogo{
+    height:auto;
     max-height:38px;
   }
 }
@@ -2690,19 +2714,6 @@ body{
 }
 
 
-/* ===== Ajustement du switch En cours / Finis ===== */
-.projectModeBtn{
-  transition:flex .18s ease, background-color .18s ease, color .18s ease;
-}
-
-.projectModeBtn.is-active{
-  flex:1.16 1 0;
-}
-
-.projectModeBtn:not(.is-active){
-  flex:.84 1 0;
-}
-
 /* Timeline projets finis améliorée : histogramme synchronisé avec les filtres actifs. */
 .completedYearFilter{
   height:auto;
@@ -2788,16 +2799,6 @@ body{
 
 .completedYearFilter.is-show-all .completedYearHistogram .completedYearBarFill{
   opacity:.65;
-}
-
-/* Logo ministère : aligné le plus haut possible dans la barre du haut. */
-.brand{
-  top:2px;
-  align-items:flex-start;
-}
-
-.brandLogo{
-  margin-top:0;
 }
 
 @media (max-width: 1180px){
