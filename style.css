@@ -4,15 +4,15 @@
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Regular.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap;}
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Medium.woff2") format("woff2");font-weight:500;font-style:normal;font-display:swap;}
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Bold.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap;}
-@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-ExtraBold.woff2") format("woff2");font-weight:800;font-style:normal;font-display:block;}
+@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-ExtraBold.woff2") format("woff2");font-weight:800;font-style:normal;font-display:swap;}
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Thin_Italic.woff2") format("woff2");font-weight:100;font-style:italic;font-display:swap;}
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Light_Italic.woff2") format("woff2");font-weight:300;font-style:italic;font-display:swap;}
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Regular_Italic.woff2") format("woff2");font-weight:400;font-style:italic;font-display:swap;}
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Medium_Italic.woff2") format("woff2");font-weight:500;font-style:italic;font-display:swap;}
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Bold_Italic.woff2") format("woff2");font-weight:700;font-style:italic;font-display:swap;}
-@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-ExtraBold_Italic.woff2") format("woff2");font-weight:800;font-style:italic;font-display:block;}
+@font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-ExtraBold_Italic.woff2") format("woff2");font-weight:800;font-style:italic;font-display:swap;}
 /* Appliquer partout */
-html, body{ font-family:"Marianne", Arial, systema-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+html, body{ font-family:"Marianne", Arial, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
 
 /* Base */
 :root{
@@ -983,6 +983,13 @@ select:focus-visible,
 }
 .projListItems{ max-height:min(52vh,520px); overflow:auto; }
 .projListRow{
+  appearance:none;
+  width:100%;
+  border:0;
+  background:transparent;
+  color:inherit;
+  font:inherit;
+  text-align:left;
   display:grid;
   grid-template-columns:2.2fr 0.8fr 0.9fr 1.3fr;
   gap:10px;
@@ -991,7 +998,7 @@ select:focus-visible,
   cursor:pointer;
 }
 .projListRow:hover{ background:rgba(0,0,0,0.03); }
-.projListRow[role="button"]{ user-select:none; }
+.projListRow{ user-select:none; }
 .projListName{ font-weight:700; }
 .projListEmpty{ padding:10px 8px; color:var(--muted); }
 
@@ -2696,119 +2703,295 @@ body{
   flex:.84 1 0;
 }
 
-/* ===== Timeline projets finis améliorée + logo topbar ===== */
+/* Timeline projets finis améliorée : histogramme synchronisé avec les filtres actifs. */
 .completedYearFilter{
-  align-items:stretch;
-  gap:8px;
-  padding:6px 10px;
   height:auto;
+  min-height:30px;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px 12px;
+  padding:4px 10px;
 }
+
 .completedTimelineMain{
-  display:flex;
+  display:inline-flex;
   align-items:center;
   gap:10px;
   min-width:0;
 }
-.completedTimelineStats{
-  display:flex;
+
+.completedYearStats{
+  display:inline-flex;
   align-items:center;
   gap:8px;
-  color:var(--muted);
   font-size:12px;
+  color:#333;
   white-space:nowrap;
-  border-left:1px solid #e5e5e5;
-  padding-left:10px;
+  font-variant-numeric:tabular-nums;
 }
-.completedTimelineStats span{
+
+.completedYearStats span{
   display:inline-flex;
   align-items:baseline;
   gap:3px;
 }
-.completedTimelineStats strong{
-  color:#111;
-  font-weight:800;
-  font-variant-numeric:tabular-nums;
-}
-.completedTimelineBars{
-  display:flex;
+
+.completedYearHistogram{
+  display:inline-flex;
   align-items:flex-end;
   gap:2px;
-  height:42px;
-  padding-left:2px;
-  border-left:1px solid #e5e5e5;
+  height:34px;
+  padding:0 2px;
+  max-width:230px;
+  overflow:hidden;
 }
-.completedTimelineBar{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:flex-end;
-  gap:2px;
-  width:14px;
-  height:42px;
+
+.completedYearBar{
+  position:relative;
+  display:inline-flex;
+  align-items:flex-end;
+  justify-content:center;
+  width:8px;
+  height:34px;
   padding:0;
   border:0;
   background:transparent;
-  color:var(--muted);
   cursor:pointer;
 }
-.completedTimelineBar span{
+
+.completedYearBarFill{
   display:block;
-  width:8px;
+  width:100%;
   min-height:4px;
-  border-radius:999px 999px 2px 2px;
-  background:#c7c7d9;
-  transition:background-color .16s ease, transform .16s ease;
-}
-.completedTimelineBar em{
-  display:none;
-  font-style:normal;
-  font-size:9px;
-  line-height:1;
-}
-.completedTimelineBar:hover span{
-  background:rgba(0,0,145,0.45);
-  transform:scaleX(1.15);
-}
-.completedTimelineBar.is-active span{
-  background:var(--accent);
-  transform:scaleX(1.25);
-}
-.completedYearFilter.is-show-all .completedTimelineBar.is-active span{
-  background:#c7c7d9;
-  transform:none;
+  border-radius:4px 4px 0 0;
+  background:rgba(0,0,145,0.28);
+  transition:height .16s ease, background-color .16s ease, opacity .16s ease;
 }
 
-/* Le logo est volontairement rattaché visuellement au haut de la barre, pas au milieu de la deuxième ligne. */
-.brand{
-  top:-40px;
-  bottom:auto;
-  height:66px;
-  align-items:flex-start;
-  padding-top:2px;
+.completedYearBar:hover .completedYearBarFill,
+.completedYearBar:focus-visible .completedYearBarFill{
+  background:rgba(0,0,145,0.55);
 }
+
+.completedYearBar.is-active .completedYearBarFill{
+  background:var(--accent);
+}
+
+.completedYearBarLabel{
+  position:absolute;
+  width:1px;
+  height:1px;
+  overflow:hidden;
+  clip:rect(0 0 0 0);
+  white-space:nowrap;
+}
+
+.completedYearFilter.is-show-all .completedYearHistogram .completedYearBarFill{
+  opacity:.65;
+}
+
+/* Logo ministère : aligné le plus haut possible dans la barre du haut. */
+.brand{
+  top:2px;
+  align-items:flex-start;
+}
+
 .brandLogo{
-  height:62px;
-  max-height:62px;
-  object-fit:contain;
+  margin-top:0;
 }
 
 @media (max-width: 1180px){
-  .completedTimelineBars{ display:none; }
+  .completedYearHistogram{ max-width:170px; }
+  .completedYearRange{ width:190px; min-width:190px; flex-basis:190px; }
 }
+
 @media (max-width: 980px){
-  .completedYearFilter{ width:100%; }
   .completedTimelineMain{ flex-wrap:wrap; }
-  .completedTimelineStats{ border-left:0; padding-left:0; }
+  .completedYearStats{ width:100%; }
+  .completedYearHistogram{ width:100%; max-width:100%; }
 }
-@media (max-width: 900px){
-  .brand{
-    position:static;
-    height:auto;
-    padding-top:0;
-    margin-left:auto;
-  }
-  .brandLogo{
-    height:48px;
-    max-height:48px;
-  }
+
+/* ========================================================================== */
+/* ===== CORRECTIF FINAL : boutons zoom + lightbox centrés proprement ===== */
+/* ========================================================================== */
+
+/* -------------------------------------------------------------------------- */
+/* Zoom carte : boutons + / - centrés sans dépendre de la police              */
+/* -------------------------------------------------------------------------- */
+
+.bimoZoomSliderBtn{
+  position:relative !important;
+  display:block !important;
+  width:24px !important;
+  height:24px !important;
+  min-width:24px !important;
+  min-height:24px !important;
+  padding:0 !important;
+  margin:0 auto !important;
+  border:0 !important;
+  border-radius:999px !important;
+  box-sizing:border-box !important;
+  background:rgba(255,255,255,0.92) !important;
+  color:#111 !important;
+  font-size:0 !important;
+  line-height:0 !important;
+  text-align:center !important;
+  overflow:hidden !important;
+  cursor:pointer !important;
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  box-shadow:0 1px 4px rgba(0,0,0,0.16) !important;
+  transform:none !important;
+}
+
+.bimoZoomSliderBtn::before,
+.bimoZoomSliderBtn::after{
+  content:"" !important;
+  position:absolute !important;
+  left:50% !important;
+  top:50% !important;
+  display:block !important;
+  border-radius:999px !important;
+  background:#111 !important;
+  pointer-events:none !important;
+  transform:translate(-50%, -50%) !important;
+}
+
+.bimoZoomSliderBtn::before{
+  width:11px !important;
+  height:2px !important;
+}
+
+.bimoZoomSliderBtn--plus::after{
+  width:2px !important;
+  height:11px !important;
+}
+
+.bimoZoomSliderBtn--minus::after{
+  display:none !important;
+}
+
+.bimoZoomSliderBtn:hover,
+.bimoZoomSliderBtn:focus-visible{
+  background:#fff !important;
+  outline:2px solid rgba(0,0,145,0.28) !important;
+  outline-offset:1px !important;
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* Lightbox photos : boutons bleus + icônes SVG parfaitement centrées          */
+/* -------------------------------------------------------------------------- */
+
+.lightboxClose,
+.lightbox button[data-close]{
+  position:absolute !important;
+  top:-6px !important;
+  right:0 !important;
+  left:auto !important;
+  bottom:auto !important;
+
+  width:40px !important;
+  height:40px !important;
+  min-width:40px !important;
+  min-height:40px !important;
+
+  padding:0 !important;
+  margin:0 !important;
+  box-sizing:border-box !important;
+
+  border-radius:999px !important;
+  border:1px solid rgba(255,255,255,0.28) !important;
+
+  background-color:var(--accent) !important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M13 13 L27 27 M27 13 L13 27' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") !important;
+  background-repeat:no-repeat !important;
+  background-position:center center !important;
+  background-size:40px 40px !important;
+
+  color:#fff !important;
+  font-size:0 !important;
+  line-height:0 !important;
+  text-indent:-9999px !important;
+  overflow:hidden !important;
+
+  cursor:pointer !important;
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  transform:none !important;
+}
+
+.lightboxNav,
+.lightbox button[data-nav]{
+  position:relative !important;
+
+  width:52px !important;
+  height:52px !important;
+  min-width:52px !important;
+  min-height:52px !important;
+
+  padding:0 !important;
+  margin:0 !important;
+  box-sizing:border-box !important;
+
+  display:block !important;
+  justify-self:center !important;
+  align-self:center !important;
+
+  border-radius:999px !important;
+  border:1px solid rgba(255,255,255,0.28) !important;
+
+  background-color:var(--accent) !important;
+  background-repeat:no-repeat !important;
+  background-position:center center !important;
+  background-size:52px 52px !important;
+
+  color:#fff !important;
+  font-size:0 !important;
+  line-height:0 !important;
+  text-indent:-9999px !important;
+  text-align:center !important;
+  overflow:hidden !important;
+
+  cursor:pointer !important;
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  transform:none !important;
+}
+
+.lightboxNav[data-nav="-1"],
+.lightbox button[data-nav="-1"],
+.lightboxPrev{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 52'%3E%3Cpath d='M31 14 L19 26 L31 38' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+}
+
+.lightboxNav[data-nav="1"],
+.lightbox button[data-nav="1"],
+.lightboxNext{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 52'%3E%3Cpath d='M21 14 L33 26 L21 38' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+}
+
+.lightboxClose::before,
+.lightboxClose::after,
+.lightboxNav::before,
+.lightboxNav::after,
+.lightbox button[data-close]::before,
+.lightbox button[data-close]::after,
+.lightbox button[data-nav]::before,
+.lightbox button[data-nav]::after{
+  content:none !important;
+  display:none !important;
+}
+
+.lightboxNav:disabled,
+.lightbox button[data-nav]:disabled{
+  opacity:0.38 !important;
+  cursor:default !important;
+}
+
+.lightboxNav:not(:disabled):hover,
+.lightboxClose:hover,
+.lightbox button[data-nav]:not(:disabled):hover,
+.lightbox button[data-close]:hover{
+  background-color:var(--accent) !important;
 }
