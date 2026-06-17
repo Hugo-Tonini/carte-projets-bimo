@@ -1,4 +1,4 @@
-/* ===== Marianne (global) ===== */
+a/* ===== Marianne (global) ===== */
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Thin.woff2") format("woff2");font-weight:100;font-style:normal;font-display:swap;}
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Light.woff2") format("woff2");font-weight:300;font-style:normal;font-display:swap;}
 @font-face{font-family:"Marianne";src:url("assets/fonts/Marianne-Regular.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap;}
@@ -2008,7 +2008,7 @@ body{
 
 .brand{
   position:absolute;
-  top:2px;
+  top:-6px;
   right:14px;
   display:flex;
   align-items:flex-start;
@@ -2791,9 +2791,9 @@ body{
   opacity:.65;
 }
 
-/* Logo ministère : taille augmentée sans agrandir la barre du haut. */
+/* Logo ministère : taille augmentée sans agrandir la barre du haut, remonté pour éviter toute coupe. */
 .brand{
-  top:2px;
+  top:-6px;
   align-items:flex-start;
   width:150px;
   height:58px;
