@@ -1596,63 +1596,77 @@ clusters.on("clustermouseout", (a) => {
     const placedRects = [];
 
     function buildPlacementCandidates(labelWidth, labelHeight) {
-      const sideDx = Math.round(labelWidth / 2 + 13);
-      const sideDy = Math.round(labelHeight / 2 + 3);
-      const nearSideDx = Math.round(labelWidth / 2 + 9);
+      const halfW = Math.round(labelWidth / 2);
+      const halfH = Math.round(labelHeight / 2);
 
-      // Distance réduite : les placements directs sont maintenant au plus près du pin.
-      // On essaie d'abord au-dessus, puis légèrement décalé, puis à droite/gauche.
+      // Écart minimal pour ne pas recouvrir le cercle du pin.
+      // Visuellement, le nom reste très proche du pin.
+      const aboveY = -(halfH + 17);
+      const belowY = halfH + 17;
+      const sideX = halfW + 17;
+      const sideY = 0;
+
+      // Priorité naturelle :
+      // 1) au-dessus, 2) au-dessus décalé, 3) droite/gauche,
+      // 4) dessous, 5) seulement après : placements plus éloignés avec trait.
       const direct = [
-        [0, -18],
-        [10, -18],
-        [18, -18],
-        [-10, -18],
-        [-18, -18],
-        [28, -20],
-        [-28, -20],
-        [0, -24],
-        [14, -24],
-        [-14, -24]
+        [0, aboveY],
+        [Math.round(halfW * 0.25), aboveY],
+        [-Math.round(halfW * 0.25), aboveY],
+        [Math.round(halfW * 0.45), aboveY],
+        [-Math.round(halfW * 0.45), aboveY],
+        [Math.round(halfW * 0.65), aboveY - 2],
+        [-Math.round(halfW * 0.65), aboveY - 2],
+
+        [sideX, sideY],
+        [-sideX, sideY],
+        [sideX, -Math.round(halfH * 0.7)],
+        [-sideX, -Math.round(halfH * 0.7)],
+
+        [0, belowY],
+        [Math.round(halfW * 0.25), belowY],
+        [-Math.round(halfW * 0.25), belowY],
+        [Math.round(halfW * 0.45), belowY],
+        [-Math.round(halfW * 0.45), belowY],
+        [sideX, Math.round(halfH * 0.8)],
+        [-sideX, Math.round(halfH * 0.8)]
       ];
 
-      // Placements encore proches, mais suffisamment déplacés pour mériter un petit trait.
-      // La droite est prioritaire quand elle est libre : meilleur rendu pour Strasbourg / Saint-Louis.
+      // Ces positions restent proches mais méritent un trait discret,
+      // car le lien au pin devient moins évident.
       const nearbyWithLeader = [
-        [nearSideDx, -4],
-        [sideDx, 0],
-        [nearSideDx, -sideDy],
-        [sideDx, sideDy],
-        [-nearSideDx, -4],
-        [-sideDx, 0],
-        [-nearSideDx, -sideDy],
-        [-sideDx, sideDy],
-        [0, -34],
-        [36, -30],
-        [-36, -30],
-        [52, -34],
-        [-52, -34]
+        [Math.round(halfW * 0.75), aboveY - 8],
+        [-Math.round(halfW * 0.75), aboveY - 8],
+        [sideX + 18, -Math.round(halfH * 0.25)],
+        [-(sideX + 18), -Math.round(halfH * 0.25)],
+        [sideX + 18, Math.round(halfH * 0.7)],
+        [-(sideX + 18), Math.round(halfH * 0.7)],
+        [Math.round(halfW * 0.65), belowY + 8],
+        [-Math.round(halfW * 0.65), belowY + 8],
+        [0, aboveY - 18],
+        [0, belowY + 18]
       ];
 
-      // Dernier recours : on s'éloigne progressivement, mais moins brutalement qu'avant.
+      // Dernier recours uniquement.
       const fallback = [
-        [70, -42],
-        [-70, -42],
-        [88, -58],
-        [-88, -58],
-        [112, -42],
-        [-112, -42],
-        [120, -76],
-        [-120, -76],
-        [0, -56],
-        [150, -72],
-        [-150, -72],
-        [175, -95],
-        [-175, -95]
+        [sideX + 45, aboveY - 18],
+        [-(sideX + 45), aboveY - 18],
+        [sideX + 65, 0],
+        [-(sideX + 65), 0],
+        [sideX + 45, belowY + 18],
+        [-(sideX + 45), belowY + 18],
+        [0, aboveY - 42],
+        [0, belowY + 42],
+        [sideX + 95, aboveY - 30],
+        [-(sideX + 95), aboveY - 30],
+        [sideX + 95, belowY + 30],
+        [-(sideX + 95), belowY + 30]
       ];
 
       const spiral = [];
-      for (let radius = 90; radius <= 220; radius += 22) {
-        for (let angle = -160; angle <= 20; angle += 15) {
+      for (let radius = 95; radius <= 220; radius += 24) {
+        for (let angle = -165; angle <= 165; angle += 15) {
+          // On ne teste le cercle large qu'à la fin, après dessus/droite/gauche/dessous.
           const rad = angle * Math.PI / 180;
           spiral.push([Math.cos(rad) * radius, Math.sin(rad) * radius]);
         }
@@ -1676,8 +1690,8 @@ clusters.on("clustermouseout", (a) => {
         const rect = makeRect(centerX - labelWidth / 2, centerY - labelHeight / 2, labelWidth, labelHeight);
 
         if (!rectInsideMap(rect, mapWidth, mapHeight, 4)) continue;
-        if (placedRects.some((placed) => rectsOverlap(rect, placed, 4))) continue;
-        if (blockedRects.some((blocked) => rectsOverlap(rect, blocked, 3))) continue;
+        if (placedRects.some((placed) => rectsOverlap(rect, placed, 3))) continue;
+        if (blockedRects.some((blocked) => rectsOverlap(rect, blocked, 2))) continue;
 
         return {
           rect,
