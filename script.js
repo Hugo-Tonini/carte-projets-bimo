@@ -2793,7 +2793,7 @@ clusters.on("clustermouseout", (a) => {
     // On "fonce" l’antenne sélectionnée via opacité/contour
     const weight = isAntennaFocused ? 2 : 1;
     const color = isAntennaFocused ? "#111" : "#666";
-    const fillOpacity = isAntennaFocused ? 0.70 : (antenna ? 0.60 : 0.14);
+    const fillOpacity = isAntennaFocused ? 0.70 : (antenna ? 0.65 : 0.14);
 
     return {
       weight,
