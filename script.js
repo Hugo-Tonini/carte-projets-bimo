@@ -925,8 +925,8 @@
       return L.divIcon({
         className: "pin-dot pin-dot-cluster-wrap",
         html: `<div class="pin-dot-inner pin-dot-cluster" style="border-color:${col};"><span class="pin-dot-count">${count}</span></div>`,
-        iconSize: [22, 22],
-        iconAnchor: [11, 11]
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
       });
     }
   });
