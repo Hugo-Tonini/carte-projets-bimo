@@ -975,7 +975,7 @@
         overflow: hidden;
       }
       .cityLabelsSvg line {
-        stroke: rgba(15, 23, 42, 0.78);
+        stroke: rgba(15, 23, 42, 0.62);
         stroke-width: 1.5;
         stroke-linecap: round;
         stroke-dasharray: 3 3;
@@ -1595,46 +1595,79 @@ clusters.on("clustermouseout", (a) => {
 
     const placedRects = [];
 
-    const directOffsets = [
-      [0, -34],
-      [0, -42],
-      [-18, -38],
-      [18, -38],
-      [-32, -46],
-      [32, -46]
-    ];
+    function buildPlacementCandidates(labelWidth, labelHeight) {
+      const sideDx = Math.round(labelWidth / 2 + 13);
+      const sideDy = Math.round(labelHeight / 2 + 3);
+      const nearSideDx = Math.round(labelWidth / 2 + 9);
 
-    const leaderOffsets = [
-      [0, -66],
-      [-54, -58],
-      [54, -58],
-      [-82, -74],
-      [82, -74],
-      [-112, -90],
-      [112, -90],
-      [-140, -62],
-      [140, -62],
-      [-170, -82],
-      [170, -82],
-      [-205, -105],
-      [205, -105],
-      [0, -104]
-    ];
+      // Distance réduite : les placements directs sont maintenant au plus près du pin.
+      // On essaie d'abord au-dessus, puis légèrement décalé, puis à droite/gauche.
+      const direct = [
+        [0, -18],
+        [10, -18],
+        [18, -18],
+        [-10, -18],
+        [-18, -18],
+        [28, -20],
+        [-28, -20],
+        [0, -24],
+        [14, -24],
+        [-14, -24]
+      ];
 
-    const spiralCandidates = [];
-    for (let radius = 115; radius <= 260; radius += 24) {
-      for (let angle = -165; angle <= -15; angle += 15) {
-        const rad = angle * Math.PI / 180;
-        spiralCandidates.push([Math.cos(rad) * radius, Math.sin(rad) * radius]);
+      // Placements encore proches, mais suffisamment déplacés pour mériter un petit trait.
+      // La droite est prioritaire quand elle est libre : meilleur rendu pour Strasbourg / Saint-Louis.
+      const nearbyWithLeader = [
+        [nearSideDx, -4],
+        [sideDx, 0],
+        [nearSideDx, -sideDy],
+        [sideDx, sideDy],
+        [-nearSideDx, -4],
+        [-sideDx, 0],
+        [-nearSideDx, -sideDy],
+        [-sideDx, sideDy],
+        [0, -34],
+        [36, -30],
+        [-36, -30],
+        [52, -34],
+        [-52, -34]
+      ];
+
+      // Dernier recours : on s'éloigne progressivement, mais moins brutalement qu'avant.
+      const fallback = [
+        [70, -42],
+        [-70, -42],
+        [88, -58],
+        [-88, -58],
+        [112, -42],
+        [-112, -42],
+        [120, -76],
+        [-120, -76],
+        [0, -56],
+        [150, -72],
+        [-150, -72],
+        [175, -95],
+        [-175, -95]
+      ];
+
+      const spiral = [];
+      for (let radius = 90; radius <= 220; radius += 22) {
+        for (let angle = -160; angle <= 20; angle += 15) {
+          const rad = angle * Math.PI / 180;
+          spiral.push([Math.cos(rad) * radius, Math.sin(rad) * radius]);
+        }
       }
+
+      return [
+        ...direct.map((offset) => ({ offset, leader: false })),
+        ...nearbyWithLeader.map((offset) => ({ offset, leader: true })),
+        ...fallback.map((offset) => ({ offset, leader: true })),
+        ...spiral.map((offset) => ({ offset, leader: true }))
+      ];
     }
 
     function findPlacement(anchorPoint, labelWidth, labelHeight) {
-      const allCandidates = [
-        ...directOffsets.map((offset) => ({ offset, leader: false })),
-        ...leaderOffsets.map((offset) => ({ offset, leader: true })),
-        ...spiralCandidates.map((offset) => ({ offset, leader: true }))
-      ];
+      const allCandidates = buildPlacementCandidates(labelWidth, labelHeight);
 
       for (const candidate of allCandidates) {
         const [dx, dy] = candidate.offset;
@@ -1643,14 +1676,14 @@ clusters.on("clustermouseout", (a) => {
         const rect = makeRect(centerX - labelWidth / 2, centerY - labelHeight / 2, labelWidth, labelHeight);
 
         if (!rectInsideMap(rect, mapWidth, mapHeight, 4)) continue;
-        if (placedRects.some((placed) => rectsOverlap(rect, placed, 5))) continue;
-        if (blockedRects.some((blocked) => rectsOverlap(rect, blocked, 4))) continue;
+        if (placedRects.some((placed) => rectsOverlap(rect, placed, 4))) continue;
+        if (blockedRects.some((blocked) => rectsOverlap(rect, blocked, 3))) continue;
 
         return {
           rect,
           centerX,
           centerY,
-          leader: candidate.leader || Math.abs(dx) > 34 || Math.abs(dy) > 56
+          leader: candidate.leader
         };
       }
 
@@ -1681,7 +1714,7 @@ clusters.on("clustermouseout", (a) => {
         const labelEdgeY = Math.max(placement.rect.top, Math.min(anchorPoint.y, placement.rect.bottom));
 
         line.setAttribute("x1", String(Math.round(anchorPoint.x)));
-        line.setAttribute("y1", String(Math.round(anchorPoint.y - 13)));
+        line.setAttribute("y1", String(Math.round(anchorPoint.y - 11)));
         line.setAttribute("x2", String(Math.round(labelEdgeX)));
         line.setAttribute("y2", String(Math.round(labelEdgeY)));
         cityLabelsSvg.appendChild(line);
