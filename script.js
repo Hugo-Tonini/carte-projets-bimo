@@ -934,7 +934,59 @@
   map.addLayer(clusters);
 
   const antennaSummaryLayer = L.layerGroup().addTo(map);
+
+  function ensureCityLabelStyles() {
+    if (document.getElementById("bimoCityLabelStyles")) return;
+
+    const style = document.createElement("style");
+    style.id = "bimoCityLabelStyles";
+    style.textContent = `
+      .cityLabelMarker {
+        pointer-events: none;
+        z-index: 720 !important;
+      }
+      .cityLabel {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+        max-width: 220px;
+        padding: 4px 9px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.94);
+        color: #1f2937;
+        font-size: 12px;
+        line-height: 1.15;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        text-transform: none;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+        border: 1px solid rgba(15, 23, 42, 0.16);
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
+      }
+      .cityLabelConnector {
+        pointer-events: none;
+        z-index: 710 !important;
+      }
+      .cityLabelConnector svg {
+        overflow: visible;
+      }
+      .cityLabelConnector line {
+        stroke: rgba(17, 24, 39, 0.72);
+        stroke-width: 1.5;
+        stroke-linecap: round;
+        stroke-dasharray: 3 3;
+        filter: drop-shadow(0 1px 1px rgba(255, 255, 255, 0.7));
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  ensureCityLabelStyles();
+
+  const cityLabelConnectorsLayer = L.layerGroup().addTo(map);
   const cityLabelsLayer = L.layerGroup().addTo(map);
+
   injectCityLabelStyles();
 
 // Tooltip (survol) : liste des projets dans un cluster
@@ -1261,6 +1313,7 @@ clusters.on("clustermouseout", (a) => {
     const activeTypes = getActiveSummaryTypes();
     if (!activeTypes.length) {
       elAntennaSummaryOverlay.innerHTML = `<div class="antennaSummaryEmpty">Cochez au moins un type de projet.</div>`;
+      window.requestAnimationFrame(renderCityLabels);
       return;
     }
 
@@ -1357,6 +1410,293 @@ clusters.on("clustermouseout", (a) => {
       elAntennaSummaryOverlay.innerHTML = `<div class="antennaSummaryEmpty">Aucun projet pour les filtres sélectionnés.</div>`;
     }
   }
+
+
+  function rectsOverlap(a, b, margin = 0) {
+    return !(
+      a.right + margin < b.left ||
+      a.left - margin > b.right ||
+      a.bottom + margin < b.top ||
+      a.top - margin > b.bottom
+    );
+  }
+
+  function getElementContainerRect(element) {
+    if (!element || !mapEl) return null;
+    const mapRect = mapEl.getBoundingClientRect();
+    const rect = element.getBoundingClientRect();
+    if (!rect.width || !rect.height) return null;
+
+    return {
+      left: rect.left - mapRect.left,
+      top: rect.top - mapRect.top,
+      right: rect.right - mapRect.left,
+      bottom: rect.bottom - mapRect.top,
+      width: rect.width,
+      height: rect.height
+    };
+  }
+
+  function getAntennaSummaryBlockedRects() {
+    if (!antennaSummaryEnabled) return [];
+
+    const rects = [];
+    const selectors = [
+      ".antennaSummaryMarker",
+      ".antennaSummaryCard",
+      ".antennaSummaryEmpty"
+    ];
+
+    for (const selector of selectors) {
+      document.querySelectorAll(selector).forEach((element) => {
+        const rect = getElementContainerRect(element);
+        if (rect) rects.push(rect);
+      });
+    }
+
+    return rects;
+  }
+
+  function makeRectFromCenter(center, width, height) {
+    return {
+      left: center.x - width / 2,
+      top: center.y - height / 2,
+      right: center.x + width / 2,
+      bottom: center.y + height / 2,
+      width,
+      height
+    };
+  }
+
+  function rectInsideMap(rect, mapSize, padding = 4) {
+    return (
+      rect.left >= padding &&
+      rect.top >= padding &&
+      rect.right <= mapSize.x - padding &&
+      rect.bottom <= mapSize.y - padding
+    );
+  }
+
+  function createCityConnectorMarker(anchorPoint, labelPoint) {
+    const dx = labelPoint.x - anchorPoint.x;
+    const dy = labelPoint.y - anchorPoint.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // Pas de trait si l'étiquette est déjà quasiment au-dessus du pin.
+    if (distance < 34) return null;
+
+    const mid = L.point((anchorPoint.x + labelPoint.x) / 2, (anchorPoint.y + labelPoint.y) / 2);
+    const midLatLng = map.containerPointToLatLng(mid);
+
+    const minX = Math.min(anchorPoint.x, labelPoint.x);
+    const minY = Math.min(anchorPoint.y, labelPoint.y);
+    const width = Math.max(1, Math.abs(dx));
+    const height = Math.max(1, Math.abs(dy));
+
+    const x1 = anchorPoint.x - minX;
+    const y1 = anchorPoint.y - minY;
+    const x2 = labelPoint.x - minX;
+    const y2 = labelPoint.y - minY;
+
+    const html = `
+      <svg width="${Math.ceil(width)}" height="${Math.ceil(height)}" viewBox="0 0 ${Math.ceil(width)} ${Math.ceil(height)}" aria-hidden="true" focusable="false">
+        <line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"></line>
+      </svg>
+    `;
+
+    return L.marker(midLatLng, {
+      interactive: false,
+      keyboard: false,
+      icon: L.divIcon({
+        className: "cityLabelConnector",
+        html,
+        iconSize: [Math.ceil(width), Math.ceil(height)],
+        iconAnchor: [Math.ceil(width / 2), Math.ceil(height / 2)]
+      })
+    });
+  }
+
+  function renderCityLabels() {
+    if (!cityLabelsLayer || !cityLabelConnectorsLayer) return;
+
+    cityLabelsLayer.clearLayers();
+    cityLabelConnectorsLayer.clearLayers();
+
+    if (!antennaSummaryEnabled) return;
+
+    const projects = filteredProjects()
+      .map((project) => ({
+        project,
+        city: projectCity(project),
+        ll: projectLatLon(project)
+      }))
+      .filter((entry) => entry.city && entry.ll);
+
+    if (!projects.length) return;
+
+    const groups = new Map();
+
+    for (const entry of projects) {
+      const key = normalizeForLookup(entry.city);
+      if (!key) continue;
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          city: entry.city,
+          points: [],
+          anchor: entry.ll
+        });
+      }
+
+      const group = groups.get(key);
+      group.points.push(entry.ll);
+
+      // Ancrage sur le pin le plus haut à l'écran pour rester visuellement au-dessus d'un pin de la ville.
+      const currentAnchorPoint = map.latLngToContainerPoint(group.anchor);
+      const candidatePoint = map.latLngToContainerPoint(entry.ll);
+      if (candidatePoint.y < currentAnchorPoint.y) {
+        group.anchor = entry.ll;
+      }
+    }
+
+    const mapSize = map.getSize();
+
+    const blockedRects = getAntennaSummaryBlockedRects();
+
+    // Les pins bloquent aussi les noms, pour ne pas masquer les cercles.
+    for (const entry of projects) {
+      const pt = map.latLngToContainerPoint(entry.ll);
+      blockedRects.push({
+        left: pt.x - 13,
+        top: pt.y - 13,
+        right: pt.x + 13,
+        bottom: pt.y + 13
+      });
+    }
+
+    const placedRects = [];
+    const cityGroups = Array.from(groups.values())
+      .sort((a, b) => {
+        const pa = map.latLngToContainerPoint(a.anchor);
+        const pb = map.latLngToContainerPoint(b.anchor);
+        return pa.y - pb.y || a.city.localeCompare(b.city, "fr", { sensitivity: "base" });
+      });
+
+    // On estime la taille avant création : simple, rapide, et suffisant pour éviter les collisions.
+    const estimateLabelSize = (text) => {
+      const length = String(text || "").length;
+      const width = Math.min(220, Math.max(62, Math.round(length * 7.3 + 26)));
+      return { width, height: 25 };
+    };
+
+    const primaryOffsets = [
+      [0, -30],
+      [0, -38],
+      [-18, -34],
+      [18, -34],
+      [-32, -42],
+      [32, -42]
+    ];
+
+    const leaderOffsets = [
+      [0, -58],
+      [-48, -50],
+      [48, -50],
+      [-72, -64],
+      [72, -64],
+      [-96, -78],
+      [96, -78],
+      [-118, -44],
+      [118, -44],
+      [-138, -92],
+      [138, -92],
+      [0, -86],
+      [-165, -62],
+      [165, -62],
+      [-190, -105],
+      [190, -105]
+    ];
+
+    function candidateIsValid(rect, { allowPinOverlap = false } = {}) {
+      if (!rectInsideMap(rect, mapSize, 4)) return false;
+      if (placedRects.some((other) => rectsOverlap(rect, other, 4))) return false;
+      if (blockedRects.some((other) => rectsOverlap(rect, other, allowPinOverlap ? 0 : 2))) return false;
+      return true;
+    }
+
+    for (const group of cityGroups) {
+      const anchorPoint = map.latLngToContainerPoint(group.anchor);
+      const { width, height } = estimateLabelSize(group.city);
+
+      let chosen = null;
+      let needsConnector = false;
+
+      for (const [dx, dy] of primaryOffsets) {
+        const center = L.point(anchorPoint.x + dx, anchorPoint.y + dy);
+        const rect = makeRectFromCenter(center, width, height);
+        if (!candidateIsValid(rect)) continue;
+        chosen = { center, rect };
+        needsConnector = false;
+        break;
+      }
+
+      if (!chosen) {
+        for (const [dx, dy] of leaderOffsets) {
+          const center = L.point(anchorPoint.x + dx, anchorPoint.y + dy);
+          const rect = makeRectFromCenter(center, width, height);
+          if (!candidateIsValid(rect)) continue;
+          chosen = { center, rect };
+          needsConnector = true;
+          break;
+        }
+      }
+
+      // Très rare : s'il reste impossible de placer proprement, on essaie un placement en périphérie proche
+      // sans masquer les encarts ni les autres noms. On évite quand même les gros chevauchements.
+      if (!chosen) {
+        for (let radius = 115; radius <= 230 && !chosen; radius += 28) {
+          for (let angle = -150; angle <= -30; angle += 15) {
+            const rad = angle * Math.PI / 180;
+            const center = L.point(
+              anchorPoint.x + Math.cos(rad) * radius,
+              anchorPoint.y + Math.sin(rad) * radius
+            );
+            const rect = makeRectFromCenter(center, width, height);
+            if (!rectInsideMap(rect, mapSize, 4)) continue;
+            if (placedRects.some((other) => rectsOverlap(rect, other, 4))) continue;
+            if (blockedRects.some((other) => rectsOverlap(rect, other, 1))) continue;
+            chosen = { center, rect };
+            needsConnector = true;
+            break;
+          }
+        }
+      }
+
+      if (!chosen) continue;
+
+      placedRects.push(chosen.rect);
+
+      const labelLatLng = map.containerPointToLatLng(chosen.center);
+      const marker = L.marker(labelLatLng, {
+        interactive: false,
+        keyboard: false,
+        icon: L.divIcon({
+          className: "cityLabelMarker",
+          html: `<span class="cityLabel">${escapeHtml(group.city)}</span>`,
+          iconSize: [chosen.rect.width, chosen.rect.height],
+          iconAnchor: [chosen.rect.width / 2, chosen.rect.height / 2]
+        })
+      });
+
+      if (needsConnector) {
+        const connector = createCityConnectorMarker(anchorPoint, chosen.center);
+        if (connector) cityLabelConnectorsLayer.addLayer(connector);
+      }
+
+      cityLabelsLayer.addLayer(marker);
+    }
+  }
+
 
   function projectId(p) {
     return String(p.__projectId ?? p["Code projet"] ?? p["ID"] ?? p.code_projet ?? p.codeProjet ?? p.id ?? "").trim();
@@ -3253,6 +3593,8 @@ clusters.on("clustermouseout", (a) => {
     elProjListMenu.addEventListener("click", (e) => e.stopPropagation());
   }
 
+
+  map.on("zoomend moveend", () => window.requestAnimationFrame(renderCityLabels));
 
   updateClearButtonState();
 
