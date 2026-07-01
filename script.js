@@ -551,7 +551,7 @@
     "Nord-Est": "#10B981",
     "Grand Sud-Ouest": "#F59E0B",
     "Alpes Centre-Est": "#8B5CF6",
-    "Méditerranée Grand-Sud": "#1D4ED8",
+    "Méditerranée Grand-Sud": "#36540e",
     "Nord-Ouest Île-de-France": "#EF4444"
   };
 
