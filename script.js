@@ -2147,15 +2147,20 @@ clusters.on("clustermouseout", (a) => {
         groups.set(key, {
           city: entry.city,
           points: [],
-          maxLat: -Infinity,
-          lonSum: 0
+          anchor: entry.ll
         });
       }
 
       const group = groups.get(key);
       group.points.push(entry.ll);
-      group.maxLat = Math.max(group.maxLat, entry.ll[0]);
-      group.lonSum += entry.ll[1];
+
+      // Pour que le nom reste vraiment au-dessus d'un pin de la ville :
+      // on prend le pin le plus haut à l'écran, pas une moyenne des longitudes.
+      const currentAnchorPoint = map.latLngToContainerPoint(group.anchor);
+      const candidatePoint = map.latLngToContainerPoint(entry.ll);
+      if (candidatePoint.y < currentAnchorPoint.y) {
+        group.anchor = entry.ll;
+      }
     }
 
     const mapSize = map.getSize();
@@ -2163,38 +2168,31 @@ clusters.on("clustermouseout", (a) => {
     for (const entry of projects) {
       const pt = map.latLngToContainerPoint(entry.ll);
       blockedRects.push({
-        left: pt.x - 14,
-        top: pt.y - 14,
-        right: pt.x + 14,
-        bottom: pt.y + 14
+        left: pt.x - 13,
+        top: pt.y - 13,
+        right: pt.x + 13,
+        bottom: pt.y + 13
       });
     }
 
     const placedRects = [];
+
+    // Positions très proches du pin. Si ça chevauche, on tente de petits décalages ;
+    // si aucun placement propre n'existe, on masque le nom plutôt que de l'envoyer loin.
     const candidateOffsets = [
+      [0, -8],
       [0, -14],
-      [-46, -14],
-      [46, -14],
-      [0, -40],
-      [-72, -40],
-      [72, -40],
-      [-96, -14],
-      [96, -14],
-      [0, -66],
-      [-124, -40],
-      [124, -40],
-      [-150, -66],
-      [150, -66]
+      [0, -20],
+      [-10, -12],
+      [10, -12],
+      [-18, -16],
+      [18, -16],
+      [-26, -20],
+      [26, -20],
+      [0, -28]
     ];
 
     const cityGroups = Array.from(groups.values())
-      .map((group) => {
-        const avgLon = group.points.length ? group.lonSum / group.points.length : group.points[0][1];
-        return {
-          ...group,
-          anchor: [group.maxLat, avgLon]
-        };
-      })
       .sort((a, b) => {
         const pa = map.latLngToContainerPoint(a.anchor);
         const pb = map.latLngToContainerPoint(b.anchor);
@@ -2218,8 +2216,8 @@ clusters.on("clustermouseout", (a) => {
         };
 
         if (!rectInsideContainer(rect, mapSize, 2)) continue;
-        if (placedRects.some((other) => rectsOverlap(rect, other, 6))) continue;
-        if (blockedRects.some((other) => rectsOverlap(rect, other, 3))) continue;
+        if (placedRects.some((other) => rectsOverlap(rect, other, 4))) continue;
+        if (blockedRects.some((other) => rectsOverlap(rect, other, 2))) continue;
 
         chosen = { rect, point: L.point(left, top) };
         break;
