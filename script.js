@@ -934,6 +934,8 @@
   map.addLayer(clusters);
 
   const antennaSummaryLayer = L.layerGroup().addTo(map);
+  const cityLabelsLayer = L.layerGroup().addTo(map);
+  injectCityLabelStyles();
 
 // Tooltip (survol) : liste des projets dans un cluster
 clusters.on("clustermouseover", (a) => {
@@ -1233,6 +1235,7 @@ clusters.on("clustermouseout", (a) => {
       elAntennaSummaryBtn.setAttribute("aria-pressed", antennaSummaryEnabled ? "true" : "false");
     }
     renderAntennaSummary();
+    renderCityLabels();
 
     if (antennaSummaryEnabled && adjustView) {
       closePanel();
@@ -1251,6 +1254,7 @@ clusters.on("clustermouseout", (a) => {
 
     if (!antennaSummaryEnabled) {
       elAntennaSummaryOverlay.innerHTML = "";
+      renderCityLabels();
       return;
     }
 
@@ -2060,6 +2064,186 @@ clusters.on("clustermouseout", (a) => {
     return allProjects.filter(matchesFilters);
   }
 
+  function injectCityLabelStyles() {
+    if (document.getElementById("bimoCityLabelStyles")) return;
+
+    const style = document.createElement("style");
+    style.id = "bimoCityLabelStyles";
+    style.textContent = `
+      .cityLabelMarker {
+        background: transparent;
+        border: 0;
+        pointer-events: none;
+        z-index: 650 !important;
+      }
+
+      .cityLabelText {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        height: 22px;
+        padding: 3px 9px 4px;
+        border-radius: 999px;
+        border: 1px solid rgba(15, 23, 42, 0.20);
+        background: rgba(255, 255, 255, 0.92);
+        color: #0f172a;
+        font: 700 12px/1.15 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        letter-spacing: 0.01em;
+        white-space: nowrap;
+        box-shadow: 0 3px 10px rgba(15, 23, 42, 0.16);
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function estimateCityLabelSize(cityName) {
+    const chars = Array.from(String(cityName || "")).length;
+    return {
+      width: Math.max(46, Math.min(190, Math.round(chars * 7.1 + 22))),
+      height: 22
+    };
+  }
+
+  function rectsOverlap(a, b, margin = 0) {
+    return !(
+      a.right + margin <= b.left ||
+      a.left >= b.right + margin ||
+      a.bottom + margin <= b.top ||
+      a.top >= b.bottom + margin
+    );
+  }
+
+  function rectInsideContainer(rect, containerSize, margin = 4) {
+    return rect.left >= margin &&
+      rect.top >= margin &&
+      rect.right <= containerSize.x - margin &&
+      rect.bottom <= containerSize.y - margin;
+  }
+
+  function renderCityLabels() {
+    if (!cityLabelsLayer) return;
+    cityLabelsLayer.clearLayers();
+
+    if (!antennaSummaryEnabled) return;
+
+    const projects = filteredProjects()
+      .map((project) => ({
+        project,
+        city: projectCity(project),
+        ll: projectLatLon(project)
+      }))
+      .filter((entry) => entry.city && entry.ll);
+
+    if (!projects.length) return;
+
+    const groups = new Map();
+    for (const entry of projects) {
+      const key = normalizeForLookup(entry.city);
+      if (!key) continue;
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          city: entry.city,
+          points: [],
+          maxLat: -Infinity,
+          lonSum: 0
+        });
+      }
+
+      const group = groups.get(key);
+      group.points.push(entry.ll);
+      group.maxLat = Math.max(group.maxLat, entry.ll[0]);
+      group.lonSum += entry.ll[1];
+    }
+
+    const mapSize = map.getSize();
+    const blockedRects = [];
+    for (const entry of projects) {
+      const pt = map.latLngToContainerPoint(entry.ll);
+      blockedRects.push({
+        left: pt.x - 14,
+        top: pt.y - 14,
+        right: pt.x + 14,
+        bottom: pt.y + 14
+      });
+    }
+
+    const placedRects = [];
+    const candidateOffsets = [
+      [0, -14],
+      [-46, -14],
+      [46, -14],
+      [0, -40],
+      [-72, -40],
+      [72, -40],
+      [-96, -14],
+      [96, -14],
+      [0, -66],
+      [-124, -40],
+      [124, -40],
+      [-150, -66],
+      [150, -66]
+    ];
+
+    const cityGroups = Array.from(groups.values())
+      .map((group) => {
+        const avgLon = group.points.length ? group.lonSum / group.points.length : group.points[0][1];
+        return {
+          ...group,
+          anchor: [group.maxLat, avgLon]
+        };
+      })
+      .sort((a, b) => {
+        const pa = map.latLngToContainerPoint(a.anchor);
+        const pb = map.latLngToContainerPoint(b.anchor);
+        return pa.y - pb.y || a.city.localeCompare(b.city, "fr", { sensitivity: "base" });
+      });
+
+    for (const group of cityGroups) {
+      const label = group.city;
+      const size = estimateCityLabelSize(label);
+      const base = map.latLngToContainerPoint(group.anchor);
+      let chosen = null;
+
+      for (const [dx, bottomDy] of candidateOffsets) {
+        const left = Math.round(base.x + dx - size.width / 2);
+        const top = Math.round(base.y + bottomDy - size.height);
+        const rect = {
+          left,
+          top,
+          right: left + size.width,
+          bottom: top + size.height
+        };
+
+        if (!rectInsideContainer(rect, mapSize, 2)) continue;
+        if (placedRects.some((other) => rectsOverlap(rect, other, 6))) continue;
+        if (blockedRects.some((other) => rectsOverlap(rect, other, 3))) continue;
+
+        chosen = { rect, point: L.point(left, top) };
+        break;
+      }
+
+      if (!chosen) continue;
+
+      placedRects.push(chosen.rect);
+      const labelLatLng = map.containerPointToLatLng(chosen.point);
+      const marker = L.marker(labelLatLng, {
+        interactive: false,
+        keyboard: false,
+        icon: L.divIcon({
+          className: "cityLabelMarker",
+          html: `<span class="cityLabelText">${escapeHtml(label)}</span>`,
+          iconSize: [size.width, size.height],
+          iconAnchor: [0, 0]
+        })
+      });
+
+      cityLabelsLayer.addLayer(marker);
+    }
+  }
+
   function computeFilteredCounts() {
     const counts = {};
     for (const p of filteredProjects()) {
@@ -2149,6 +2333,7 @@ clusters.on("clustermouseout", (a) => {
     updateCompletedTimelineUi();
     filteredCounts = computeFilteredCounts();
     renderAntennaSummary();
+    renderCityLabels();
     projectListDirty = true;
     if (elProjListMenu && !elProjListMenu.hidden) buildProjectList();
     updateDeptStyle();
@@ -2985,6 +3170,10 @@ clusters.on("clustermouseout", (a) => {
       renderMarkers();
     });
   }
+
+  map.on("zoomend moveend", () => {
+    renderCityLabels();
+  });
 
   if (elClear) {
     elClear.addEventListener("click", () => {
