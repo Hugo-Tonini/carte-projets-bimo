@@ -225,7 +225,7 @@ h1{ margin: 0; font-size: 20px; }
   min-width:0;
   height:32px;
   min-height:32px;
-  padding:0 16px;
+  padding:2px 16px 0;
   cursor:pointer;
   border:0;
   border-radius:999px;
@@ -2019,7 +2019,7 @@ body{
 }
 
 .projectModeBtn{
-  padding:0 16px;
+  padding:2px 16px 0;
   line-height:1;
   height:32px;
   min-height:32px;
