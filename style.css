@@ -777,8 +777,8 @@ h1{ margin: 0; font-size: 20px; }
 .pin-dot{ background: transparent; border: none; }
 
 .pin-dot-inner{
-  width: 17px;
-  height: 17px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: rgba(0,0,0,0.05);
   border: 4px solid blue;
@@ -794,8 +794,8 @@ h1{ margin: 0; font-size: 20px; }
 .pin-dot-cluster-wrap{ background: transparent; border: none; }
 
 .pin-dot-inner.pin-dot-cluster{
-  width: 17px;
-  height: 17px;
+  width: 26px;
+  height: 26px;
   border-width: 4px;
   position: relative;
   display: flex;
@@ -815,7 +815,7 @@ h1{ margin: 0; font-size: 20px; }
 
 .pin-dot-count{
   font-weight: 800;
-  font-size: 11px;
+  font-size: 16px;
   color: #111;
   user-select: none;
   text-shadow: 0 1px 0 rgba(255,255,255,0.8);
