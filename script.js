@@ -1295,8 +1295,8 @@
         border-radius: 999px;
       }
       .projectPinSizeGlyph--minus::before {
-        left: 1px;
-        right: 1px;
+        left: 2px;
+        right: 2px;
         top: 50%;
         height: 2px;
         transform: translateY(-50%) translateX(1px);
