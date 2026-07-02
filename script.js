@@ -373,44 +373,11 @@
     const referenceHeight = Math.round(referenceButton?.getBoundingClientRect?.().height || 0);
     if (!referenceHeight) return;
 
-    elProjectModeSwitch.style.height = `${referenceHeight}px`;
-    elProjectModeSwitch.style.minHeight = `${referenceHeight}px`;
-    elProjectModeSwitch.style.display = 'inline-grid';
-    elProjectModeSwitch.style.gridTemplateColumns = '1fr 1fr';
-    elProjectModeSwitch.style.alignItems = 'stretch';
-    elProjectModeSwitch.style.justifyItems = 'stretch';
-    elProjectModeSwitch.style.boxSizing = 'border-box';
-    elProjectModeSwitch.style.overflow = 'hidden';
-
-    const modeButtons = elProjectModeSwitch.querySelectorAll('.projectModeBtn');
-    modeButtons.forEach((btn) => {
-      btn.style.display = 'flex';
-      btn.style.alignItems = 'center';
-      btn.style.justifyContent = 'center';
-      btn.style.alignSelf = 'stretch';
-      btn.style.justifySelf = 'stretch';
-      btn.style.width = '100%';
-      btn.style.height = '100%';
-      btn.style.minHeight = '100%';
-      btn.style.margin = '0';
-      btn.style.padding = '0 14px';
-      btn.style.lineHeight = '0';
-      btn.style.textAlign = 'center';
-      btn.style.verticalAlign = 'middle';
-      btn.style.boxSizing = 'border-box';
-    });
-
-    if (elCompletedYearFilter) {
-      elCompletedYearFilter.style.height = "auto";
-      elCompletedYearFilter.style.minHeight = `${referenceHeight}px`;
-    }
+    document.documentElement.style.setProperty("--bimo-toolbar-control-height", `${referenceHeight}px`);
 
     if (elCompletedPlayBtn) {
       const playButtonSize = Math.max(Math.round(referenceHeight * 0.9), 28);
-      elCompletedPlayBtn.style.width = `${playButtonSize}px`;
-      elCompletedPlayBtn.style.minWidth = `${playButtonSize}px`;
-      elCompletedPlayBtn.style.height = `${playButtonSize}px`;
-      elCompletedPlayBtn.style.minHeight = `${playButtonSize}px`;
+      document.documentElement.style.setProperty("--bimo-completed-play-size", `${playButtonSize}px`);
     }
   }
 
@@ -1307,6 +1274,8 @@
         grid-template-columns: 1fr 1fr !important;
         align-items: stretch !important;
         justify-items: stretch !important;
+        height: var(--bimo-toolbar-control-height, auto) !important;
+        min-height: var(--bimo-toolbar-control-height, auto) !important;
         box-sizing: border-box;
         overflow: hidden;
       }
@@ -1325,6 +1294,16 @@
         line-height: 1 !important;
         text-align: center !important;
         vertical-align: middle !important;
+      }
+      .completedYearFilter {
+        height: auto;
+        min-height: var(--bimo-toolbar-control-height, 34px);
+      }
+      .completedYearPlayBtn {
+        width: var(--bimo-completed-play-size, 28px);
+        min-width: var(--bimo-completed-play-size, 28px);
+        height: var(--bimo-completed-play-size, 28px);
+        min-height: var(--bimo-completed-play-size, 28px);
       }
       .projectLabelsToggle {
         display: inline-flex;
