@@ -830,20 +830,29 @@ h1{ margin: 0; font-size: 20px; }
   width: 18px;
   height: 18px;
   border: 0;
+  background: transparent !important;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow: visible;
 }
 
-.pin-dot-inner.pin-dot-cluster::before{
-  content: "";
-  position: absolute;
-  inset: 4px;
-  border-radius: 50%;
-  background: rgba(0,0,0,0.05);
-  z-index: 1;
+.pin-dot-cluster-svg{
+  position:absolute;
+  inset:0;
+  width:18px;
+  height:18px;
+  display:block;
+  overflow:visible;
+}
+
+.pin-dot-cluster-ring{
+  stroke-linecap:butt;
+}
+
+.pin-dot-cluster-center{
+  fill:rgba(0,0,0,0.05);
 }
 
 .pin-dot-inner.pin-dot-cluster .pin-dot-count{
@@ -855,6 +864,7 @@ h1{ margin: 0; font-size: 20px; }
   line-height: 1;
   text-align: center;
   z-index: 2;
+  pointer-events:none;
 }
 
 .pin-dot-count{
