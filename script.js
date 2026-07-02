@@ -52,8 +52,10 @@
       title: "Carte des projets finis du BIMO"
     }
   };
-  let COMPLETED_YEAR_MIN = 2008;
-  let COMPLETED_YEAR_MAX = 2024;
+  const COMPLETED_YEAR_DEFAULT_MIN = 2008;
+  const COMPLETED_YEAR_DEFAULT_MAX = 2024;
+  let COMPLETED_YEAR_MIN = COMPLETED_YEAR_DEFAULT_MIN;
+  let COMPLETED_YEAR_MAX = COMPLETED_YEAR_DEFAULT_MAX;
 
   // ---- 3. Références DOM ----
   const elPageTitle = document.getElementById("pageTitle");
@@ -128,6 +130,8 @@
   let completedProjectsLoaded = false;
   let completedProjectsLoadPromise = null;
   let suppressProjectUrlUpdate = false;
+  let completedTimelineOutOfRangeReported = false;
+
   function markerElement(marker) {
     if (!marker || typeof marker.getElement !== "function") return null;
     try {
@@ -481,6 +485,8 @@
     let missingNames = 0;
     let missingCoordinates = 0;
     let completedWithoutDates = 0;
+    let completedOutsideTimeline = 0;
+    const completedOutsideTimelineYears = new Set();
     const unknownAntennas = new Set();
 
     for (const project of projects) {
@@ -500,6 +506,10 @@
       if (modeKey === PROJECT_MODES.completed.key && projectStartYear(project) == null && projectEndYear(project) == null) {
         completedWithoutDates += 1;
       }
+      if (modeKey === PROJECT_MODES.completed.key && isCompletedProjectOutsideTimelineRange(project)) {
+        completedOutsideTimeline += 1;
+        for (const year of completedProjectYearValues(project)) completedOutsideTimelineYears.add(year);
+      }
     }
 
     if (duplicateIds.size) {
@@ -509,12 +519,14 @@
       console.warn(`[BIMO] ${unknownAntennas.size} antenne(s) inconnue(s) dans les données (${modeKey}) :`, Array.from(unknownAntennas));
     }
 
-    if (missingNames || missingCoordinates || completedWithoutDates || unknownAntennas.size) {
+    if (missingNames || missingCoordinates || completedWithoutDates || completedOutsideTimeline || unknownAntennas.size) {
       console.info(`[BIMO] Qualité des données (${modeKey})`, {
         projets: projects.length,
         sansNom: missingNames,
         sansCoordonnees: missingCoordinates,
         finisSansDates: completedWithoutDates,
+        finisHorsPeriodeTimeline: completedOutsideTimeline,
+        anneesHorsPeriodeTimeline: Array.from(completedOutsideTimelineYears).sort((a, b) => a - b),
         antennesInconnues: unknownAntennas.size
       });
     }
@@ -630,15 +642,23 @@
       label: "Nord-Ouest Île-de-France",
       color: "#EF4444",
       summaryPlacement: { point: [49.72, -1.95], align: "outside-west" }
+    },
+    "Siège": {
+      label: "Siège",
+      color: "#111827",
+      summaryPlacement: null,
+      includeInLegend: false,
+      includeInSummary: false
     }
   });
 
-  const ANTENNA_LEGEND_ORDER = Object.freeze(Object.keys(ANTENNA_CONFIG));
+  const ANTENNA_KEYS = Object.freeze(Object.keys(ANTENNA_CONFIG));
+  const ANTENNA_LEGEND_ORDER = Object.freeze(ANTENNA_KEYS.filter((antenna) => ANTENNA_CONFIG[antenna]?.includeInLegend !== false));
 
   function antennaKeyFromText(value) {
     const text = normalizeForLookup(value);
     if (!text) return "";
-    return ANTENNA_LEGEND_ORDER.find((antenna) => normalizeForLookup(antenna) === text) || "";
+    return ANTENNA_KEYS.find((antenna) => normalizeForLookup(antenna) === text) || "";
   }
 
   function antennaConfigByName(antennaName) {
@@ -2756,12 +2776,65 @@ clusters.on("clustermouseout", (a) => {
     return match ? Number(match[0]) : null;
   }
 
-  function updateCompletedYearBounds() {
-    // La frise des projets finis reste volontairement bornée à la période métier demandée,
-    // même si certaines données contiennent des dates hors périmètre.
-    COMPLETED_YEAR_MIN = 2008;
-    COMPLETED_YEAR_MAX = 2024;
+  function completedProjectYearValues(p) {
+    return [projectStartYear(p), projectEndYear(p)].filter((year) => Number.isFinite(year));
+  }
 
+  function completedProjectYearRange(p) {
+    const years = completedProjectYearValues(p);
+    if (!years.length) return null;
+    return {
+      from: Math.min(...years),
+      to: Math.max(...years)
+    };
+  }
+
+  function isCompletedProjectOutsideTimelineRange(p) {
+    const range = completedProjectYearRange(p);
+    if (!range) return false;
+    return range.to < COMPLETED_YEAR_DEFAULT_MIN || range.from > COMPLETED_YEAR_DEFAULT_MAX;
+  }
+
+  function completedTimelineOutOfRangeProjects(projects = completedTimelineBaseProjects()) {
+    return projects.filter(isCompletedProjectOutsideTimelineRange);
+  }
+
+  function computeCompletedShowAllStats(projects = completedTimelineBaseProjects()) {
+    return projects.reduce((acc, project) => {
+      acc.total += 1;
+      if (Number.isFinite(projectEndYear(project))) acc.delivered += 1;
+      const amount = amountNumber(project["Montant"] ?? project.montant);
+      if (Number.isFinite(amount)) acc.amount += amount;
+      return acc;
+    }, { total: 0, delivered: 0, amount: 0 });
+  }
+
+  function reportCompletedTimelineCoverage(projects = projectsByMode.completed) {
+    if (completedTimelineOutOfRangeReported || !Array.isArray(projects) || !projects.length) return;
+
+    const outsideProjects = completedTimelineOutOfRangeProjects(projects);
+    if (!outsideProjects.length) return;
+
+    completedTimelineOutOfRangeReported = true;
+    const years = new Set();
+    for (const project of outsideProjects) {
+      for (const year of completedProjectYearValues(project)) years.add(year);
+    }
+
+    console.info("[BIMO] Certains projets finis sont hors période 2008–2024. Ils restent visibles via l’option Tout afficher.", {
+      projets: outsideProjects.length,
+      annees: Array.from(years).sort((a, b) => a - b)
+    });
+  }
+
+  function updateCompletedYearBounds() {
+    // La frise des projets finis reste volontairement bornée à la période métier demandée.
+    // Les projets hors période ne sont pas masqués silencieusement : ils sont signalés
+    // dans la timeline et restent visibles via l’option « Tout afficher ».
+    COMPLETED_YEAR_MIN = COMPLETED_YEAR_DEFAULT_MIN;
+    COMPLETED_YEAR_MAX = COMPLETED_YEAR_DEFAULT_MAX;
+
+    reportCompletedTimelineCoverage();
     completedYearFilter = clampCompletedYear(completedYearFilter);
     updateCompletedYearFilterUi();
   }
@@ -2846,26 +2919,33 @@ clusters.on("clustermouseout", (a) => {
   function updateCompletedTimelineUi() {
     if (!elCompletedYearFilter || currentProjectMode !== PROJECT_MODES.completed.key) return;
 
-    const stats = computeCompletedYearStats();
+    const baseProjects = completedTimelineBaseProjects();
+    const stats = computeCompletedYearStats(baseProjects);
     const selectedStats = stats.find((entry) => entry.year === completedYearFilter) || { present: 0, delivered: 0, amountPresent: 0, amountDelivered: 0 };
     const maxPresent = Math.max(1, ...stats.map((entry) => entry.present));
+    const showAllStats = computeCompletedShowAllStats(baseProjects);
+    const outsideCount = completedTimelineOutOfRangeProjects(baseProjects).length;
 
     if (elCompletedYearStats) {
       const amountLabel = formatMillionEuro(showAllCompletedProjects
-        ? stats.reduce((sum, entry) => sum + entry.amountDelivered, 0)
+        ? showAllStats.amount
         : selectedStats.amountPresent
       );
       const totalVisible = showAllCompletedProjects
-        ? completedTimelineBaseProjects().length
+        ? showAllStats.total
         : selectedStats.present;
       const deliveredVisible = showAllCompletedProjects
-        ? stats.reduce((sum, entry) => sum + entry.delivered, 0)
+        ? showAllStats.delivered
         : selectedStats.delivered;
+      const outsideLabel = outsideCount
+        ? `<span title="${escapeAttr(showAllCompletedProjects ? "Projets dont les dates sont hors période 2008–2024" : "Projets hors période 2008–2024, visibles via Tout afficher")}"><strong>${outsideCount}</strong> hors période</span>`
+        : "";
 
       elCompletedYearStats.innerHTML = `
         <span><strong>${totalVisible}</strong> présent(s)</span>
         <span><strong>${deliveredVisible}</strong> livré(s)</span>
         ${amountLabel ? `<span><strong>${escapeHtml(amountLabel)}</strong></span>` : ""}
+        ${outsideLabel}
       `;
     }
 
@@ -3193,7 +3273,13 @@ clusters.on("clustermouseout", (a) => {
 
     if (elCount) elCount.textContent = String(list.length);
     if (elStatLocated) {
-      elStatLocated.textContent = markerCount === list.length ? "" : ` (${markerCount} localisé(s))`;
+      const unlocatedCount = Math.max(0, list.length - markerCount);
+      elStatLocated.textContent = unlocatedCount
+        ? ` (${markerCount} localisé(s), ${unlocatedCount} non localisé(s))`
+        : "";
+      elStatLocated.title = unlocatedCount
+        ? "Certains projets filtrés n’ont pas de coordonnées dans les données JSON et ne peuvent pas être placés sur la carte."
+        : "";
     }
     updateCompletedTimelineUi();
     filteredCounts = computeFilteredCounts();
