@@ -973,7 +973,7 @@
     const btnMinus = document.createElement("button");
     btnMinus.type = "button";
     btnMinus.className = "projectPinSizeBtn projectPinSizeBtn--minus";
-    btnMinus.innerHTML = '<span class="projectPinSizeGlyph" aria-hidden="true">−</span>';
+    btnMinus.innerHTML = '<span class="projectPinSizeGlyph projectPinSizeGlyph--minus" aria-hidden="true"></span>';
     btnMinus.setAttribute("aria-label", "Diminuer la taille des pins projets");
 
     const btnReset = document.createElement("button");
@@ -985,7 +985,7 @@
     const btnPlus = document.createElement("button");
     btnPlus.type = "button";
     btnPlus.className = "projectPinSizeBtn projectPinSizeBtn--plus";
-    btnPlus.innerHTML = '<span class="projectPinSizeGlyph" aria-hidden="true">+</span>';
+    btnPlus.innerHTML = '<span class="projectPinSizeGlyph projectPinSizeGlyph--plus" aria-hidden="true"></span>';
     btnPlus.setAttribute("aria-label", "Augmenter la taille des pins projets");
 
     wrap.appendChild(btnMinus);
@@ -1277,20 +1277,51 @@
       }
       .projectPinSizeGlyph {
         display: block;
+        position: relative;
+        text-align: center;
+        color: currentColor;
+      }
+      .projectPinSizeGlyph--minus,
+      .projectPinSizeGlyph--plus {
+        width: 14px;
+        height: 14px;
+      }
+      .projectPinSizeGlyph--minus::before,
+      .projectPinSizeGlyph--plus::before,
+      .projectPinSizeGlyph--plus::after {
+        content: "";
+        position: absolute;
+        background: currentColor;
+        border-radius: 999px;
+      }
+      .projectPinSizeGlyph--minus::before {
+        left: 1px;
+        right: 1px;
+        top: 50%;
+        height: 2px;
+        transform: translateY(-50%) translateX(1px);
+      }
+      .projectPinSizeGlyph--plus::before {
+        left: 2px;
+        right: 2px;
+        top: 50%;
+        height: 2px;
+        transform: translateY(-50%) translateX(-1px);
+      }
+      .projectPinSizeGlyph--plus::after {
+        top: 2px;
+        bottom: 2px;
+        left: 50%;
+        width: 2px;
+        transform: translateX(-50%) translateX(-1px);
+      }
+      .projectPinSizeBtn--reset .projectPinSizeGlyph {
+        display: block;
         width: 100%;
         height: 1em;
         line-height: 1;
-        font-size: 16px;
-        font-weight: 900;
-        text-align: center;
-        transform: translateY(-1px);
-      }
-      .projectPinSizeBtn--minus .projectPinSizeGlyph,
-      .projectPinSizeBtn--plus .projectPinSizeGlyph {
-        transform: translateY(-3px);
-      }
-      .projectPinSizeBtn--reset .projectPinSizeGlyph {
         font-size: 14px;
+        font-weight: 900;
         transform: translateY(-1px);
       }
       .projectPinSizeBtn:hover:not(:disabled) {
