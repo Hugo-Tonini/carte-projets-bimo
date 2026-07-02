@@ -1210,8 +1210,9 @@
       .projectPinSizeControls {
         display: inline-grid;
         grid-template-columns: 1fr 1fr 1fr;
-        align-items: stretch;
-        justify-items: stretch;
+        align-items: center;
+        justify-items: center;
+        width: 68px;
         height: 24px;
         min-height: 24px;
         margin: 0;
@@ -1222,30 +1223,28 @@
         overflow: hidden;
         vertical-align: middle;
         line-height: 1;
+        box-sizing: border-box;
       }
       .projectPinSizeBtn {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 28px;
+        width: 100%;
         height: 100%;
         margin: 0;
-        padding: 0;
+        padding: 0 0 1px 0;
         border: 0;
-        border-right: 1px solid rgba(15, 23, 42, 0.16);
+        border-right: 0;
         border-radius: 0;
         background: transparent;
         color: #111827;
         font: inherit;
-        font-size: 13px;
-        font-weight: 800;
+        font-size: 15px;
+        font-weight: 900;
         line-height: 1;
         text-align: center;
         cursor: pointer;
         box-sizing: border-box;
-      }
-      .projectPinSizeBtn:last-child {
-        border-right: 0;
       }
       .projectPinSizeBtn:hover:not(:disabled) {
         background: #f3f4f6;
