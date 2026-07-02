@@ -94,6 +94,7 @@
   let deptSpatialIndex = [];
   let filteredCounts = {}; // "74" -> nb projets filtrés (tooltip)
   let antennaSummaryEnabled = false;
+  let cityLabelsEnabled = false;
 
   // Focus antenne (pour foncer les départements de l’antenne sélectionnée)
   let selectedAntenna = null;
@@ -925,8 +926,8 @@
       return L.divIcon({
         className: "pin-dot pin-dot-cluster-wrap",
         html: `<div class="pin-dot-inner pin-dot-cluster" style="border-color:${col};"><span class="pin-dot-count">${count}</span></div>`,
-        iconSize: [22, 22],
-        iconAnchor: [11, 11]
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
       });
     }
   });
@@ -980,6 +981,9 @@
         stroke-linecap: round;
         stroke-dasharray: 3 3;
         vector-effect: non-scaling-stroke;
+      }
+      .cityLabelsToggle {
+        margin-left: 8px;
       }
       .cityLabel {
         position: absolute;
@@ -1172,10 +1176,54 @@ clusters.on("clustermouseout", (a) => {
     }
   }
 
+
+  function initCityLabelsToggle(afterElement) {
+    if (document.getElementById("cityLabelsToggle")) {
+      scheduleCityLabelsRender();
+      return;
+    }
+
+    const wrap = document.createElement("label");
+    wrap.className = "toggle cityLabelsToggle";
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.id = "cityLabelsToggle";
+    cb.checked = false;
+
+    const span = document.createElement("span");
+    span.textContent = "Noms des villes";
+
+    wrap.appendChild(cb);
+    wrap.appendChild(span);
+
+    if (afterElement?.insertAdjacentElement) {
+      afterElement.insertAdjacentElement("afterend", wrap);
+    } else {
+      const typeFilters = Array.from(document.querySelectorAll(".typeFilter"));
+      const last = typeFilters[typeFilters.length - 1];
+      const host = last?.closest("label")?.parentElement || last?.parentElement || last;
+      if (host?.appendChild) host.appendChild(wrap);
+    }
+
+    cityLabelsEnabled = false;
+    clearCityLabels();
+
+    cb.addEventListener("change", () => {
+      cityLabelsEnabled = !!cb.checked;
+      if (cityLabelsEnabled) {
+        scheduleCityLabelsRender();
+      } else {
+        clearCityLabels();
+      }
+    });
+  }
+
   function initOfficesToggle() {
     // On insère un toggle à côté des filtres de type (MOM/AMO/EXP) si possible
     const typeFilters = Array.from(document.querySelectorAll(".typeFilter"));
     if (!typeFilters.length) {
+      initCityLabelsToggle(null);
       renderOffices();
       return;
     }
@@ -1184,6 +1232,7 @@ clusters.on("clustermouseout", (a) => {
 
     // Eviter de doubler si le script est chargé deux fois
     if (document.getElementById("officesToggle")) {
+      initCityLabelsToggle(document.getElementById("officesToggle")?.closest("label"));
       renderOffices();
       return;
     }
@@ -1202,6 +1251,7 @@ clusters.on("clustermouseout", (a) => {
     wrap.appendChild(cb);
     wrap.appendChild(span);
     host.insertAdjacentElement("afterend", wrap);
+    initCityLabelsToggle(wrap);
 
     cb.addEventListener("change", () => {
       officesEnabled = !!cb.checked;
@@ -1326,7 +1376,7 @@ clusters.on("clustermouseout", (a) => {
 
     if (!antennaSummaryEnabled) {
       elAntennaSummaryOverlay.innerHTML = "";
-      clearCityLabels();
+      scheduleCityLabelsRender();
       return;
     }
 
@@ -1515,7 +1565,7 @@ clusters.on("clustermouseout", (a) => {
     cityLabelsHtml.innerHTML = "";
     cityLabelsSvg.replaceChildren();
 
-    if (!antennaSummaryEnabled) {
+    if (!cityLabelsEnabled) {
       cityLabelsOverlay.hidden = true;
       return;
     }
