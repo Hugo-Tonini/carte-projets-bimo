@@ -982,21 +982,33 @@
         stroke-dasharray: 3 3;
         vector-effect: non-scaling-stroke;
       }
+      .officesToggle,
       .cityLabelsToggle {
         display: inline-flex;
         align-items: center;
         gap: 4px;
-        margin-left: 0;
-        vertical-align: middle;
-      }
-      .cityLabelsToggle input {
         margin: 0;
+        padding: 0;
+        vertical-align: middle;
+        line-height: 1;
+      }
+      .officesToggle input,
+      .cityLabelsToggle input {
+        display: inline-block;
+        width: 13px;
+        height: 13px;
+        margin: 0;
+        padding: 0;
+        vertical-align: middle;
         accent-color: #000080;
       }
+      .officesToggle span,
       .cityLabelsToggle span {
         display: inline-flex;
         align-items: center;
         line-height: 1;
+        padding-top: 0;
+        margin-top: 0;
       }
       .cityLabel {
         position: absolute;
