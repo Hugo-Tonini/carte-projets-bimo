@@ -1258,20 +1258,23 @@
       }
 
       const total = slices.reduce((sum, item) => sum + item.count, 0) || children.length || 1;
-      let clusterStyle = `border-color:${escapeAttr(PROJECT_TYPE_COLORS.mom)};${projectPinTransformStyle()}`;
+      const gradientParts = [];
+      let cursor = 0;
 
       if (slices.length === 1) {
-        clusterStyle = `border-color:${escapeAttr(slices[0].color)};${projectPinTransformStyle()}`;
+        gradientParts.push(`${slices[0].color} 0% 100%`);
       } else if (slices.length > 1) {
-        let cursor = 0;
-        const gradientParts = slices.map((item, index) => {
+        slices.forEach((item, index) => {
           const start = cursor;
           const end = index === slices.length - 1 ? 100 : cursor + (item.count / total) * 100;
           cursor = end;
-          return `${item.color} ${start.toFixed(3)}% ${end.toFixed(3)}%`;
+          gradientParts.push(`${item.color} ${start.toFixed(3)}% ${end.toFixed(3)}%`);
         });
-        clusterStyle = `border-color:transparent;background:conic-gradient(${gradientParts.join(", ")});${projectPinTransformStyle()}`;
+      } else {
+        gradientParts.push(`${PROJECT_TYPE_COLORS.mom} 0% 100%`);
       }
+
+      const clusterStyle = `background:conic-gradient(from -90deg, ${gradientParts.join(", ")});${projectPinTransformStyle()}`;
 
       return L.divIcon({
         className: "pin-dot pin-dot-cluster-wrap",
