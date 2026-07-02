@@ -1062,19 +1062,19 @@
 
     const btnMinus = document.createElement("button");
     btnMinus.type = "button";
-    btnMinus.className = "projectClusterDistanceBtn projectClusterDistanceBtn--minus";
+    btnMinus.className = "projectPinSizeBtn projectPinSizeBtn--minus projectClusterDistanceBtn projectClusterDistanceBtn--minus";
     btnMinus.innerHTML = '<span class="projectPinSizeGlyph projectPinSizeGlyph--minus" aria-hidden="true"></span>';
     btnMinus.setAttribute("aria-label", "Diminuer la distance de regroupement des clusters projets");
 
     const btnReset = document.createElement("button");
     btnReset.type = "button";
-    btnReset.className = "projectClusterDistanceBtn projectClusterDistanceBtn--reset";
+    btnReset.className = "projectPinSizeBtn projectPinSizeBtn--reset projectClusterDistanceBtn projectClusterDistanceBtn--reset";
     btnReset.innerHTML = '<span class="projectPinSizeGlyph" aria-hidden="true">O</span>';
     btnReset.setAttribute("aria-label", "Revenir à la distance originale de regroupement des clusters projets");
 
     const btnPlus = document.createElement("button");
     btnPlus.type = "button";
-    btnPlus.className = "projectClusterDistanceBtn projectClusterDistanceBtn--plus";
+    btnPlus.className = "projectPinSizeBtn projectPinSizeBtn--plus projectClusterDistanceBtn projectClusterDistanceBtn--plus";
     btnPlus.innerHTML = '<span class="projectPinSizeGlyph projectPinSizeGlyph--plus" aria-hidden="true"></span>';
     btnPlus.setAttribute("aria-label", "Augmenter la distance de regroupement des clusters projets");
 
@@ -1470,33 +1470,6 @@
       }
       .projectClusterDistanceBtn--reset.is-active {
         color: #000080;
-      }
-      .projectClusterDistanceBtn--minus .projectPinSizeGlyph::before {
-        left: 1px;
-        right: 1px;
-        top: 50%;
-        height: 2px;
-        transform: translateY(-50%) translateX(1px);
-      }
-      .projectClusterDistanceBtn--plus .projectPinSizeGlyph::before {
-        left: 2px;
-        right: 2px;
-        top: 50%;
-        height: 2px;
-        transform: translateY(-50%) translateX(-1px);
-      }
-      .projectClusterDistanceBtn--plus .projectPinSizeGlyph::after {
-        top: 2px;
-        bottom: 2px;
-        left: 50%;
-        width: 2px;
-        transform: translateX(-50%) translateX(-1px);
-      }
-      .projectPinControlsGroup {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        vertical-align: middle;
       }
       .cityLabel {
         position: absolute;
