@@ -1258,27 +1258,50 @@
       }
 
       const total = slices.reduce((sum, item) => sum + item.count, 0) || children.length || 1;
-      const gradientParts = [];
+      const segments = [];
       let cursor = 0;
 
       if (slices.length === 1) {
-        gradientParts.push(`${slices[0].color} 0% 100%`);
+        segments.push({ color: slices[0].color, start: 0, length: 100 });
       } else if (slices.length > 1) {
         slices.forEach((item, index) => {
           const start = cursor;
           const end = index === slices.length - 1 ? 100 : cursor + (item.count / total) * 100;
           cursor = end;
-          gradientParts.push(`${item.color} ${start.toFixed(3)}% ${end.toFixed(3)}%`);
+          segments.push({ color: item.color, start, length: Math.max(0, end - start) });
         });
       } else {
-        gradientParts.push(`${PROJECT_TYPE_COLORS.mom} 0% 100%`);
+        segments.push({ color: PROJECT_TYPE_COLORS.mom, start: 0, length: 100 });
       }
 
-      const clusterStyle = `background:conic-gradient(from -90deg, ${gradientParts.join(", ")});${projectPinTransformStyle()}`;
+      const ringSegments = segments
+        .filter((segment) => segment.length > 0)
+        .map((segment) => {
+          const length = Math.min(100, Math.max(0, segment.length));
+          const gap = Math.max(0, 100 - length);
+          return `
+            <circle class="pin-dot-cluster-ring"
+              cx="9" cy="9" r="7"
+              fill="none"
+              stroke="${escapeAttr(segment.color)}"
+              stroke-width="4"
+              pathLength="100"
+              stroke-dasharray="${length.toFixed(3)} ${gap.toFixed(3)}"
+              stroke-dashoffset="${(-segment.start).toFixed(3)}"
+              transform="rotate(-90 9 9)" />`;
+        })
+        .join("");
+
+      const clusterSvg = `
+        <svg class="pin-dot-cluster-svg" viewBox="0 0 18 18" aria-hidden="true" focusable="false">
+          ${ringSegments}
+          <circle class="pin-dot-cluster-center" cx="9" cy="9" r="5" />
+        </svg>
+      `;
 
       return L.divIcon({
         className: "pin-dot pin-dot-cluster-wrap",
-        html: `<div class="projectPinScaleWrap"><div class="pin-dot-inner pin-dot-cluster" style="${clusterStyle}"><span class="pin-dot-count">${count}</span></div></div>`,
+        html: `<div class="projectPinScaleWrap"><div class="pin-dot-inner pin-dot-cluster" style="${projectPinTransformStyle()}">${clusterSvg}<span class="pin-dot-count">${count}</span></div></div>`,
         iconSize: [projectPinSize(32), projectPinSize(32)],
         iconAnchor: [projectPinSize(16), projectPinSize(16)]
       });
