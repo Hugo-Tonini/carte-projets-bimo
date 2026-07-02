@@ -1021,7 +1021,7 @@
 
       return L.divIcon({
         className: "pin-dot pin-dot-cluster-wrap",
-        html: `<div class="pin-dot-inner pin-dot-cluster" style="border-color:${col};${projectPinTransformStyle()}"><span class="pin-dot-count">${count}</span></div>`,
+        html: `<div class="projectPinScaleWrap"><div class="pin-dot-inner pin-dot-cluster" style="border-color:${col};${projectPinTransformStyle()}"><span class="pin-dot-count">${count}</span></div></div>`,
         iconSize: [projectPinSize(32), projectPinSize(32)],
         iconAnchor: [projectPinSize(16), projectPinSize(16)]
       });
@@ -1182,6 +1182,17 @@
           right: 12px !important;
           max-width: calc(100vw - 24px);
         }
+      }
+      .projectPinScaleWrap {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+      }
+      .projectPinScaleWrap .pin-dot-inner {
+        flex: 0 0 auto;
       }
       .projectPinSizeControls {
         display: inline-flex;
@@ -2971,7 +2982,7 @@ clusters.on("clustermouseout", (a) => {
       const marker = L.marker(ll, {
         icon: L.divIcon({
           className: "pin-dot",
-          html: `<div class="pin-dot-inner" style="border-color:${col};${projectPinTransformStyle()}"></div>`,
+          html: `<div class="projectPinScaleWrap"><div class="pin-dot-inner" style="border-color:${col};${projectPinTransformStyle()}"></div></div>`,
           iconSize: [projectPinSize(22), projectPinSize(22)],
           iconAnchor: [projectPinSize(11), projectPinSize(11)]
         })
