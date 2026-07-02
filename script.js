@@ -1226,9 +1226,8 @@
         vector-effect: non-scaling-stroke;
       }
       .officesToggle,
-      .cityLabelsToggle,
-      .projectModeBtn {
-        line-height: 0 !important;
+      .cityLabelsToggle {
+        line-height: 0;
       }
       .projectModeBtnLabel {
         display: block;
@@ -1270,30 +1269,30 @@
         margin-top: 0;
       }
       .projectModeSwitch {
-        display: inline-grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        align-items: stretch !important;
-        justify-items: stretch !important;
-        height: var(--bimo-toolbar-control-height, auto) !important;
-        min-height: var(--bimo-toolbar-control-height, auto) !important;
+        display: inline-grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: stretch;
+        justify-items: stretch;
+        height: var(--bimo-toolbar-control-height, auto);
+        min-height: var(--bimo-toolbar-control-height, auto);
         box-sizing: border-box;
         overflow: hidden;
       }
       .projectModeBtn {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        align-self: stretch !important;
-        justify-self: stretch !important;
-        width: 100% !important;
-        height: 100% !important;
-        min-height: 100% !important;
-        box-sizing: border-box !important;
-        margin: 0 !important;
-        padding: 0 14px !important;
-        line-height: 1 !important;
-        text-align: center !important;
-        vertical-align: middle !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        align-self: stretch;
+        justify-self: stretch;
+        width: 100%;
+        height: 100%;
+        min-height: 100%;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0 14px;
+        line-height: 1;
+        text-align: center;
+        vertical-align: middle;
       }
       .completedYearFilter {
         height: auto;
