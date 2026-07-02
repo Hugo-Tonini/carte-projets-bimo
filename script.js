@@ -530,7 +530,7 @@
     projectIdToName = new Map();
     for (const p of allProjects) {
       const pid = projectId(p);
-      const nm = String(p["Nom de projet"] ?? p.nom ?? "").trim();
+      const nm = projectDisplayName(p);
       if (pid) projectIdToName.set(pid, nm);
     }
   }
@@ -1652,8 +1652,8 @@ clusters.on("clustermouseout", (a) => {
         html += `<div class="officeProjectsList">`;
         html += antennaProjects.map((p) => {
           const pid = projectId(p);
-          const name = String(p["Nom de projet"] ?? p.nom ?? "Projet").trim() || "Projet";
-          const typ = String(p["Type de projet"] ?? p.type ?? "—").trim() || "—";
+          const name = projectDisplayName(p);
+          const typ = displayOrDash(p["Type de projet"] ?? p.type);
           const city = projectCity(p) || "—";
           return `
             <button class="officeProjectItem" type="button" data-project-id="${escapeAttr(pid)}">
@@ -1953,6 +1953,23 @@ clusters.on("clustermouseout", (a) => {
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
+  }
+
+  function cleanText(value) {
+    if (value === undefined || value === null) return "";
+    return String(value).trim();
+  }
+
+  function firstNonEmpty(...values) {
+    for (const value of values) {
+      const text = cleanText(value);
+      if (text) return text;
+    }
+    return "";
+  }
+
+  function displayOrDash(value) {
+    return firstNonEmpty(value) || "—";
   }
 
   function formatEuro(v) {
@@ -2447,8 +2464,31 @@ clusters.on("clustermouseout", (a) => {
   }
 
 
+  function projectRawIdentifier(project) {
+    const source = project && typeof project === "object" ? project : {};
+    return firstNonEmpty(
+      source["Code projet"],
+      source["ID"],
+      source.code_projet,
+      source.codeProjet,
+      source.id
+    );
+  }
+
   function projectDisplayName(project) {
-    return String(project?.["Nom de projet"] ?? project?.nom ?? "").trim();
+    const source = project && typeof project === "object" ? project : {};
+    const city = projectCity(source);
+    const deptName = deptNameFromProject(source);
+    const generatedId = cleanText(source.__projectId);
+
+    return firstNonEmpty(
+      source["Nom de projet"],
+      source.nom,
+      projectRawIdentifier(source),
+      city ? `Projet à ${city}` : "",
+      deptName ? `Projet — ${deptName}` : "",
+      generatedId ? `Projet ${generatedId}` : ""
+    ) || "Projet sans nom";
   }
 
   function renderProjectLabels(existingPlacedRects = []) {
@@ -2624,10 +2664,10 @@ clusters.on("clustermouseout", (a) => {
 
   function projectListLabel(p) {
     const source = p && typeof p === "object" ? p : {};
-    const nom = String(source["Nom de projet"] ?? source.nom ?? "").trim();
-    const typ = String(source["Type de projet"] ?? source.type ?? "").trim();
-    const ant = String(source["Antenne"] ?? source.antenne ?? "").trim();
-    const mnt = formatEuro(source["Montant"] ?? source.montant);
+    const nom = projectDisplayName(source);
+    const typ = displayOrDash(source["Type de projet"] ?? source.type);
+    const ant = displayOrDash(source["Antenne"] ?? source.antenne);
+    const mnt = formatEuro(source["Montant"] ?? source.montant) || "—";
     return { nom, typ, mnt, ant };
   }
 
@@ -2944,7 +2984,7 @@ clusters.on("clustermouseout", (a) => {
   function buildProjectSearchBlob(p) {
     const values = [
       projectId(p),
-      p?.["Nom de projet"], p?.nom,
+      projectDisplayName(p), p?.["Nom de projet"], p?.nom,
       p?.["Adresse"], p?.adresse,
       projectCity(p),
       p?.["Client"], p?.client,
@@ -3328,7 +3368,7 @@ clusters.on("clustermouseout", (a) => {
     if (!a) return [];
     return allProjects
       .filter((p) => normalizeForLookup(p["Antenne"] ?? p.antenne) === a)
-      .sort((aProj, bProj) => String(aProj["Nom de projet"] ?? aProj.nom ?? "").localeCompare(String(bProj["Nom de projet"] ?? bProj.nom ?? ""), "fr", { sensitivity: "base" }));
+      .sort((aProj, bProj) => projectDisplayName(aProj).localeCompare(projectDisplayName(bProj), "fr", { sensitivity: "base" }));
   }
 
   function filteredProjectsForAntennaSummary() {
@@ -3383,7 +3423,7 @@ clusters.on("clustermouseout", (a) => {
       marker.options.__bimoType = col;
 
       // Tooltip (survol) : nom du projet
-      const pName = String(p["Nom de projet"] ?? p.nom ?? "").trim();
+      const pName = projectDisplayName(p);
       if (pName) {
         marker.bindTooltip(escapeHtml(pName), {
           className: "projTooltip projTooltip--single",
@@ -3576,7 +3616,7 @@ clusters.on("clustermouseout", (a) => {
     if (!p || typeof p !== "object") return;
 
     updateProjectUrl(p);
-    const title = p["Nom de projet"] ?? p.nom ?? "Projet";
+    const title = projectDisplayName(p);
 
     // Ordre demandé
     const fieldsMain = [
