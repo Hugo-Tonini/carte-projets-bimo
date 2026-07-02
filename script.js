@@ -1093,6 +1093,19 @@
         stroke-width: 1.2;
         stroke-dasharray: 2 3;
       }
+      #projListMenu,
+      #advancedFiltersPanel {
+        left: 58px !important;
+        right: auto !important;
+      }
+      @media (max-width: 720px) {
+        #projListMenu,
+        #advancedFiltersPanel {
+          left: 12px !important;
+          right: 12px !important;
+          max-width: calc(100vw - 24px);
+        }
+      }
       .cityLabel {
         position: absolute;
         left: 0;
