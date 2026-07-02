@@ -983,7 +983,20 @@
         vector-effect: non-scaling-stroke;
       }
       .cityLabelsToggle {
-        margin-left: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-left: 0;
+        vertical-align: middle;
+      }
+      .cityLabelsToggle input {
+        margin: 0;
+        accent-color: #000080;
+      }
+      .cityLabelsToggle span {
+        display: inline-flex;
+        align-items: center;
+        line-height: 1;
       }
       .cityLabel {
         position: absolute;
@@ -1189,6 +1202,7 @@ clusters.on("clustermouseout", (a) => {
     const cb = document.createElement("input");
     cb.type = "checkbox";
     cb.id = "cityLabelsToggle";
+    cb.className = "cityLabelsToggleInput";
     cb.checked = false;
 
     const span = document.createElement("span");
