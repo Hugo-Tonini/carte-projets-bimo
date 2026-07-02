@@ -95,6 +95,7 @@
   let filteredCounts = {}; // "74" -> nb projets filtrés (tooltip)
   let antennaSummaryEnabled = false;
   let cityLabelsEnabled = false;
+  let projectLabelsEnabled = false;
 
   // Focus antenne (pour foncer les départements de l’antenne sélectionnée)
   let selectedAntenna = null;
@@ -1001,7 +1002,8 @@
         vector-effect: non-scaling-stroke;
       }
       .officesToggle,
-      .cityLabelsToggle {
+      .cityLabelsToggle,
+      .projectLabelsToggle {
         display: inline-flex;
         align-items: center;
         gap: 4px;
@@ -1011,7 +1013,8 @@
         line-height: 1;
       }
       .officesToggle input,
-      .cityLabelsToggle input {
+      .cityLabelsToggle input,
+      .projectLabelsToggle input {
         display: inline-block;
         width: 13px;
         height: 13px;
@@ -1021,7 +1024,8 @@
         accent-color: #000080;
       }
       .officesToggle span,
-      .cityLabelsToggle span {
+      .cityLabelsToggle span,
+      .projectLabelsToggle span {
         display: inline-flex;
         align-items: center;
         line-height: 1;
@@ -1051,6 +1055,43 @@
         line-height: 1 !important;
         text-align: center !important;
         vertical-align: middle !important;
+      }
+      .projectLabelsToggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin: 0;
+        padding: 0;
+        vertical-align: middle;
+        line-height: 1;
+      }
+      .projectLabelsToggle input {
+        display: inline-block;
+        width: 13px;
+        height: 13px;
+        margin: 0;
+        padding: 0;
+        vertical-align: middle;
+        accent-color: #000080;
+      }
+      .projectLabelsToggle span {
+        display: inline-flex;
+        align-items: center;
+        line-height: 1;
+        padding-top: 0;
+        margin-top: 0;
+      }
+      .cityLabel.projectLabel {
+        max-width: 260px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        background: rgba(255, 255, 255, 0.93);
+      }
+      .cityLabelsSvg line.projectLabelLine {
+        stroke: rgba(15, 23, 42, 0.52);
+        stroke-width: 1.2;
+        stroke-dasharray: 2 3;
       }
       .cityLabel {
         position: absolute;
@@ -1275,15 +1316,50 @@ clusters.on("clustermouseout", (a) => {
     }
 
     cityLabelsEnabled = false;
-    clearCityLabels();
+    initProjectLabelsToggle(wrap);
+    scheduleCityLabelsRender();
 
     cb.addEventListener("change", () => {
       cityLabelsEnabled = !!cb.checked;
-      if (cityLabelsEnabled) {
-        scheduleCityLabelsRender();
-      } else {
-        clearCityLabels();
-      }
+      scheduleCityLabelsRender();
+    });
+  }
+
+
+  function initProjectLabelsToggle(afterElement) {
+    if (document.getElementById("projectLabelsToggle")) {
+      scheduleCityLabelsRender();
+      return;
+    }
+
+    const wrap = document.createElement("label");
+    wrap.className = "toggle projectLabelsToggle";
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.id = "projectLabelsToggle";
+    cb.className = "projectLabelsToggleInput";
+    cb.checked = false;
+
+    const span = document.createElement("span");
+    span.textContent = "Noms des projets";
+
+    wrap.appendChild(cb);
+    wrap.appendChild(span);
+
+    if (afterElement?.insertAdjacentElement) {
+      afterElement.insertAdjacentElement("afterend", wrap);
+    } else {
+      const cityToggle = document.getElementById("cityLabelsToggle")?.closest("label");
+      if (cityToggle?.insertAdjacentElement) cityToggle.insertAdjacentElement("afterend", wrap);
+    }
+
+    projectLabelsEnabled = false;
+    scheduleCityLabelsRender();
+
+    cb.addEventListener("change", () => {
+      projectLabelsEnabled = !!cb.checked;
+      scheduleCityLabelsRender();
     });
   }
 
@@ -1626,16 +1702,19 @@ clusters.on("clustermouseout", (a) => {
     if (cityLabelsOverlay) cityLabelsOverlay.hidden = true;
   }
 
-  function renderCityLabels() {
-    if (!cityLabelsOverlay || !cityLabelsHtml || !cityLabelsSvg) return;
+  function renderCityLabels(options = {}) {
+    if (!cityLabelsOverlay || !cityLabelsHtml || !cityLabelsSvg) return [];
 
+    const preserveExisting = !!options.preserveExisting;
     setCityLabelsOverlaySize();
-    cityLabelsHtml.innerHTML = "";
-    cityLabelsSvg.replaceChildren();
+    if (!preserveExisting) {
+      cityLabelsHtml.innerHTML = "";
+      cityLabelsSvg.replaceChildren();
+    }
 
     if (!cityLabelsEnabled) {
-      cityLabelsOverlay.hidden = true;
-      return;
+      if (!preserveExisting) cityLabelsOverlay.hidden = true;
+      return [];
     }
 
     cityLabelsOverlay.hidden = false;
@@ -1648,7 +1727,7 @@ clusters.on("clustermouseout", (a) => {
       }))
       .filter((entry) => entry.city && entry.ll);
 
-    if (!projects.length) return;
+    if (!projects.length) return [];
 
     const groups = new Map();
 
@@ -1852,11 +1931,177 @@ clusters.on("clustermouseout", (a) => {
         cityLabelsSvg.appendChild(line);
       }
     }
+
+    return placedRects;
   }
+
+
+  function projectDisplayName(project) {
+    return String(project?.["Nom de projet"] ?? project?.nom ?? "").trim();
+  }
+
+  function renderProjectLabels(existingPlacedRects = []) {
+    if (!projectLabelsEnabled || !cityLabelsOverlay || !cityLabelsHtml || !cityLabelsSvg) return existingPlacedRects;
+
+    const projects = filteredProjects()
+      .map((project) => ({
+        project,
+        name: projectDisplayName(project),
+        ll: projectLatLon(project)
+      }))
+      .filter((entry) => entry.name && entry.ll);
+
+    if (!projects.length) return existingPlacedRects;
+
+    const { width: mapWidth, height: mapHeight } = setCityLabelsOverlaySize();
+    const blockedRects = getAntennaSummaryRects();
+
+    for (const entry of projects) {
+      const pt = map.latLngToContainerPoint(entry.ll);
+      blockedRects.push(makeRect(pt.x - 14, pt.y - 14, 28, 28));
+    }
+
+    const measured = projects.map((entry) => {
+      const el = document.createElement("div");
+      el.className = "cityLabel projectLabel";
+      el.textContent = entry.name;
+      el.style.visibility = "hidden";
+      el.style.transform = "translate(-9999px, -9999px)";
+      cityLabelsHtml.appendChild(el);
+
+      const rect = el.getBoundingClientRect();
+      return {
+        entry,
+        el,
+        width: Math.ceil(Math.min(rect.width || 90, 260)),
+        height: Math.ceil(rect.height || 24)
+      };
+    });
+
+    const placedRects = Array.isArray(existingPlacedRects) ? existingPlacedRects.slice() : [];
+
+    function buildProjectPlacementCandidates(labelWidth, labelHeight) {
+      const halfW = Math.round(labelWidth / 2);
+      const halfH = Math.round(labelHeight / 2);
+      const aboveY = -(halfH + 17);
+      const belowY = halfH + 17;
+      const sideX = halfW + 17;
+
+      const direct = [
+        [0, aboveY],
+        [Math.round(halfW * 0.25), aboveY],
+        [-Math.round(halfW * 0.25), aboveY],
+        [sideX, 0],
+        [-sideX, 0],
+        [0, belowY],
+        [Math.round(halfW * 0.35), belowY],
+        [-Math.round(halfW * 0.35), belowY]
+      ];
+
+      const nearbyWithLeader = [
+        [Math.round(halfW * 0.7), aboveY - 8],
+        [-Math.round(halfW * 0.7), aboveY - 8],
+        [sideX + 18, -Math.round(halfH * 0.25)],
+        [-(sideX + 18), -Math.round(halfH * 0.25)],
+        [sideX + 18, Math.round(halfH * 0.75)],
+        [-(sideX + 18), Math.round(halfH * 0.75)],
+        [0, aboveY - 20],
+        [0, belowY + 20]
+      ];
+
+      const fallback = [
+        [sideX + 48, aboveY - 18],
+        [-(sideX + 48), aboveY - 18],
+        [sideX + 68, 0],
+        [-(sideX + 68), 0],
+        [sideX + 48, belowY + 18],
+        [-(sideX + 48), belowY + 18],
+        [0, aboveY - 44],
+        [0, belowY + 44]
+      ];
+
+      return [
+        ...direct.map((offset) => ({ offset, leader: false })),
+        ...nearbyWithLeader.map((offset) => ({ offset, leader: true })),
+        ...fallback.map((offset) => ({ offset, leader: true }))
+      ];
+    }
+
+    function findProjectPlacement(anchorPoint, labelWidth, labelHeight) {
+      const candidates = buildProjectPlacementCandidates(labelWidth, labelHeight);
+
+      for (const candidate of candidates) {
+        const [dx, dy] = candidate.offset;
+        const centerX = anchorPoint.x + dx;
+        const centerY = anchorPoint.y + dy;
+        const rect = makeRect(centerX - labelWidth / 2, centerY - labelHeight / 2, labelWidth, labelHeight);
+
+        if (!rectInsideMap(rect, mapWidth, mapHeight, 4)) continue;
+        if (placedRects.some((placed) => rectsOverlap(rect, placed, 3))) continue;
+        if (blockedRects.some((blocked) => rectsOverlap(rect, blocked, 2))) continue;
+
+        return { rect, leader: candidate.leader };
+      }
+
+      return null;
+    }
+
+    for (const item of measured) {
+      const anchorPoint = map.latLngToContainerPoint(item.entry.ll);
+      const placement = findProjectPlacement(anchorPoint, item.width, item.height);
+
+      if (!placement) {
+        item.el.remove();
+        continue;
+      }
+
+      placedRects.push(placement.rect);
+
+      item.el.style.visibility = "visible";
+      item.el.style.transform = "";
+      item.el.style.left = `${Math.round(placement.rect.left)}px`;
+      item.el.style.top = `${Math.round(placement.rect.top)}px`;
+      item.el.style.width = `${Math.ceil(item.width)}px`;
+
+      if (placement.leader) {
+        const labelEdgeX = Math.max(placement.rect.left, Math.min(anchorPoint.x, placement.rect.right));
+        const labelEdgeY = Math.max(placement.rect.top, Math.min(anchorPoint.y, placement.rect.bottom));
+
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.classList.add("projectLabelLine");
+        line.setAttribute("x1", String(Math.round(anchorPoint.x)));
+        line.setAttribute("y1", String(Math.round(anchorPoint.y - 11)));
+        line.setAttribute("x2", String(Math.round(labelEdgeX)));
+        line.setAttribute("y2", String(Math.round(labelEdgeY)));
+        cityLabelsSvg.appendChild(line);
+      }
+    }
+
+    return placedRects;
+  }
+
+  function renderMapLabels() {
+    if (!cityLabelsOverlay || !cityLabelsHtml || !cityLabelsSvg) return;
+
+    setCityLabelsOverlaySize();
+    cityLabelsHtml.innerHTML = "";
+    cityLabelsSvg.replaceChildren();
+
+    if (!cityLabelsEnabled && !projectLabelsEnabled) {
+      cityLabelsOverlay.hidden = true;
+      return;
+    }
+
+    cityLabelsOverlay.hidden = false;
+
+    const placed = cityLabelsEnabled ? renderCityLabels({ preserveExisting: true }) : [];
+    renderProjectLabels(placed);
+  }
+
 
   function scheduleCityLabelsRender() {
     window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(renderCityLabels);
+      window.requestAnimationFrame(renderMapLabels);
     });
   }
 
