@@ -131,6 +131,7 @@
   let completedProjectsLoadPromise = null;
   let suppressProjectUrlUpdate = false;
   let completedTimelineOutOfRangeReported = false;
+  let mapLabelsRenderFrame = 0;
 
   function markerElement(marker) {
     if (!marker || typeof marker.getElement !== "function") return null;
@@ -2408,8 +2409,13 @@ clusters.on("clustermouseout", (a) => {
 
 
   function scheduleCityLabelsRender() {
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(renderMapLabels);
+    if (mapLabelsRenderFrame) return;
+
+    mapLabelsRenderFrame = window.requestAnimationFrame(() => {
+      mapLabelsRenderFrame = window.requestAnimationFrame(() => {
+        mapLabelsRenderFrame = 0;
+        renderMapLabels();
+      });
     });
   }
 
@@ -3210,11 +3216,14 @@ clusters.on("clustermouseout", (a) => {
   }
 
   function renderMarkers() {
+    if (!clusters || typeof clusters.clearLayers !== "function") return;
+
     clusters.clearLayers();
     projectIdToMarker = new Map();
     clearSelectedMarker();
 
     const list = filteredProjects();
+    const markerLayers = [];
     let markerCount = 0;
 
     for (const p of list) {
@@ -3267,8 +3276,16 @@ clusters.on("clustermouseout", (a) => {
         showPanel(p);
       });
 
-      clusters.addLayer(marker);
+      markerLayers.push(marker);
       markerCount += 1;
+    }
+
+    if (markerLayers.length) {
+      if (typeof clusters.addLayers === "function") {
+        clusters.addLayers(markerLayers);
+      } else {
+        markerLayers.forEach((marker) => clusters.addLayer(marker));
+      }
     }
 
     if (elCount) elCount.textContent = String(list.length);
@@ -3288,6 +3305,7 @@ clusters.on("clustermouseout", (a) => {
     if (elProjListMenu && !elProjListMenu.hidden) buildProjectList();
     updateDeptStyle();
     updateClearButtonState();
+    scheduleCityLabelsRender();
   }
 
   // ---- 13. Panneau latéral ----
@@ -4073,6 +4091,7 @@ clusters.on("clustermouseout", (a) => {
   }
 
   const rerenderDebounced = debounce(renderMarkers, 200);
+  const rerenderAdvancedFiltersDebounced = debounce(renderMarkers, 150);
   if (elQ) elQ.addEventListener("input", () => {
     updateClearButtonState();
     rerenderDebounced();
@@ -4145,11 +4164,13 @@ clusters.on("clustermouseout", (a) => {
   [elAmountMin, elAmountMax, elPhaseFilter, elClientFilter, elProgrammeFilter, elThemeFilter, elDeptFilter, elPhotosFilter, elEnergyFilter]
     .filter(Boolean)
     .forEach((el) => {
-      const eventName = el.tagName === "INPUT" ? "input" : "change";
+      const isTextualInput = el.tagName === "INPUT";
+      const eventName = isTextualInput ? "input" : "change";
       el.addEventListener(eventName, () => {
         syncAdvancedFiltersButtonState();
         updateClearButtonState();
-        renderMarkers();
+        if (isTextualInput) rerenderAdvancedFiltersDebounced();
+        else renderMarkers();
       });
     });
 
