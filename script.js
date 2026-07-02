@@ -1471,6 +1471,22 @@
       .projectClusterDistanceBtn--reset.is-active {
         color: #000080;
       }
+      .typeFilter {
+        margin-left: 2px;
+        margin-right: 4px;
+        vertical-align: -1px;
+        accent-color: #000080;
+      }
+      .officesToggle input,
+      .cityLabelsToggle input,
+      .projectLabelsToggle input {
+        margin-left: 2px;
+        margin-right: 4px;
+        transform: translateY(-1px);
+      }
+      .cityLabelsToggle input {
+        transform: translateY(-2px);
+      }
       .cityLabel {
         position: absolute;
         left: 0;
