@@ -21,7 +21,6 @@ html, body{ font-family:"Marianne", Arial, system-ui, -apple-system, Segoe UI, R
   --bg: #ffffff;
   --muted: #666;
   --accent: #000091;
-  --bimo-pin-other-color: #09e6ed;
   --bimo-toolbar-control-height: 34px;
   --bimo-completed-play-size: 29px;
   --bimo-button-bg: #fff;
@@ -929,12 +928,6 @@ h1{ margin: 0; font-size: 20px; }
   border: 4px solid blue;
   box-sizing: border-box;
   display: inline-block;
-}
-.pin-swatch.pin-swatch--autres,
-.pin-swatch.pin-swatch--other,
-.pin-swatch[data-type="autres"],
-.pin-swatch[data-type="other"]{
-  border-color:var(--bimo-pin-other-color);
 }
 
 /* ===== Status / errors ===== */
