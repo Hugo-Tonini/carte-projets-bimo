@@ -111,14 +111,31 @@
   let completedProjectsLoaded = false;
   let completedProjectsLoadPromise = null;
   let suppressProjectUrlUpdate = false;
+  function markerElement(marker) {
+    if (!marker || typeof marker.getElement !== "function") return null;
+    try {
+      return marker.getElement() || null;
+    } catch (err) {
+      console.warn("[BIMO] Élément de marqueur inaccessible", err);
+      return null;
+    }
+  }
+
   function clearSelectedMarker() {
-    if (selectedMarker) selectedMarker.getElement()?.classList.remove("selected");
+    markerElement(selectedMarker)?.classList.remove("selected");
     selectedMarker = null;
   }
+
   function setSelectedMarker(marker) {
     clearSelectedMarker();
+
+    if (!marker || typeof marker.getElement !== "function") {
+      selectedMarker = null;
+      return;
+    }
+
     selectedMarker = marker;
-    marker.getElement()?.classList.add("selected");
+    markerElement(marker)?.classList.add("selected");
   }
 
   function clearAntennaFocus() {
@@ -2095,7 +2112,7 @@ clusters.on("clustermouseout", (a) => {
       });
 
       marker.on("add", () => {
-        const el = marker.getElement();
+        const el = markerElement(marker);
         if (el) {
           L.DomEvent.disableClickPropagation(el);
           L.DomEvent.disableScrollPropagation(el);
@@ -2601,14 +2618,16 @@ clusters.on("clustermouseout", (a) => {
 
 
   function projectId(p) {
-    return String(p.__projectId ?? p["Code projet"] ?? p["ID"] ?? p.code_projet ?? p.codeProjet ?? p.id ?? "").trim();
+    const source = p && typeof p === "object" ? p : {};
+    return String(source.__projectId ?? source["Code projet"] ?? source["ID"] ?? source.code_projet ?? source.codeProjet ?? source.id ?? "").trim();
   }
 
   function projectListLabel(p) {
-    const nom = String(p["Nom de projet"] ?? p.nom ?? "").trim();
-    const typ = String(p["Type de projet"] ?? p.type ?? "").trim();
-    const ant = String(p["Antenne"] ?? p.antenne ?? "").trim();
-    const mnt = formatEuro(p["Montant"] ?? p.montant);
+    const source = p && typeof p === "object" ? p : {};
+    const nom = String(source["Nom de projet"] ?? source.nom ?? "").trim();
+    const typ = String(source["Type de projet"] ?? source.type ?? "").trim();
+    const ant = String(source["Antenne"] ?? source.antenne ?? "").trim();
+    const mnt = formatEuro(source["Montant"] ?? source.montant);
     return { nom, typ, mnt, ant };
   }
 
@@ -2679,7 +2698,7 @@ clusters.on("clustermouseout", (a) => {
     const p = allProjects.find((x) => projectId(x) === pid);
     const marker = projectIdToMarker.get(pid);
 
-    if (!marker) {
+    if (!marker || typeof marker.getLatLng !== "function") {
       clearSelectedMarker();
       if (p) showPanel(p);
       setProjectListOpen(false);
@@ -2687,6 +2706,13 @@ clusters.on("clustermouseout", (a) => {
     }
 
     const ll = marker.getLatLng();
+    if (!ll || !Number.isFinite(ll.lat) || !Number.isFinite(ll.lng)) {
+      clearSelectedMarker();
+      if (p) showPanel(p);
+      setProjectListOpen(false);
+      return;
+    }
+
     setSelectedMarker(marker);
 
     const targetZoom = Math.max(map.getZoom(), 14);
@@ -2751,23 +2777,26 @@ clusters.on("clustermouseout", (a) => {
   }
 
   function projectType(p) {
-    return String(p["Type de projet"] ?? p.type ?? "").toLowerCase().trim();
+    const source = p && typeof p === "object" ? p : {};
+    return String(source["Type de projet"] ?? source.type ?? "").toLowerCase().trim();
   }
 
   function projectCity(p) {
+    const source = p && typeof p === "object" ? p : {};
     return String(
-      p["Ville"] ??
-      p.ville ??
-      p["Commune"] ??
-      p.commune ??
-      p["Adresse ville"] ??
+      source["Ville"] ??
+      source.ville ??
+      source["Commune"] ??
+      source.commune ??
+      source["Adresse ville"] ??
       ""
     ).trim();
   }
 
   function projectLatLon(p) {
-    const lat = parseFloat(String(p["Latitude"] ?? p.latitude ?? p.lat ?? "").replace(",", "."));
-    const lon = parseFloat(String(p["Longitude"] ?? p.longitude ?? p.lon ?? "").replace(",", "."));
+    const source = p && typeof p === "object" ? p : {};
+    const lat = parseFloat(String(source["Latitude"] ?? source.latitude ?? source.lat ?? "").replace(",", "."));
+    const lon = parseFloat(String(source["Longitude"] ?? source.longitude ?? source.lon ?? "").replace(",", "."));
     if (Number.isFinite(lat) && Number.isFinite(lon)) return [lat, lon];
     return null;
   }
@@ -2891,22 +2920,24 @@ clusters.on("clustermouseout", (a) => {
   }
 
   function deptCodeFromProject(p) {
-    const codeLike = String(p.__deptCode ?? p["Code département"] ?? p.code_departement ?? p["Département"] ?? p.departement ?? "").trim();
+    const source = p && typeof p === "object" ? p : {};
+    const codeLike = String(source.__deptCode ?? source["Code département"] ?? source.code_departement ?? source["Département"] ?? source.departement ?? "").trim();
     if (codeLike) {
       const maybeCode = normalizeDeptCode(codeLike);
       if (/^(\d{2}|\d{3}|2A|2B)$/.test(maybeCode)) return maybeCode;
     }
 
-    const rawName = String(p.__deptName ?? p["Nom département"] ?? p["Département"] ?? p.departement ?? "").trim();
+    const rawName = String(source.__deptName ?? source["Nom département"] ?? source["Département"] ?? source.departement ?? "").trim();
     if (!rawName) return "";
     const key = normalizeForLookup(rawName);
     return deptNameToCode.get(key) || "";
   }
 
   function deptNameFromProject(p) {
-    const rawName = String(p.__deptName ?? p["Nom département"] ?? "").trim();
+    const source = p && typeof p === "object" ? p : {};
+    const rawName = String(source.__deptName ?? source["Nom département"] ?? "").trim();
     if (rawName) return rawName;
-    const code = deptCodeFromProject(p);
+    const code = deptCodeFromProject(source);
     return code ? String(deptCodeToName[code] ?? "").trim() : "";
   }
 
@@ -3411,7 +3442,7 @@ clusters.on("clustermouseout", (a) => {
     const prevBtn = lightboxEl.querySelector('[data-nav="-1"]');
     const nextBtn = lightboxEl.querySelector('[data-nav="1"]');
     const counter = lightboxEl.querySelector(".lightboxCounter");
-    if (!img) return;
+    if (!(img instanceof HTMLImageElement)) return;
 
     const total = lightboxItems.length || 0;
     const safeIndex = total ? Math.max(0, Math.min(lightboxIndex, total - 1)) : 0;
@@ -3542,6 +3573,8 @@ clusters.on("clustermouseout", (a) => {
   }
 
   function showPanel(p) {
+    if (!p || typeof p !== "object") return;
+
     updateProjectUrl(p);
     const title = p["Nom de projet"] ?? p.nom ?? "Projet";
 
