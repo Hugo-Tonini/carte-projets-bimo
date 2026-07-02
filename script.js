@@ -2,6 +2,23 @@
 (() => {
   "use strict";
 
+  /*
+   * Organisation générale du fichier
+   * 1. Gestion globale des erreurs
+   * 2. Configuration applicative et métier
+   * 3. Références DOM et état applicatif
+   * 4. UI de mode projet, timeline et filtres
+   * 5. Configuration antennes, types de projet et départements
+   * 6. Initialisation Leaflet et contrôles de carte
+   * 7. Rendu des antennes, labels, marqueurs, clusters et panneaux
+   * 8. Helpers de données, formatage, accessibilité et robustesse
+   * 9. Chargement des données et initialisation finale
+   *
+   * Étape 10 : refactoring volontairement léger.
+   * Les blocs n'ont pas été déplacés massivement pour limiter le risque de régression.
+   */
+
+  // ---- 1. Gestion globale des erreurs ----
   // Affiche une erreur générique dans l'interface et garde le détail en console.
   window.addEventListener("error", (e) => {
     console.error("[BIMO] Erreur JavaScript", e.error || e.message || e);
@@ -19,7 +36,7 @@
     el.hidden = false;
   });
 
-  // ---- Configuration ----
+  // ---- 2. Configuration applicative ----
   const DATA_VERSION = "2026-05-21b";
   const CURRENT_PROJECTS_URL = `export_projets_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
   const COMPLETED_PROJECTS_URL = `export_projets_finis_web.json?v=${encodeURIComponent(DATA_VERSION)}`;
@@ -38,7 +55,7 @@
   let COMPLETED_YEAR_MIN = 2008;
   let COMPLETED_YEAR_MAX = 2024;
 
-  // ---- DOM ----
+  // ---- 3. Références DOM ----
   const elPageTitle = document.getElementById("pageTitle");
   const elQ = document.getElementById("q");
   const elClear = document.getElementById("clear");
@@ -78,7 +95,7 @@
   let elCompletedYearHistogram = null;
 
 
-  // ---- State ----
+  // ---- 4. État applicatif ----
   let allProjects = [];
   let projectsByMode = { current: [], completed: [] };
   let currentProjectMode = PROJECT_MODES.current.key;
@@ -138,6 +155,7 @@
     markerElement(marker)?.classList.add("selected");
   }
 
+  // ---- 5. UI de mode projet, timeline et état des filtres ----
   function clearAntennaFocus() {
     selectedAntenna = null;
     updateDeptStyle();
@@ -581,7 +599,7 @@
     updateClearButtonState();
   }
 
-  // ---- Antennes / Couleurs ----
+  // ---- 6. Configuration métier : antennes et types de projet ----
   const ANTENNA_CONFIG = Object.freeze({
     "Alpes Centre-Est": {
       label: "Alpes Centre-Est",
@@ -719,6 +737,7 @@
     }
   }
 
+  // ---- 7. Configuration métier : correspondances départements / antennes ----
   // Table “corrigée” : département (nom) -> antenne
   const DEPT_TO_ANTENNA_BY_NAME = new Map(Object.entries({
     // Alpes Centre-Est
@@ -884,7 +903,7 @@
     }
   ];
 
-  // ---- Map ----
+  // ---- 8. Initialisation Leaflet ----
   if (!window.L || typeof L.map !== "function" || typeof L.markerClusterGroup !== "function") {
     showStatus("Erreur : Leaflet ou MarkerCluster n’est pas chargé. Vérifiez la connexion ou les dépendances CDN.");
     return;
@@ -936,6 +955,7 @@
     map.attributionControl.setPrefix("Carte créée par Hugo TONINI");
   }
 
+  // ---- 9. Contrôles Leaflet personnalisés ----
   function createZoomSliderControl() {
     const zoomSliderControl = L.control({ position: "topleft" });
 
@@ -1629,7 +1649,7 @@ clusters.on("clustermouseout", (a) => {
 });
 
 
-  // ---- Pins fixes : Siège & Antennes ----
+  // ---- 10. Pins fixes : siège et antennes ----
   const OFFICES = [
     { type_lieu: "antenne", nom: "Alpes Centre-Est", antenne: "Alpes Centre-Est", adresse: "10 rue Stella, 69002 Lyon", latitude: 45.76061, longitude: 4.83664 },
     { type_lieu: "antenne", nom: "Nord-Ouest Île-de-France", antenne: "Nord-Ouest Île-de-France", adresse: "10 rue du Centre, 93196 Noisy-le-Grand Cedex", latitude: 48.838387, longitude: 2.545001 },
@@ -1937,7 +1957,7 @@ clusters.on("clustermouseout", (a) => {
 
   map.on("click", () => closePanel());
 
-  // ---- Helpers ----
+  // ---- 11. Helpers données, formatage et filtres ----
   function showStatus(msg) {
     if (!elStatus) return;
     elStatus.textContent = msg;
@@ -3466,7 +3486,7 @@ clusters.on("clustermouseout", (a) => {
     return counts;
   }
 
-  // ---- Pins projets ----
+  // ---- 12. Pins projets, clusters et rendu carte ----
   function colorByType(t) {
     return projectTypeColorByKey(projectTypeKeyFromText(t));
   }
@@ -3546,9 +3566,9 @@ clusters.on("clustermouseout", (a) => {
     updateClearButtonState();
   }
 
-  // ---- Panel ----
+  // ---- 13. Panneau latéral ----
 
-  // ---- Photos (panel) ----
+  // ---- 14. Photos et lightbox ----
   let lightboxEl = null;
   let lightboxItems = [];
   let lightboxIndex = 0;
@@ -4095,7 +4115,7 @@ clusters.on("clustermouseout", (a) => {
     return html;
   }
 
-  // ---- Photos (dans le panneau projet) ----
+  // ---- 15. Photos dans le panneau projet ----
   function getProjectPhotos(p) {
     const v = p?.photos ?? [];
     return Array.isArray(v) ? v.filter(Boolean) : [];
@@ -4139,7 +4159,7 @@ clusters.on("clustermouseout", (a) => {
 
 
 
-  // ---- Départements ----
+  // ---- 16. Départements et coloration géographique ----
   function colorByAntenna(a) {
     return antennaColorByName(a);
   }
@@ -4282,7 +4302,7 @@ clusters.on("clustermouseout", (a) => {
     elStatDept.textContent = selectedAntenna ? ` — ${selectedAntenna}` : "";
   }
 
-  // ---- Fetch robuste ----
+  // ---- 17. Chargement réseau robuste ----
   async function fetchJson(url, { timeoutMs = 15000 } = {}) {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort("timeout"), timeoutMs);
@@ -4305,7 +4325,7 @@ clusters.on("clustermouseout", (a) => {
     }
   }
 
-  // ---- Debounce ----
+  // ---- 18. Utilitaires événementiels ----
   function debounce(fn, waitMs) {
     let t = null;
     return (...args) => {
@@ -4314,7 +4334,7 @@ clusters.on("clustermouseout", (a) => {
     };
   }
 
-  // ---- Init UI ----
+  // ---- 19. Initialisation UI et événements ----
   renderLegendAntennas();
   syncProjectTypeLegendColors();
   createCompletedYearFilterUi();
@@ -4409,7 +4429,7 @@ clusters.on("clustermouseout", (a) => {
       });
     });
 
-  // ---- Liste projets ----
+  // ---- 20. Liste projets ----
   if (elProjListBtn && elProjListMenu) {
     elProjListBtn.setAttribute("aria-expanded", "false");
 
@@ -4453,7 +4473,7 @@ clusters.on("clustermouseout", (a) => {
 
   updateClearButtonState();
 
-  // ---- Load data ----
+  // ---- 21. Chargement initial des données ----
   (async () => {
     try {
       await loadDepartements();
