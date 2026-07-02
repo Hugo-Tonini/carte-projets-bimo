@@ -328,7 +328,27 @@
     syncToolbarControlHeights();
   }
 
+
+  function ensureProjectModeButtonLabels() {
+    if (!elProjectModeSwitch) return;
+
+    const modeButtons = elProjectModeSwitch.querySelectorAll(".projectModeBtn");
+    modeButtons.forEach((btn) => {
+      if (btn.querySelector(".projectModeBtnLabel")) return;
+
+      const text = String(btn.textContent || "").trim();
+      btn.textContent = "";
+
+      const label = document.createElement("span");
+      label.className = "projectModeBtnLabel";
+      label.textContent = text;
+
+      btn.appendChild(label);
+    });
+  }
+
   function syncToolbarControlHeights() {
+    ensureProjectModeButtonLabels();
     if (!elProjectModeSwitch) return;
 
     const referenceButton = elClear || elProjListBtn;
@@ -356,7 +376,7 @@
       btn.style.minHeight = '100%';
       btn.style.margin = '0';
       btn.style.padding = '0 14px';
-      btn.style.lineHeight = '1';
+      btn.style.lineHeight = '0';
       btn.style.textAlign = 'center';
       btn.style.verticalAlign = 'middle';
       btn.style.boxSizing = 'border-box';
@@ -1093,6 +1113,19 @@
       }
       .officesToggle,
       .cityLabelsToggle,
+      .projectModeBtn {
+        line-height: 0 !important;
+      }
+      .projectModeBtnLabel {
+        display: block;
+        width: 100%;
+        height: 1em;
+        line-height: 1;
+        font: inherit;
+        font-weight: inherit;
+        text-align: center;
+        transform: translateY(-1px);
+      }
       .projectLabelsToggle {
         display: inline-flex;
         align-items: center;
@@ -3879,6 +3912,7 @@ clusters.on("clustermouseout", (a) => {
   syncProjectTypeLegendColors();
   createCompletedYearFilterUi();
   updateCompletedYearFilterUi();
+  ensureProjectModeButtonLabels();
   syncToolbarControlHeights();
 
   window.addEventListener("resize", syncToolbarControlHeights);
