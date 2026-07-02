@@ -94,6 +94,7 @@
   let deptSpatialIndex = [];
   let filteredCounts = {}; // "74" -> nb projets filtrés (tooltip)
   let antennaSummaryEnabled = false;
+  let pinSizeScale = 1;
   let cityLabelsEnabled = false;
   let projectLabelsEnabled = false;
 
@@ -922,6 +923,171 @@
 
   createZoomSliderControl();
 
+  function clampPinSizeScale(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return 1;
+    return Math.max(0.6, Math.min(1.8, Math.round(n * 10) / 10));
+  }
+
+  function pinSize(baseSize) {
+    return Math.max(8, Math.round(baseSize * pinSizeScale));
+  }
+
+  function pinFontSize(baseSize) {
+    return Math.max(8, Math.round(baseSize * pinSizeScale));
+  }
+
+  function updatePinSizeCssVars() {
+    const root = mapEl || document.documentElement;
+    root.style.setProperty("--bimo-pin-size", `${pinSize(22)}px`);
+    root.style.setProperty("--bimo-pin-inner-size", `${pinSize(22)}px`);
+    root.style.setProperty("--bimo-pin-cluster-size", `${pinSize(32)}px`);
+    root.style.setProperty("--bimo-pin-cluster-font-size", `${pinFontSize(12)}px`);
+    root.style.setProperty("--bimo-pin-office-size", `${pinSize(22)}px`);
+  }
+
+  function refreshPinsAfterSizeChange() {
+    updatePinSizeCssVars();
+    renderOffices();
+    renderMarkers();
+    if (typeof clusters.refreshClusters === "function") clusters.refreshClusters();
+    scheduleCityLabelsRender();
+  }
+
+  function ensurePinSizeControlStyles() {
+    if (document.getElementById("bimoPinSizeControlStyles")) return;
+
+    const style = document.createElement("style");
+    style.id = "bimoPinSizeControlStyles";
+    style.textContent = `
+      .pinSizeControl {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: 8px;
+        white-space: nowrap;
+        vertical-align: middle;
+      }
+      .pinSizeControlLabel {
+        line-height: 1;
+      }
+      .pinSizeControlBtn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        border: 1px solid rgba(15, 23, 42, 0.24);
+        background: #fff;
+        color: #111827;
+        font-weight: 800;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0;
+      }
+      .pinSizeControlBtn:hover {
+        background: #f3f4f6;
+      }
+      .pinSizeControlValue {
+        min-width: 34px;
+        text-align: center;
+        font-size: 12px;
+        line-height: 1;
+      }
+      #map .pin-dot-inner {
+        width: var(--bimo-pin-inner-size, 22px);
+        height: var(--bimo-pin-inner-size, 22px);
+        box-sizing: border-box;
+      }
+      #map .pin-dot-cluster {
+        width: var(--bimo-pin-cluster-size, 32px);
+        height: var(--bimo-pin-cluster-size, 32px);
+      }
+      #map .pin-dot-count {
+        font-size: var(--bimo-pin-cluster-font-size, 12px);
+        line-height: 1;
+      }
+      #map .pin-office-wrap {
+        width: var(--bimo-pin-office-size, 22px);
+        height: var(--bimo-pin-office-size, 22px);
+      }
+      #map .pin-office-svg {
+        width: 100%;
+        height: 100%;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function initPinSizeControl(afterElement) {
+    if (document.getElementById("pinSizeControl")) return;
+
+    ensurePinSizeControlStyles();
+    updatePinSizeCssVars();
+
+    const wrap = document.createElement("span");
+    wrap.id = "pinSizeControl";
+    wrap.className = "pinSizeControl";
+
+    const label = document.createElement("span");
+    label.className = "pinSizeControlLabel";
+    label.textContent = "Taille pins";
+
+    const minus = document.createElement("button");
+    minus.type = "button";
+    minus.className = "pinSizeControlBtn";
+    minus.setAttribute("aria-label", "Diminuer la taille des pins");
+    minus.textContent = "−";
+
+    const value = document.createElement("span");
+    value.className = "pinSizeControlValue";
+    value.setAttribute("aria-live", "polite");
+
+    const plus = document.createElement("button");
+    plus.type = "button";
+    plus.className = "pinSizeControlBtn";
+    plus.setAttribute("aria-label", "Augmenter la taille des pins");
+    plus.textContent = "+";
+
+    wrap.appendChild(label);
+    wrap.appendChild(minus);
+    wrap.appendChild(value);
+    wrap.appendChild(plus);
+
+    const sync = () => {
+      value.textContent = `${Math.round(pinSizeScale * 100)}%`;
+      minus.disabled = pinSizeScale <= 0.6;
+      plus.disabled = pinSizeScale >= 1.8;
+    };
+
+    const setScale = (nextScale) => {
+      const clamped = clampPinSizeScale(nextScale);
+      if (clamped === pinSizeScale) {
+        sync();
+        return;
+      }
+      pinSizeScale = clamped;
+      sync();
+      refreshPinsAfterSizeChange();
+    };
+
+    minus.addEventListener("click", () => setScale(pinSizeScale - 0.1));
+    plus.addEventListener("click", () => setScale(pinSizeScale + 0.1));
+
+    if (afterElement?.insertAdjacentElement) {
+      afterElement.insertAdjacentElement("afterend", wrap);
+    } else {
+      const target = document.getElementById("projectLabelsToggle")?.closest("label")
+        || document.getElementById("cityLabelsToggle")?.closest("label")
+        || document.getElementById("officesToggle")?.closest("label");
+      if (target?.insertAdjacentElement) target.insertAdjacentElement("afterend", wrap);
+    }
+
+    sync();
+  }
+
+
   const clusters = L.markerClusterGroup({
     chunkedLoading: true,
     chunkInterval: 10,
@@ -945,8 +1111,8 @@
       return L.divIcon({
         className: "pin-dot pin-dot-cluster-wrap",
         html: `<div class="pin-dot-inner pin-dot-cluster" style="border-color:${col};"><span class="pin-dot-count">${count}</span></div>`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16]
+        iconSize: [pinSize(32), pinSize(32)],
+        iconAnchor: [pinSize(16), pinSize(16)]
       });
     }
   });
@@ -1269,8 +1435,8 @@ clusters.on("clustermouseout", (a) => {
         icon: L.divIcon({
           className: "pin-dot",
           html: `<div class="pin-office-wrap">${officeSvg}${isHQ ? `<div class="pin-office-badge">★</div>` : ``}</div>`,
-          iconSize: [22, 22],
-          iconAnchor: [11, 11]
+          iconSize: [pinSize(22), pinSize(22)],
+          iconAnchor: [pinSize(11), pinSize(11)]
         })
       });
 
@@ -1368,6 +1534,7 @@ clusters.on("clustermouseout", (a) => {
     }
 
     projectLabelsEnabled = false;
+    initPinSizeControl(wrap);
     scheduleCityLabelsRender();
 
     cb.addEventListener("change", () => {
@@ -2862,8 +3029,8 @@ clusters.on("clustermouseout", (a) => {
         icon: L.divIcon({
           className: "pin-dot",
           html: `<div class="pin-dot-inner" style="border-color:${col};"></div>`,
-          iconSize: [22, 22],
-          iconAnchor: [11, 11]
+          iconSize: [pinSize(22), pinSize(22)],
+          iconAnchor: [pinSize(11), pinSize(11)]
         })
       });
 
@@ -3709,6 +3876,7 @@ clusters.on("clustermouseout", (a) => {
   }
 
   // ---- Init UI ----
+  updatePinSizeCssVars();
   renderLegendAntennas();
   syncProjectTypeLegendColors();
   createCompletedYearFilterUi();
