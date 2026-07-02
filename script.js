@@ -1252,6 +1252,10 @@
         text-align: center;
         transform: translateY(-1px);
       }
+      .projectPinSizeBtn--minus .projectPinSizeGlyph,
+      .projectPinSizeBtn--plus .projectPinSizeGlyph {
+        transform: translateY(-3px);
+      }
       .projectPinSizeBtn--reset .projectPinSizeGlyph {
         font-size: 14px;
         transform: translateY(-1px);
