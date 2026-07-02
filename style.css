@@ -904,13 +904,7 @@ h1{ margin: 0; font-size: 20px; }
 .pin-swatch.pin-swatch--other,
 .pin-swatch[data-type="autres"],
 .pin-swatch[data-type="other"]{
-  border-color:#09e6ed !important;
-}
-.legend-row .pin-swatch[style*="orange"],
-.legend-row .pin-swatch[style*="#FF4B08"],
-.legend-row .pin-swatch[style*="#ff8c00"],
-.legend-row .pin-swatch[style*="#A855F7"]{
-  border-color:#09e6ed !important;
+  border-color:var(--bimo-pin-other-color);
 }
 
 /* ===== Status / errors ===== */
@@ -2395,19 +2389,8 @@ body{
 }
 
 
-/* ===== Ajustements finaux : Autres + longueurs DPE/GES ===== */
+/* ===== Ajustements finaux : longueurs DPE/GES ===== */
 
-
-.pin-swatch.pin-swatch--autres,
-.pin-swatch.pin-swatch--other,
-.pin-swatch[data-type="autres"],
-.pin-swatch[data-type="other"],
-.legend-row .pin-swatch[style*="orange"],
-.legend-row .pin-swatch[style*="#FF4B08"],
-.legend-row .pin-swatch[style*="#ff8c00"],
-.legend-row .pin-swatch[style*="#A855F7"]{
-  border-color:var(--bimo-pin-other-color) !important;
-}
 
 .dpeScale{
   --dpe-base-width:128px;
