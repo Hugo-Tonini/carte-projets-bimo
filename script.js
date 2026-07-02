@@ -463,6 +463,7 @@
     let missingNames = 0;
     let missingCoordinates = 0;
     let completedWithoutDates = 0;
+    const unknownAntennas = new Set();
 
     for (const project of projects) {
       const pid = projectId(project);
@@ -473,6 +474,10 @@
 
       const name = String(project["Nom de projet"] ?? project.nom ?? "").trim();
       if (!name) missingNames += 1;
+
+      const antenna = String(project["Antenne"] ?? project.antenne ?? "").trim();
+      if (antenna && !antennaKeyFromText(antenna)) unknownAntennas.add(antenna);
+
       if (!projectLatLon(project)) missingCoordinates += 1;
       if (modeKey === PROJECT_MODES.completed.key && projectStartYear(project) == null && projectEndYear(project) == null) {
         completedWithoutDates += 1;
@@ -482,12 +487,17 @@
     if (duplicateIds.size) {
       console.warn(`[BIMO] ${duplicateIds.size} identifiant(s) projet en doublon (${modeKey}) :`, Array.from(duplicateIds));
     }
-    if (missingNames || missingCoordinates || completedWithoutDates) {
+    if (unknownAntennas.size) {
+      console.warn(`[BIMO] ${unknownAntennas.size} antenne(s) inconnue(s) dans les données (${modeKey}) :`, Array.from(unknownAntennas));
+    }
+
+    if (missingNames || missingCoordinates || completedWithoutDates || unknownAntennas.size) {
       console.info(`[BIMO] Qualité des données (${modeKey})`, {
         projets: projects.length,
         sansNom: missingNames,
         sansCoordonnees: missingCoordinates,
-        finisSansDates: completedWithoutDates
+        finisSansDates: completedWithoutDates,
+        antennesInconnues: unknownAntennas.size
       });
     }
   }
@@ -572,33 +582,74 @@
   }
 
   // ---- Antennes / Couleurs ----
-  const ANTENNA_COLORS = {
-    "Atlantique Grand-Ouest": "#3B82F6",
-    "Nord-Est": "#10B981",
-    "Grand Sud-Ouest": "#F59E0B",
-    "Alpes Centre-Est": "#8B5CF6",
-    "Méditerranée Grand-Sud": "#36540e",
-    "Nord-Ouest Île-de-France": "#EF4444"
-  };
+  const ANTENNA_CONFIG = Object.freeze({
+    "Alpes Centre-Est": {
+      label: "Alpes Centre-Est",
+      color: "#8B5CF6",
+      summaryPlacement: { point: [45.35, 7.75], align: "outside-east" }
+    },
+    "Atlantique Grand-Ouest": {
+      label: "Atlantique Grand-Ouest",
+      color: "#3B82F6",
+      summaryPlacement: { point: [47.05, -4.75], align: "outside-west" }
+    },
+    "Grand Sud-Ouest": {
+      label: "Grand Sud-Ouest",
+      color: "#F59E0B",
+      summaryPlacement: { point: [44.05, -2.55], align: "outside-west" }
+    },
+    "Méditerranée Grand-Sud": {
+      label: "Méditerranée Grand-Sud",
+      color: "#36540e",
+      summaryPlacement: { point: [42.85, 6.30], align: "outside-south" }
+    },
+    "Nord-Est": {
+      label: "Nord-Est",
+      color: "#10B981",
+      summaryPlacement: { point: [48.95, 8.15], align: "outside-east" }
+    },
+    "Nord-Ouest Île-de-France": {
+      label: "Nord-Ouest Île-de-France",
+      color: "#EF4444",
+      summaryPlacement: { point: [49.72, -1.95], align: "outside-west" }
+    }
+  });
 
-  const ANTENNA_LEGEND_ORDER = [
-    "Alpes Centre-Est",
-    "Atlantique Grand-Ouest",
-    "Grand Sud-Ouest",
-    "Méditerranée Grand-Sud",
-    "Nord-Est",
-    "Nord-Ouest Île-de-France"
-  ];
+  const ANTENNA_LEGEND_ORDER = Object.freeze(Object.keys(ANTENNA_CONFIG));
+
+  function antennaKeyFromText(value) {
+    const text = normalizeForLookup(value);
+    if (!text) return "";
+    return ANTENNA_LEGEND_ORDER.find((antenna) => normalizeForLookup(antenna) === text) || "";
+  }
+
+  function antennaConfigByName(antennaName) {
+    const key = antennaKeyFromText(antennaName);
+    return key ? ANTENNA_CONFIG[key] : null;
+  }
+
+  function antennaColorByName(antennaName, fallback = "#FFFFFF") {
+    return antennaConfigByName(antennaName)?.color || fallback;
+  }
+
+  function antennaSummaryPlacementByName(antennaName) {
+    return antennaConfigByName(antennaName)?.summaryPlacement || null;
+  }
+
+  function antennaDisplayLabel(antennaName) {
+    return antennaConfigByName(antennaName)?.label || String(antennaName || "").trim();
+  }
 
   function renderLegendAntennas() {
     if (!elLegendAntennas) return;
 
     elLegendAntennas.innerHTML = ANTENNA_LEGEND_ORDER.map((antenna) => {
-      const color = ANTENNA_COLORS[antenna] || "#FFFFFF";
+      const color = antennaColorByName(antenna);
+      const label = antennaDisplayLabel(antenna);
       return `
-        <div class="legend-row">
+        <div class="legend-row" data-antenna="${escapeAttr(antenna)}">
           <span class="swatch" style="background:${escapeAttr(color)};"></span>
-          <span>${escapeHtml(antenna)}</span>
+          <span>${escapeHtml(label)}</span>
         </div>
       `;
     }).join("");
@@ -649,18 +700,6 @@
 
     return PROJECT_TYPE_CONFIG.other.key;
   }
-
-  const ANTENNA_SUMMARY_PLACEMENTS = {
-    // Chaque point sert de point d'accroche géographique Leaflet.
-    // La classe "outside-*" fait partir l'encart vers l'extérieur de la France,
-    // pour éviter qu'il recouvre les départements de son antenne.
-    "Nord-Ouest Île-de-France": { point: [49.72, -1.95], align: "outside-west" },
-    "Nord-Est": { point: [48.95, 8.15], align: "outside-east" },
-    "Atlantique Grand-Ouest": { point: [47.05, -4.75], align: "outside-west" },
-    "Alpes Centre-Est": { point: [45.35, 7.75], align: "outside-east" },
-    "Grand Sud-Ouest": { point: [44.05, -2.55], align: "outside-west" },
-    "Méditerranée Grand-Sud": { point: [42.85, 6.30], align: "outside-south" }
-  };
 
   function syncProjectTypeLegendColors() {
     if (!elLegend) return;
@@ -2108,7 +2147,7 @@ clusters.on("clustermouseout", (a) => {
     }
 
     for (const project of filteredProjectsForAntennaSummary()) {
-      const antenna = String(project["Antenne"] ?? project.antenne ?? "").trim();
+      const antenna = antennaKeyFromText(project["Antenne"] ?? project.antenne);
       if (!summaries.has(antenna)) continue;
 
       const typeKey = projectTypeKey(project);
@@ -2142,13 +2181,14 @@ clusters.on("clustermouseout", (a) => {
 
       if (!lines.length) continue;
 
-      const placement = ANTENNA_SUMMARY_PLACEMENTS[antenna];
+      const placement = antennaSummaryPlacementByName(antenna);
       if (!placement?.point) continue;
 
       visibleCards += 1;
-      const color = ANTENNA_COLORS[antenna] || "#fff";
+      const color = antennaColorByName(antenna, "#fff");
       const isSelected = selectedAntenna === antenna;
-      const title = antenna === "Nord-Ouest Île-de-France" ? "Nord-Ouest<br>Île-de-France" : escapeHtml(antenna);
+      const displayLabel = antennaDisplayLabel(antenna);
+      const title = antenna === "Nord-Ouest Île-de-France" ? "Nord-Ouest<br>Île-de-France" : escapeHtml(displayLabel);
       const alignClass = `antennaSummaryCard--${placement.align || "outside-center"}`;
       const html = `
         <button class="antennaSummaryCard antennaSummaryCard--map ${alignClass}${isSelected ? " is-selected" : ""}" type="button" style="--summary-color:${escapeAttr(color)};" data-antenna="${escapeAttr(antenna)}" aria-label="Filtrer sur ${escapeAttr(antenna)}">
@@ -3397,15 +3437,16 @@ clusters.on("clustermouseout", (a) => {
     // on n'affiche que les projets appartenant à cette antenne.
     if (!selectedAntenna) return base;
 
-    const a = normalizeForLookup(selectedAntenna);
-    return base.filter((p) => normalizeForLookup(p["Antenne"] ?? p.antenne) === a);
+    const antenna = antennaKeyFromText(selectedAntenna);
+    if (!antenna) return base;
+    return base.filter((p) => antennaKeyFromText(p["Antenne"] ?? p.antenne) === antenna);
   }
 
   function getProjectsForAntenna(antennaName) {
-    const a = normalizeForLookup(antennaName);
-    if (!a) return [];
+    const antenna = antennaKeyFromText(antennaName);
+    if (!antenna) return [];
     return allProjects
-      .filter((p) => normalizeForLookup(p["Antenne"] ?? p.antenne) === a)
+      .filter((p) => antennaKeyFromText(p["Antenne"] ?? p.antenne) === antenna)
       .sort((aProj, bProj) => projectDisplayName(aProj).localeCompare(projectDisplayName(bProj), "fr", { sensitivity: "base" }));
   }
 
@@ -4100,7 +4141,7 @@ clusters.on("clustermouseout", (a) => {
 
   // ---- Départements ----
   function colorByAntenna(a) {
-    return ANTENNA_COLORS[a] || "#FFFFFF";
+    return antennaColorByName(a);
   }
 
   function styleDept(feature) {
