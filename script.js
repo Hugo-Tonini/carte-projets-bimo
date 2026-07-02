@@ -1972,6 +1972,67 @@ clusters.on("clustermouseout", (a) => {
     return firstNonEmpty(value) || "—";
   }
 
+
+  const PROJECT_FIELD_ALIASES = Object.freeze({
+    buildingType: [
+      "Type de bâtiment",
+      "Type de batiment",
+      "type_batiment"
+    ],
+    energyBefore: [
+      "Consommation énergétique - avant travaux",
+      "Consommation énergetique - avant travaux",
+      "Consommation energetique - avant travaux",
+      "Consommation énergétique - existant",
+      "Consommation énergetique - existant",
+      "Consommation energetique - existant"
+    ],
+    energyAfter: [
+      "Consommation énergétique - après travaux",
+      "Consommation énergétique - Après travaux",
+      "Consommation énergetique - après travaux",
+      "Consommation énergetique - Après travaux",
+      "Consommation energetique - apres travaux",
+      "Consommation énergétique - objectif",
+      "Consommation énergetique - objectif",
+      "Consommation energetique - objectif"
+    ],
+    gesBefore: [
+      "Émission GES - avant travaux",
+      "Emission GES - avant travaux",
+      "Émissions GES - avant travaux",
+      "Emissions GES - avant travaux",
+      "GES - avant travaux"
+    ],
+    gesAfter: [
+      "Émission GES - après travaux",
+      "Émission GES - Après travaux",
+      "Emission GES - après travaux",
+      "Emission GES - Après travaux",
+      "Émissions GES - après travaux",
+      "Émissions GES - Après travaux",
+      "Emissions GES - après travaux",
+      "Emissions GES - Après travaux",
+      "GES - après travaux",
+      "GES - Après travaux"
+    ]
+  });
+
+  function projectFieldValue(project, aliases) {
+    const source = project && typeof project === "object" ? project : {};
+    const fields = Array.isArray(aliases) ? aliases : [aliases];
+
+    for (const field of fields) {
+      if (!field) continue;
+      const value = source[field];
+      if (value !== undefined && value !== null && String(value).trim() !== "") {
+        return value;
+      }
+    }
+
+    return "";
+  }
+
   function formatEuro(v) {
     const s = String(v ?? "").trim();
     if (!s) return "";
@@ -3152,13 +3213,12 @@ clusters.on("clustermouseout", (a) => {
   }
 
   function hasProjectEnergyData(p) {
-    const fields = [
-      "Consommation énergetique - avant travaux",
-      "Consommation énergetique - Après travaux",
-      "Émission GES - avant travaux",
-      "Émission GES - Après travaux"
-    ];
-    return fields.some((key) => p?.[key] != null && String(p[key]).trim() !== "");
+    return !!(
+      projectFieldValue(p, PROJECT_FIELD_ALIASES.energyBefore) ||
+      projectFieldValue(p, PROJECT_FIELD_ALIASES.energyAfter) ||
+      projectFieldValue(p, PROJECT_FIELD_ALIASES.gesBefore) ||
+      projectFieldValue(p, PROJECT_FIELD_ALIASES.gesAfter)
+    );
   }
 
   function selectedValue(el) {
@@ -3777,11 +3837,7 @@ clusters.on("clustermouseout", (a) => {
   }
 
   function getBuildingThresholds(project) {
-    const rawType =
-      project["Type de bâtiment"] ??
-      project["Type de batiment"] ??
-      project.type_batiment ??
-      "";
+    const rawType = projectFieldValue(project, PROJECT_FIELD_ALIASES.buildingType);
     const key = normalizeBuildingType(rawType);
     return TERTIARY_DPE_THRESHOLDS[key] || null;
   }
@@ -3874,28 +3930,10 @@ clusters.on("clustermouseout", (a) => {
     const thresholds = getBuildingThresholds(project);
     if (!thresholds) return "";
 
-    const energyBefore = parseMetricValue(
-      project["Consommation énergetique - avant travaux"] ??
-      project["Consommation énergetique - existant"]
-    );
-    const energyAfter = parseMetricValue(
-      project["Consommation énergetique - Après travaux"] ??
-      project["Consommation énergetique - après travaux"] ??
-      project["Consommation énergetique - objectif"]
-    );
-    const gesBefore = parseMetricValue(
-      project["Émission GES - avant travaux"] ??
-      project["Emission GES - avant travaux"] ??
-      project["GES - avant travaux"]
-    );
-    const gesAfter = parseMetricValue(
-      project["Émission GES - Après travaux"] ??
-      project["Émission GES - après travaux"] ??
-      project["Emission GES - Après travaux"] ??
-      project["Emission GES - après travaux"] ??
-      project["GES - Après travaux"] ??
-      project["GES - après travaux"]
-    );
+    const energyBefore = parseMetricValue(projectFieldValue(project, PROJECT_FIELD_ALIASES.energyBefore));
+    const energyAfter = parseMetricValue(projectFieldValue(project, PROJECT_FIELD_ALIASES.energyAfter));
+    const gesBefore = parseMetricValue(projectFieldValue(project, PROJECT_FIELD_ALIASES.gesBefore));
+    const gesAfter = parseMetricValue(projectFieldValue(project, PROJECT_FIELD_ALIASES.gesAfter));
 
     const energyCard = renderOfficialDpeCard({
       theme: "energy",
