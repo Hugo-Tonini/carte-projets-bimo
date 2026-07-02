@@ -1762,6 +1762,9 @@ clusters.on("clustermouseout", (a) => {
 
     projectLabelsEnabled = false;
     initProjectPinSizeControls(wrap);
+    window.setTimeout(() => {
+      initProjectClusterDistanceControls(document.getElementById("projectPinSizeControls") || wrap);
+    }, 0);
     scheduleCityLabelsRender();
 
     cb.addEventListener("change", () => {
@@ -4126,6 +4129,14 @@ clusters.on("clustermouseout", (a) => {
     renderMarkers();
   }));
   initOfficesToggle();
+  window.setTimeout(() => {
+    initProjectClusterDistanceControls(
+      document.getElementById("projectPinSizeControls")
+      || document.getElementById("projectLabelsToggle")?.closest("label")
+      || document.getElementById("cityLabelsToggle")?.closest("label")
+      || document.getElementById("officesToggle")?.closest("label")
+    );
+  }, 0);
 
   if (elAntennaSummaryBtn) {
     elAntennaSummaryBtn.addEventListener("click", () => {
