@@ -1303,6 +1303,11 @@
       .projectPinSizeBtn--reset.is-active {
         color: #000080;
       }
+      #map .pin-dot-count {
+        text-shadow: none !important;
+        filter: none !important;
+        -webkit-text-stroke: 0 !important;
+      }
       .cityLabel {
         position: absolute;
         left: 0;
