@@ -1471,21 +1471,31 @@
       .projectClusterDistanceBtn--reset.is-active {
         color: #000080;
       }
-      .typeFilter {
-        margin-left: 2px;
-        margin-right: 4px;
-        vertical-align: -1px;
+      .toolbarCheckboxLabel {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin: 0;
+        padding: 0;
+        vertical-align: middle;
+        line-height: 1;
+        white-space: nowrap;
+      }
+      .toolbarCheckboxLabel input[type="checkbox"] {
+        display: inline-block;
+        width: 13px;
+        height: 13px;
+        margin: 0;
+        padding: 0;
+        flex: 0 0 auto;
+        vertical-align: middle;
         accent-color: #000080;
       }
-      .officesToggle input,
-      .cityLabelsToggle input,
-      .projectLabelsToggle input {
-        margin-left: 2px;
-        margin-right: 4px;
+      .toolbarCheckboxText {
+        display: inline-flex;
+        align-items: center;
+        line-height: 1;
         transform: translateY(-1px);
-      }
-      .cityLabelsToggle input {
-        transform: translateY(-2px);
       }
       .cityLabel {
         position: absolute;
@@ -1699,6 +1709,9 @@ clusters.on("clustermouseout", (a) => {
 
     wrap.appendChild(cb);
     wrap.appendChild(span);
+    normalizeToolbarCheckboxLabel(wrap);
+    normalizeToolbarCheckboxLabel(wrap);
+    normalizeToolbarCheckboxLabel(wrap);
 
     if (afterElement?.insertAdjacentElement) {
       afterElement.insertAdjacentElement("afterend", wrap);
@@ -1719,6 +1732,52 @@ clusters.on("clustermouseout", (a) => {
     });
   }
 
+
+
+  function normalizeToolbarCheckboxLabel(label) {
+    if (!label) return;
+
+    label.classList.add("toolbarCheckboxLabel");
+
+    const checkbox = label.querySelector('input[type="checkbox"]');
+    if (!checkbox) return;
+
+    const directNodes = Array.from(label.childNodes).filter((node) => node !== checkbox);
+    if (!directNodes.length) return;
+
+    if (
+      directNodes.length === 1 &&
+      directNodes[0].nodeType === Node.ELEMENT_NODE &&
+      directNodes[0].classList?.contains("toolbarCheckboxText")
+    ) {
+      return;
+    }
+
+    if (
+      directNodes.length === 1 &&
+      directNodes[0].nodeType === Node.ELEMENT_NODE &&
+      directNodes[0].tagName === "SPAN"
+    ) {
+      directNodes[0].classList.add("toolbarCheckboxText");
+      return;
+    }
+
+    const textWrap = document.createElement("span");
+    textWrap.className = "toolbarCheckboxText";
+
+    directNodes.forEach((node) => textWrap.appendChild(node));
+    label.appendChild(textWrap);
+  }
+
+  function normalizeToolbarCheckboxes() {
+    document.querySelectorAll(".typeFilter").forEach((input) => {
+      normalizeToolbarCheckboxLabel(input.closest("label"));
+    });
+
+    document.querySelectorAll(".officesToggle, .cityLabelsToggle, .projectLabelsToggle").forEach((label) => {
+      normalizeToolbarCheckboxLabel(label);
+    });
+  }
 
   function initProjectLabelsToggle(afterElement) {
     if (document.getElementById("projectLabelsToggle")) {
@@ -4118,6 +4177,7 @@ clusters.on("clustermouseout", (a) => {
     renderMarkers();
   }));
   initOfficesToggle();
+  normalizeToolbarCheckboxes();
   window.setTimeout(() => {
     initProjectClusterDistanceControls(
       document.getElementById("projectPinSizeControls")
