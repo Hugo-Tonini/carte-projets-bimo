@@ -948,27 +948,39 @@
     const wrap = document.createElement("span");
     wrap.id = "projectPinSizeControls";
     wrap.className = "projectPinSizeControls";
+    wrap.setAttribute("aria-label", "Taille des pins projets");
 
     const btnMinus = document.createElement("button");
     btnMinus.type = "button";
     btnMinus.className = "projectPinSizeBtn projectPinSizeBtn--minus";
-    btnMinus.textContent = "Pins −";
+    btnMinus.textContent = "−";
     btnMinus.setAttribute("aria-label", "Diminuer la taille des pins projets");
+
+    const btnReset = document.createElement("button");
+    btnReset.type = "button";
+    btnReset.className = "projectPinSizeBtn projectPinSizeBtn--reset";
+    btnReset.textContent = "o";
+    btnReset.setAttribute("aria-label", "Revenir à la taille originale des pins projets");
 
     const btnPlus = document.createElement("button");
     btnPlus.type = "button";
     btnPlus.className = "projectPinSizeBtn projectPinSizeBtn--plus";
-    btnPlus.textContent = "Pins +";
+    btnPlus.textContent = "+";
     btnPlus.setAttribute("aria-label", "Augmenter la taille des pins projets");
 
     wrap.appendChild(btnMinus);
+    wrap.appendChild(btnReset);
     wrap.appendChild(btnPlus);
 
     const sync = () => {
+      const pct = Math.round(projectPinSizeScale * 100);
       btnMinus.disabled = projectPinSizeScale <= 0.6;
       btnPlus.disabled = projectPinSizeScale >= 1.8;
-      btnMinus.title = `Taille actuelle : ${Math.round(projectPinSizeScale * 100)} %`;
-      btnPlus.title = `Taille actuelle : ${Math.round(projectPinSizeScale * 100)} %`;
+      btnReset.disabled = projectPinSizeScale === 1;
+      btnReset.classList.toggle("is-active", projectPinSizeScale === 1);
+      btnMinus.title = `Taille actuelle : ${pct} %`;
+      btnReset.title = "Revenir à 100 %";
+      btnPlus.title = `Taille actuelle : ${pct} %`;
     };
 
     const setScale = (nextScale) => {
@@ -983,6 +995,7 @@
     };
 
     btnMinus.addEventListener("click", () => setScale(projectPinSizeScale - 0.1));
+    btnReset.addEventListener("click", () => setScale(1));
     btnPlus.addEventListener("click", () => setScale(projectPinSizeScale + 0.1));
 
     if (afterElement?.insertAdjacentElement) {
@@ -1195,28 +1208,44 @@
         flex: 0 0 auto;
       }
       .projectPinSizeControls {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
+        display: inline-grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        align-items: stretch;
+        justify-items: stretch;
+        height: 24px;
+        min-height: 24px;
         margin: 0;
         padding: 0;
+        border: 1px solid rgba(15, 23, 42, 0.24);
+        border-radius: 999px;
+        background: #fff;
+        overflow: hidden;
         vertical-align: middle;
         line-height: 1;
       }
       .projectPinSizeBtn {
-        display: inline-flex;
+        display: flex;
         align-items: center;
         justify-content: center;
-        min-height: 20px;
-        padding: 2px 7px;
-        border: 1px solid rgba(15, 23, 42, 0.24);
-        border-radius: 999px;
-        background: #fff;
+        width: 28px;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-right: 1px solid rgba(15, 23, 42, 0.16);
+        border-radius: 0;
+        background: transparent;
         color: #111827;
         font: inherit;
-        font-size: 12px;
+        font-size: 13px;
+        font-weight: 800;
         line-height: 1;
+        text-align: center;
         cursor: pointer;
+        box-sizing: border-box;
+      }
+      .projectPinSizeBtn:last-child {
+        border-right: 0;
       }
       .projectPinSizeBtn:hover:not(:disabled) {
         background: #f3f4f6;
@@ -1224,6 +1253,9 @@
       .projectPinSizeBtn:disabled {
         opacity: 0.45;
         cursor: default;
+      }
+      .projectPinSizeBtn--reset.is-active {
+        color: #000080;
       }
       .cityLabel {
         position: absolute;
