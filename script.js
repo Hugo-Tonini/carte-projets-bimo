@@ -340,6 +340,13 @@
     modeButtons.forEach((btn) => {
       btn.style.height = '100%';
       btn.style.minHeight = '100%';
+      btn.style.display = 'inline-flex';
+      btn.style.alignItems = 'center';
+      btn.style.justifyContent = 'center';
+      btn.style.lineHeight = '1';
+      btn.style.paddingTop = '0';
+      btn.style.paddingBottom = '0';
+      btn.style.boxSizing = 'border-box';
     });
 
     if (elCompletedYearFilter) {
@@ -1009,6 +1016,20 @@
         line-height: 1;
         padding-top: 0;
         margin-top: 0;
+      }
+      .projectModeSwitch {
+        display: inline-flex;
+        align-items: center;
+      }
+      .projectModeBtn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-sizing: border-box;
+        line-height: 1 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        vertical-align: middle;
       }
       .cityLabel {
         position: absolute;
