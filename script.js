@@ -96,6 +96,7 @@
   let antennaSummaryEnabled = false;
   let cityLabelsEnabled = false;
   let projectLabelsEnabled = false;
+  let projectPinSizeScale = 1;
 
   // Focus antenne (pour foncer les départements de l’antenne sélectionnée)
   let selectedAntenna = null;
@@ -922,6 +923,82 @@
 
   createZoomSliderControl();
 
+  function clampProjectPinSizeScale(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return 1;
+    return Math.max(0.6, Math.min(1.8, Math.round(n * 10) / 10));
+  }
+
+  function projectPinSize(baseSize) {
+    return Math.max(6, Math.round(baseSize * projectPinSizeScale));
+  }
+
+  function projectPinTransformStyle() {
+    return `transform:scale(${projectPinSizeScale});transform-origin:center center;`;
+  }
+
+  function rerenderProjectPinsAfterSizeChange() {
+    renderMarkers();
+    scheduleCityLabelsRender();
+  }
+
+  function initProjectPinSizeControls(afterElement) {
+    if (document.getElementById("projectPinSizeControls")) return;
+
+    const wrap = document.createElement("span");
+    wrap.id = "projectPinSizeControls";
+    wrap.className = "projectPinSizeControls";
+
+    const btnMinus = document.createElement("button");
+    btnMinus.type = "button";
+    btnMinus.className = "projectPinSizeBtn projectPinSizeBtn--minus";
+    btnMinus.textContent = "Pins −";
+    btnMinus.setAttribute("aria-label", "Diminuer la taille des pins projets");
+
+    const btnPlus = document.createElement("button");
+    btnPlus.type = "button";
+    btnPlus.className = "projectPinSizeBtn projectPinSizeBtn--plus";
+    btnPlus.textContent = "Pins +";
+    btnPlus.setAttribute("aria-label", "Augmenter la taille des pins projets");
+
+    wrap.appendChild(btnMinus);
+    wrap.appendChild(btnPlus);
+
+    const sync = () => {
+      btnMinus.disabled = projectPinSizeScale <= 0.6;
+      btnPlus.disabled = projectPinSizeScale >= 1.8;
+      btnMinus.title = `Taille actuelle : ${Math.round(projectPinSizeScale * 100)} %`;
+      btnPlus.title = `Taille actuelle : ${Math.round(projectPinSizeScale * 100)} %`;
+    };
+
+    const setScale = (nextScale) => {
+      const clamped = clampProjectPinSizeScale(nextScale);
+      if (clamped === projectPinSizeScale) {
+        sync();
+        return;
+      }
+      projectPinSizeScale = clamped;
+      sync();
+      rerenderProjectPinsAfterSizeChange();
+    };
+
+    btnMinus.addEventListener("click", () => setScale(projectPinSizeScale - 0.1));
+    btnPlus.addEventListener("click", () => setScale(projectPinSizeScale + 0.1));
+
+    if (afterElement?.insertAdjacentElement) {
+      afterElement.insertAdjacentElement("afterend", wrap);
+    } else {
+      const target = document.getElementById("projectLabelsToggle")?.closest("label")
+        || document.getElementById("cityLabelsToggle")?.closest("label")
+        || document.getElementById("officesToggle")?.closest("label");
+      if (target?.insertAdjacentElement) target.insertAdjacentElement("afterend", wrap);
+    }
+
+    sync();
+  }
+
+
+
   const clusters = L.markerClusterGroup({
     chunkedLoading: true,
     chunkInterval: 10,
@@ -944,9 +1021,9 @@
 
       return L.divIcon({
         className: "pin-dot pin-dot-cluster-wrap",
-        html: `<div class="pin-dot-inner pin-dot-cluster" style="border-color:${col};"><span class="pin-dot-count">${count}</span></div>`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16]
+        html: `<div class="pin-dot-inner pin-dot-cluster" style="border-color:${col};${projectPinTransformStyle()}"><span class="pin-dot-count">${count}</span></div>`,
+        iconSize: [projectPinSize(32), projectPinSize(32)],
+        iconAnchor: [projectPinSize(16), projectPinSize(16)]
       });
     }
   });
@@ -1105,6 +1182,37 @@
           right: 12px !important;
           max-width: calc(100vw - 24px);
         }
+      }
+      .projectPinSizeControls {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin: 0;
+        padding: 0;
+        vertical-align: middle;
+        line-height: 1;
+      }
+      .projectPinSizeBtn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 20px;
+        padding: 2px 7px;
+        border: 1px solid rgba(15, 23, 42, 0.24);
+        border-radius: 999px;
+        background: #fff;
+        color: #111827;
+        font: inherit;
+        font-size: 12px;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .projectPinSizeBtn:hover:not(:disabled) {
+        background: #f3f4f6;
+      }
+      .projectPinSizeBtn:disabled {
+        opacity: 0.45;
+        cursor: default;
       }
       .cityLabel {
         position: absolute;
@@ -1341,6 +1449,7 @@ clusters.on("clustermouseout", (a) => {
 
   function initProjectLabelsToggle(afterElement) {
     if (document.getElementById("projectLabelsToggle")) {
+      initProjectPinSizeControls(document.getElementById("projectLabelsToggle")?.closest("label"));
       scheduleCityLabelsRender();
       return;
     }
@@ -1368,6 +1477,7 @@ clusters.on("clustermouseout", (a) => {
     }
 
     projectLabelsEnabled = false;
+    initProjectPinSizeControls(wrap);
     scheduleCityLabelsRender();
 
     cb.addEventListener("change", () => {
@@ -2861,9 +2971,9 @@ clusters.on("clustermouseout", (a) => {
       const marker = L.marker(ll, {
         icon: L.divIcon({
           className: "pin-dot",
-          html: `<div class="pin-dot-inner" style="border-color:${col};"></div>`,
-          iconSize: [22, 22],
-          iconAnchor: [11, 11]
+          html: `<div class="pin-dot-inner" style="border-color:${col};${projectPinTransformStyle()}"></div>`,
+          iconSize: [projectPinSize(22), projectPinSize(22)],
+          iconAnchor: [projectPinSize(11), projectPinSize(11)]
         })
       });
 
