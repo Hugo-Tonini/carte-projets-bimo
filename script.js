@@ -697,11 +697,11 @@
   const PROJECT_TYPE_CONFIG = Object.freeze({
     mom: { key: "mom", label: "MOM", color: "blue", aliases: ["mom"] },
     amo: { key: "amo", label: "AMO", color: "red", aliases: ["amo"] },
-    exp: { key: "exp", label: "EXP", color: "green", aliases: ["exp"] },
-    other: { key: "other", label: "Autres", color: "#09e6ed", aliases: ["autre", "autres"] }
+    exp: { key: "exp", label: "EXP", color: "green", aliases: ["exp"] }
   });
 
   const PROJECT_TYPE_FILTER_KEYS = Object.freeze(["mom", "amo", "exp"]);
+  const PROJECT_TYPE_CLUSTER_ORDER = Object.freeze(["amo", "mom", "exp"]);
 
   const PROJECT_TYPE_COLORS = Object.freeze(Object.fromEntries(
     Object.entries(PROJECT_TYPE_CONFIG).map(([key, config]) => [key, config.color])
@@ -713,7 +713,7 @@
 
   function projectTypeConfigByKey(typeKey) {
     const key = String(typeKey || "").toLowerCase().trim();
-    return PROJECT_TYPE_CONFIG[key] || PROJECT_TYPE_CONFIG.other;
+    return PROJECT_TYPE_CONFIG[key] || PROJECT_TYPE_CONFIG.mom;
   }
 
   function projectTypeColorByKey(typeKey) {
@@ -733,11 +733,7 @@
       if (config.aliases.some((alias) => text.includes(alias))) return config.key;
     }
 
-    if (PROJECT_TYPE_CONFIG.other.aliases.some((alias) => text.includes(alias))) {
-      return PROJECT_TYPE_CONFIG.other.key;
-    }
-
-    return PROJECT_TYPE_CONFIG.other.key;
+    return PROJECT_TYPE_CONFIG.mom.key;
   }
 
   function syncProjectTypeLegendColors() {
@@ -1236,19 +1232,50 @@
     zoomToBoundsOnClick: true,
     iconCreateFunction: (cluster) => {
       const children = cluster.getAllChildMarkers();
-      const types = new Set(children.map(m => (m.options && m.options.__bimoType) ? m.options.__bimoType : ""));
       const count = cluster.getChildCount();
+      const colorCounts = new Map();
 
-      // Si plusieurs types => couleur "Autres", sinon couleur du type
-      let col = PROJECT_TYPE_COLORS.other;
-      if (types.size === 1) {
-        const only = types.values().next().value;
-        col = only || PROJECT_TYPE_COLORS.other;
+      for (const marker of children) {
+        const color = String(marker?.options?.__bimoType || PROJECT_TYPE_COLORS.mom).trim();
+        if (!color) continue;
+        colorCounts.set(color, (colorCounts.get(color) || 0) + 1);
+      }
+
+      const orderedColors = PROJECT_TYPE_CLUSTER_ORDER
+        .map((typeKey) => PROJECT_TYPE_COLORS[typeKey])
+        .filter(Boolean);
+      const slices = [];
+
+      for (const color of orderedColors) {
+        const sliceCount = colorCounts.get(color) || 0;
+        if (sliceCount > 0) slices.push({ color, count: sliceCount });
+      }
+
+      for (const [color, sliceCount] of colorCounts.entries()) {
+        if (!orderedColors.includes(color) && sliceCount > 0) {
+          slices.push({ color, count: sliceCount });
+        }
+      }
+
+      const total = slices.reduce((sum, item) => sum + item.count, 0) || children.length || 1;
+      let clusterStyle = `border-color:${escapeAttr(PROJECT_TYPE_COLORS.mom)};${projectPinTransformStyle()}`;
+
+      if (slices.length === 1) {
+        clusterStyle = `border-color:${escapeAttr(slices[0].color)};${projectPinTransformStyle()}`;
+      } else if (slices.length > 1) {
+        let cursor = 0;
+        const gradientParts = slices.map((item, index) => {
+          const start = cursor;
+          const end = index === slices.length - 1 ? 100 : cursor + (item.count / total) * 100;
+          cursor = end;
+          return `${item.color} ${start.toFixed(3)}% ${end.toFixed(3)}%`;
+        });
+        clusterStyle = `border-color:transparent;background:conic-gradient(${gradientParts.join(", ")});${projectPinTransformStyle()}`;
       }
 
       return L.divIcon({
         className: "pin-dot pin-dot-cluster-wrap",
-        html: `<div class="projectPinScaleWrap"><div class="pin-dot-inner pin-dot-cluster" style="border-color:${col};${projectPinTransformStyle()}"><span class="pin-dot-count">${count}</span></div></div>`,
+        html: `<div class="projectPinScaleWrap"><div class="pin-dot-inner pin-dot-cluster" style="${clusterStyle}"><span class="pin-dot-count">${count}</span></div></div>`,
         iconSize: [projectPinSize(32), projectPinSize(32)],
         iconAnchor: [projectPinSize(16), projectPinSize(16)]
       });
