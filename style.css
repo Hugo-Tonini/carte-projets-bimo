@@ -21,6 +21,9 @@ html, body{ font-family:"Marianne", Arial, system-ui, -apple-system, Segoe UI, R
   --bg: #ffffff;
   --muted: #666;
   --accent: #000091;
+  --bimo-pin-other-color: #09e6ed;
+  --bimo-toolbar-control-height: 34px;
+  --bimo-completed-play-size: 29px;
 }
 
 *{ box-sizing: border-box; }
@@ -205,8 +208,8 @@ h1{ margin: 0; font-size: 20px; }
   grid-template-columns:1fr 1fr;
   align-items:center;
   width:196px;
-  height:34px;
-  min-height:34px;
+  height:var(--bimo-toolbar-control-height, 34px);
+  min-height:var(--bimo-toolbar-control-height, 34px);
   padding:1px;
   gap:1px;
   border:1px solid rgba(0,0,145,0.22);
@@ -266,6 +269,7 @@ h1{ margin: 0; font-size: 20px; }
   border-radius:10px;
   background:#fff;
   flex:0 0 auto;
+  min-height:var(--bimo-toolbar-control-height, 34px);
 }
 .completedYearFilter.is-visible{
   display:inline-flex;
@@ -322,8 +326,8 @@ h1{ margin: 0; font-size: 20px; }
   align-items:center;
   justify-content:center;
   flex:0 0 auto;
-  width:29px;
-  height:29px;
+  width:var(--bimo-completed-play-size, 29px);
+  height:var(--bimo-completed-play-size, 29px);
   padding:0;
   border:0;
   border-radius:999px;
@@ -2011,8 +2015,8 @@ body{
 
 .projectModeSwitch{
   width:196px;
-  height:34px;
-  min-height:34px;
+  height:var(--bimo-toolbar-control-height, 34px);
+  min-height:var(--bimo-toolbar-control-height, 34px);
   padding:1px;
   gap:1px;
 }
@@ -2392,9 +2396,7 @@ body{
 
 
 /* ===== Ajustements finaux : Autres + longueurs DPE/GES ===== */
-:root{
-  --bimo-pin-other-color: #09e6ed;
-}
+
 
 .pin-swatch.pin-swatch--autres,
 .pin-swatch.pin-swatch--other,
