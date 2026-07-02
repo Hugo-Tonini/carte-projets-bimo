@@ -829,11 +829,21 @@ h1{ margin: 0; font-size: 20px; }
 .pin-dot-inner.pin-dot-cluster{
   width: 18px;
   height: 18px;
-  border-width: 4px;
+  border: 0;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+
+.pin-dot-inner.pin-dot-cluster::before{
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.05);
+  z-index: 1;
 }
 
 .pin-dot-inner.pin-dot-cluster .pin-dot-count{
@@ -844,6 +854,7 @@ h1{ margin: 0; font-size: 20px; }
   justify-content: center;
   line-height: 1;
   text-align: center;
+  z-index: 2;
 }
 
 .pin-dot-count{
