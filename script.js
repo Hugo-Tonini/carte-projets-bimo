@@ -953,19 +953,19 @@
     const btnMinus = document.createElement("button");
     btnMinus.type = "button";
     btnMinus.className = "projectPinSizeBtn projectPinSizeBtn--minus";
-    btnMinus.textContent = "−";
+    btnMinus.innerHTML = '<span class="projectPinSizeGlyph" aria-hidden="true">−</span>';
     btnMinus.setAttribute("aria-label", "Diminuer la taille des pins projets");
 
     const btnReset = document.createElement("button");
     btnReset.type = "button";
     btnReset.className = "projectPinSizeBtn projectPinSizeBtn--reset";
-    btnReset.textContent = "o";
+    btnReset.innerHTML = '<span class="projectPinSizeGlyph" aria-hidden="true">O</span>';
     btnReset.setAttribute("aria-label", "Revenir à la taille originale des pins projets");
 
     const btnPlus = document.createElement("button");
     btnPlus.type = "button";
     btnPlus.className = "projectPinSizeBtn projectPinSizeBtn--plus";
-    btnPlus.textContent = "+";
+    btnPlus.innerHTML = '<span class="projectPinSizeGlyph" aria-hidden="true">+</span>';
     btnPlus.setAttribute("aria-label", "Augmenter la taille des pins projets");
 
     wrap.appendChild(btnMinus);
@@ -1209,7 +1209,7 @@
       }
       .projectPinSizeControls {
         display: inline-grid;
-        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-columns: repeat(3, 1fr);
         align-items: center;
         justify-items: center;
         width: 68px;
@@ -1222,29 +1222,39 @@
         background: #fff;
         overflow: hidden;
         vertical-align: middle;
-        line-height: 1;
+        line-height: 0;
         box-sizing: border-box;
       }
       .projectPinSizeBtn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        display: grid;
+        place-items: center;
         width: 100%;
         height: 100%;
         margin: 0;
-        padding: 0 0 1px 0;
+        padding: 0;
         border: 0;
-        border-right: 0;
         border-radius: 0;
         background: transparent;
         color: #111827;
         font: inherit;
-        font-size: 15px;
-        font-weight: 900;
-        line-height: 1;
+        line-height: 0;
         text-align: center;
         cursor: pointer;
         box-sizing: border-box;
+      }
+      .projectPinSizeGlyph {
+        display: block;
+        width: 100%;
+        height: 1em;
+        line-height: 1;
+        font-size: 16px;
+        font-weight: 900;
+        text-align: center;
+        transform: translateY(-1px);
+      }
+      .projectPinSizeBtn--reset .projectPinSizeGlyph {
+        font-size: 14px;
+        transform: translateY(-1px);
       }
       .projectPinSizeBtn:hover:not(:disabled) {
         background: #f3f4f6;
