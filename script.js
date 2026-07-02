@@ -620,12 +620,51 @@
     }).join("");
   }
 
-  const PROJECT_TYPE_COLORS = {
-    mom: "blue",
-    amo: "red",
-    exp: "green",
-    other: "#09e6ed"
-  };
+  const PROJECT_TYPE_CONFIG = Object.freeze({
+    mom: { key: "mom", label: "MOM", color: "blue", aliases: ["mom"] },
+    amo: { key: "amo", label: "AMO", color: "red", aliases: ["amo"] },
+    exp: { key: "exp", label: "EXP", color: "green", aliases: ["exp"] },
+    other: { key: "other", label: "Autres", color: "#09e6ed", aliases: ["autre", "autres"] }
+  });
+
+  const PROJECT_TYPE_FILTER_KEYS = Object.freeze(["mom", "amo", "exp"]);
+
+  const PROJECT_TYPE_COLORS = Object.freeze(Object.fromEntries(
+    Object.entries(PROJECT_TYPE_CONFIG).map(([key, config]) => [key, config.color])
+  ));
+
+  const PROJECT_TYPE_LABELS = Object.freeze(Object.fromEntries(
+    Object.entries(PROJECT_TYPE_CONFIG).map(([key, config]) => [key, config.label])
+  ));
+
+  function projectTypeConfigByKey(typeKey) {
+    const key = String(typeKey || "").toLowerCase().trim();
+    return PROJECT_TYPE_CONFIG[key] || PROJECT_TYPE_CONFIG.other;
+  }
+
+  function projectTypeColorByKey(typeKey) {
+    return projectTypeConfigByKey(typeKey).color;
+  }
+
+  function projectTypeLabelByKey(typeKey) {
+    return projectTypeConfigByKey(typeKey).label;
+  }
+
+  function projectTypeKeyFromText(value) {
+    const text = normalizeForLookup(value);
+    if (!text) return PROJECT_TYPE_CONFIG.mom.key;
+
+    for (const key of PROJECT_TYPE_FILTER_KEYS) {
+      const config = PROJECT_TYPE_CONFIG[key];
+      if (config.aliases.some((alias) => text.includes(alias))) return config.key;
+    }
+
+    if (PROJECT_TYPE_CONFIG.other.aliases.some((alias) => text.includes(alias))) {
+      return PROJECT_TYPE_CONFIG.other.key;
+    }
+
+    return PROJECT_TYPE_CONFIG.other.key;
+  }
 
   const ANTENNA_SUMMARY_PLACEMENTS = {
     // Chaque point sert de point d'accroche géographique Leaflet.
@@ -647,12 +686,11 @@
       const swatch = row.querySelector(".pin-swatch");
       if (!swatch) continue;
 
-      const text = normalizeForLookup(row.textContent || "");
-      let color = "";
-      if (text.includes("mom")) color = PROJECT_TYPE_COLORS.mom;
-      else if (text.includes("amo")) color = PROJECT_TYPE_COLORS.amo;
-      else if (text.includes("exp")) color = PROJECT_TYPE_COLORS.exp;
-      else if (text.includes("autre")) color = PROJECT_TYPE_COLORS.other;
+      const explicitType = String(swatch.dataset?.type || row.dataset?.type || "").toLowerCase().trim();
+      const typeKey = PROJECT_TYPE_CONFIG[explicitType]
+        ? explicitType
+        : projectTypeKeyFromText(row.textContent || "");
+      const color = projectTypeColorByKey(typeKey);
 
       if (color) swatch.style.borderColor = color;
     }
@@ -1940,17 +1978,13 @@ clusters.on("clustermouseout", (a) => {
   }
 
   function projectTypeKey(p) {
-    const t = projectType(p);
-    if (t.includes("mom")) return "mom";
-    if (t.includes("amo")) return "amo";
-    if (t.includes("exp")) return "exp";
-    return "other";
+    return projectTypeKeyFromText(projectType(p));
   }
 
   function getActiveSummaryTypes() {
     return Array.from(document.querySelectorAll(".typeFilter:checked"))
       .map((x) => String(x.value || "").toLowerCase().trim())
-      .filter((value) => ["mom", "amo", "exp"].includes(value));
+      .filter((value) => PROJECT_TYPE_FILTER_KEYS.includes(value));
   }
 
   function setAntennaSummaryEnabled(enabled, { adjustView = false } = {}) {
@@ -1994,7 +2028,10 @@ clusters.on("clustermouseout", (a) => {
     const activeTypeSet = new Set(activeTypes);
     const summaries = new Map();
     for (const antenna of ANTENNA_LEGEND_ORDER) {
-      summaries.set(antenna, { mom: 0, amo: 0, exp: 0, momAmount: 0 });
+      summaries.set(antenna, {
+        ...Object.fromEntries(PROJECT_TYPE_FILTER_KEYS.map((key) => [key, 0])),
+        momAmount: 0
+      });
     }
 
     for (const project of filteredProjectsForAntennaSummary()) {
@@ -2012,7 +2049,6 @@ clusters.on("clustermouseout", (a) => {
       }
     }
 
-    const typeLabels = { mom: "MOM", amo: "AMO", exp: "EXP" };
     let visibleCards = 0;
 
     for (const antenna of ANTENNA_LEGEND_ORDER) {
@@ -2027,7 +2063,7 @@ clusters.on("clustermouseout", (a) => {
               ? `${count} MOM pour ${escapeHtml(amount)}`
               : `${count} MOM`;
           }
-          return `${count} ${typeLabels[typeKey]}`;
+          return `${count} ${projectTypeLabelByKey(typeKey)}`;
         })
         .filter(Boolean);
 
@@ -2943,7 +2979,7 @@ clusters.on("clustermouseout", (a) => {
   function matchesFiltersWithoutCompletedYear(p) {
     const q = normalizeSearchText(elQ?.value || "");
     const types = getActiveTypes();
-    const t = projectType(p);
+    const t = projectTypeKey(p);
 
     if (types.length && !types.includes(t)) return false;
 
@@ -3282,12 +3318,7 @@ clusters.on("clustermouseout", (a) => {
 
   // ---- Pins projets ----
   function colorByType(t) {
-    if (!t) return PROJECT_TYPE_COLORS.mom;
-    const x = String(t).toLowerCase();
-    if (x.includes("amo")) return PROJECT_TYPE_COLORS.amo;
-    if (x.includes("mom")) return PROJECT_TYPE_COLORS.mom;
-    if (x.includes("exp")) return PROJECT_TYPE_COLORS.exp;
-    return PROJECT_TYPE_COLORS.other;
+    return projectTypeColorByKey(projectTypeKeyFromText(t));
   }
 
   function renderMarkers() {
