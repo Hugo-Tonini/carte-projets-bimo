@@ -335,17 +335,28 @@
 
     elProjectModeSwitch.style.height = `${referenceHeight}px`;
     elProjectModeSwitch.style.minHeight = `${referenceHeight}px`;
+    elProjectModeSwitch.style.display = 'inline-grid';
+    elProjectModeSwitch.style.gridTemplateColumns = '1fr 1fr';
+    elProjectModeSwitch.style.alignItems = 'stretch';
+    elProjectModeSwitch.style.justifyItems = 'stretch';
+    elProjectModeSwitch.style.boxSizing = 'border-box';
+    elProjectModeSwitch.style.overflow = 'hidden';
 
     const modeButtons = elProjectModeSwitch.querySelectorAll('.projectModeBtn');
     modeButtons.forEach((btn) => {
-      btn.style.height = '100%';
-      btn.style.minHeight = '100%';
-      btn.style.display = 'inline-flex';
+      btn.style.display = 'flex';
       btn.style.alignItems = 'center';
       btn.style.justifyContent = 'center';
+      btn.style.alignSelf = 'stretch';
+      btn.style.justifySelf = 'stretch';
+      btn.style.width = '100%';
+      btn.style.height = '100%';
+      btn.style.minHeight = '100%';
+      btn.style.margin = '0';
+      btn.style.padding = '0 14px';
       btn.style.lineHeight = '1';
-      btn.style.paddingTop = '0';
-      btn.style.paddingBottom = '0';
+      btn.style.textAlign = 'center';
+      btn.style.verticalAlign = 'middle';
       btn.style.boxSizing = 'border-box';
     });
 
@@ -1018,18 +1029,28 @@
         margin-top: 0;
       }
       .projectModeSwitch {
-        display: inline-flex;
-        align-items: center;
+        display: inline-grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        align-items: stretch !important;
+        justify-items: stretch !important;
+        box-sizing: border-box;
+        overflow: hidden;
       }
       .projectModeBtn {
-        display: inline-flex !important;
+        display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        box-sizing: border-box;
+        align-self: stretch !important;
+        justify-self: stretch !important;
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 100% !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+        padding: 0 14px !important;
         line-height: 1 !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-        vertical-align: middle;
+        text-align: center !important;
+        vertical-align: middle !important;
       }
       .cityLabel {
         position: absolute;
