@@ -97,6 +97,7 @@
   let cityLabelsEnabled = false;
   let projectLabelsEnabled = false;
   let projectPinSizeScale = 1;
+  let projectClusterDistanceScale = 1;
 
   // Focus antenne (pour foncer les départements de l’antenne sélectionnée)
   let selectedAntenna = null;
@@ -957,13 +958,32 @@
     return `transform:scale(${projectPinSizeScale});transform-origin:center center;`;
   }
 
+  function clampProjectClusterDistanceScale(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return 1;
+    return Math.max(0.4, Math.min(2.5, Math.round(n * 10) / 10));
+  }
+
+  function projectClusterMaxRadius() {
+    return Math.max(1, Math.round(10 * projectClusterDistanceScale));
+  }
+
+  function rerenderProjectClustersAfterDistanceChange() {
+    renderMarkers();
+    scheduleCityLabelsRender();
+  }
+
+
   function rerenderProjectPinsAfterSizeChange() {
     renderMarkers();
     scheduleCityLabelsRender();
   }
 
   function initProjectPinSizeControls(afterElement) {
-    if (document.getElementById("projectPinSizeControls")) return;
+    if (document.getElementById("projectPinSizeControls")) {
+      initProjectClusterDistanceControls(document.getElementById("projectPinSizeControls"));
+      return;
+    }
 
     const wrap = document.createElement("span");
     wrap.id = "projectPinSizeControls";
@@ -1031,12 +1051,84 @@
   }
 
 
+  function initProjectClusterDistanceControls(afterElement) {
+    if (document.getElementById("projectClusterDistanceControls")) return;
+
+    const wrap = document.createElement("span");
+    wrap.id = "projectClusterDistanceControls";
+    wrap.className = "projectClusterDistanceControls";
+    wrap.setAttribute("aria-label", "Distance de regroupement des clusters projets");
+    wrap.title = "Distance clusters";
+
+    const btnMinus = document.createElement("button");
+    btnMinus.type = "button";
+    btnMinus.className = "projectClusterDistanceBtn projectClusterDistanceBtn--minus";
+    btnMinus.innerHTML = '<span class="projectPinSizeGlyph projectPinSizeGlyph--minus" aria-hidden="true"></span>';
+    btnMinus.setAttribute("aria-label", "Diminuer la distance de regroupement des clusters projets");
+
+    const btnReset = document.createElement("button");
+    btnReset.type = "button";
+    btnReset.className = "projectClusterDistanceBtn projectClusterDistanceBtn--reset";
+    btnReset.innerHTML = '<span class="projectPinSizeGlyph" aria-hidden="true">O</span>';
+    btnReset.setAttribute("aria-label", "Revenir à la distance originale de regroupement des clusters projets");
+
+    const btnPlus = document.createElement("button");
+    btnPlus.type = "button";
+    btnPlus.className = "projectClusterDistanceBtn projectClusterDistanceBtn--plus";
+    btnPlus.innerHTML = '<span class="projectPinSizeGlyph projectPinSizeGlyph--plus" aria-hidden="true"></span>';
+    btnPlus.setAttribute("aria-label", "Augmenter la distance de regroupement des clusters projets");
+
+    wrap.appendChild(btnMinus);
+    wrap.appendChild(btnReset);
+    wrap.appendChild(btnPlus);
+
+    const sync = () => {
+      const pct = Math.round(projectClusterDistanceScale * 100);
+      btnMinus.disabled = projectClusterDistanceScale <= 0.4;
+      btnPlus.disabled = projectClusterDistanceScale >= 2.5;
+      btnReset.disabled = projectClusterDistanceScale === 1;
+      btnReset.classList.toggle("is-active", projectClusterDistanceScale === 1);
+      btnMinus.title = `Distance clusters : ${pct} %`;
+      btnReset.title = "Revenir à la distance clusters originale";
+      btnPlus.title = `Distance clusters : ${pct} %`;
+    };
+
+    const setScale = (nextScale) => {
+      const clamped = clampProjectClusterDistanceScale(nextScale);
+      if (clamped === projectClusterDistanceScale) {
+        sync();
+        return;
+      }
+      projectClusterDistanceScale = clamped;
+      sync();
+      rerenderProjectClustersAfterDistanceChange();
+    };
+
+    btnMinus.addEventListener("click", () => setScale(projectClusterDistanceScale - 0.1));
+    btnReset.addEventListener("click", () => setScale(1));
+    btnPlus.addEventListener("click", () => setScale(projectClusterDistanceScale + 0.1));
+
+    if (afterElement?.insertAdjacentElement) {
+      afterElement.insertAdjacentElement("afterend", wrap);
+    } else {
+      const target = document.getElementById("projectPinSizeControls")
+        || document.getElementById("projectLabelsToggle")?.closest("label")
+        || document.getElementById("cityLabelsToggle")?.closest("label")
+        || document.getElementById("officesToggle")?.closest("label");
+      if (target?.insertAdjacentElement) target.insertAdjacentElement("afterend", wrap);
+    }
+
+    sync();
+  }
+
+
+
 
   const clusters = L.markerClusterGroup({
     chunkedLoading: true,
     chunkInterval: 10,
     spiderfyOnMaxZoom: true,
-    maxClusterRadius: 10,
+    maxClusterRadius: () => projectClusterMaxRadius(),
     spiderfyDistanceMultiplier: 3.5,
     showCoverageOnHover: false,
     zoomToBoundsOnClick: true,
@@ -1295,8 +1387,8 @@
         border-radius: 999px;
       }
       .projectPinSizeGlyph--minus::before {
-        left: 2px;
-        right: 2px;
+        left: 1px;
+        right: 1px;
         top: 50%;
         height: 2px;
         transform: translateY(-50%) translateX(1px);
@@ -1333,6 +1425,78 @@
       }
       .projectPinSizeBtn--reset.is-active {
         color: #000080;
+      }
+      .projectClusterDistanceControls {
+        display: inline-grid;
+        grid-template-columns: repeat(3, 1fr);
+        align-items: center;
+        justify-items: center;
+        width: 68px;
+        height: 24px;
+        min-height: 24px;
+        margin: 0;
+        padding: 0;
+        border: 1px solid rgba(15, 23, 42, 0.24);
+        border-radius: 999px;
+        background: #fff;
+        overflow: hidden;
+        vertical-align: middle;
+        line-height: 0;
+        box-sizing: border-box;
+      }
+      .projectClusterDistanceBtn {
+        display: grid;
+        place-items: center;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        color: #111827;
+        font: inherit;
+        line-height: 0;
+        text-align: center;
+        cursor: pointer;
+        box-sizing: border-box;
+      }
+      .projectClusterDistanceBtn:hover:not(:disabled) {
+        background: #f3f4f6;
+      }
+      .projectClusterDistanceBtn:disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
+      .projectClusterDistanceBtn--reset.is-active {
+        color: #000080;
+      }
+      .projectClusterDistanceBtn--minus .projectPinSizeGlyph::before {
+        left: 1px;
+        right: 1px;
+        top: 50%;
+        height: 2px;
+        transform: translateY(-50%) translateX(1px);
+      }
+      .projectClusterDistanceBtn--plus .projectPinSizeGlyph::before {
+        left: 2px;
+        right: 2px;
+        top: 50%;
+        height: 2px;
+        transform: translateY(-50%) translateX(-1px);
+      }
+      .projectClusterDistanceBtn--plus .projectPinSizeGlyph::after {
+        top: 2px;
+        bottom: 2px;
+        left: 50%;
+        width: 2px;
+        transform: translateX(-50%) translateX(-1px);
+      }
+      .projectPinControlsGroup {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        vertical-align: middle;
       }
       .cityLabel {
         position: absolute;
