@@ -2106,8 +2106,134 @@ clusters.on("clustermouseout", (a) => {
     document.head.appendChild(style);
   }
 
+
+  function ensurePrintStaticSnapshotStyles() {
+    if (document.getElementById("bimoPrintStaticSnapshotStyles")) return;
+
+    const style = document.createElement("style");
+    style.id = "bimoPrintStaticSnapshotStyles";
+    style.textContent = `
+      .bimoPrintPage {
+        position: fixed;
+        left: -100000px;
+        top: 0;
+        width: 297mm;
+        height: 210mm;
+        overflow: hidden;
+        background: #fff;
+        opacity: 0;
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      .bimoPrintPageMap {
+        position: absolute !important;
+        left: 6mm !important;
+        top: 6mm !important;
+        width: 285mm !important;
+        height: 198mm !important;
+        min-height: 198mm !important;
+        overflow: hidden !important;
+        background: #e5e7eb !important;
+        border: 0 !important;
+        box-shadow: none !important;
+      }
+
+      .bimoPrintPageMap .leaflet-control-container,
+      .bimoPrintPageMap .leaflet-control-attribution,
+      .bimoPrintPageMap .bimoZoomSlider,
+      .bimoPrintPageMap .projTooltip {
+        display: none !important;
+        visibility: hidden !important;
+      }
+
+      .bimoPrintPageLegend {
+        position: absolute !important;
+        left: 8mm !important;
+        bottom: 8mm !important;
+        z-index: 20 !important;
+        max-width: 84mm !important;
+        max-height: 64mm !important;
+        overflow: hidden !important;
+        background: rgba(255, 255, 255, 0.94) !important;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.18) !important;
+        border: 1px solid rgba(15, 23, 42, 0.14) !important;
+      }
+
+      .bimoPrintPageOverseas {
+        position: absolute !important;
+        top: 8mm !important;
+        right: 8mm !important;
+        z-index: 21 !important;
+        max-width: 94mm !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+      }
+
+      @media print {
+        body.bimo-print-static > *:not(#bimoPrintPage) {
+          display: none !important;
+          visibility: hidden !important;
+        }
+
+        body.bimo-print-static #bimoPrintPage {
+          display: block !important;
+          position: fixed !important;
+          left: 0 !important;
+          top: 0 !important;
+          width: 297mm !important;
+          height: 210mm !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          overflow: hidden !important;
+          background: #fff !important;
+          opacity: 1 !important;
+          pointer-events: none !important;
+          z-index: 2147483647 !important;
+          visibility: visible !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+
+        body.bimo-print-static #bimoPrintPage,
+        body.bimo-print-static #bimoPrintPage * {
+          visibility: visible !important;
+          opacity: 1 !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+
+        body.bimo-print-static #bimoPrintMapClone {
+          display: block !important;
+          position: absolute !important;
+          left: 6mm !important;
+          top: 6mm !important;
+          width: 285mm !important;
+          height: 198mm !important;
+          min-height: 198mm !important;
+          transform: none !important;
+          overflow: hidden !important;
+          background: #e5e7eb !important;
+          z-index: 1 !important;
+        }
+
+        body.bimo-print-static #bimoPrintLegendClone {
+          display: block !important;
+        }
+
+        body.bimo-print-static .bimoPrintPageOverseas {
+          display: grid !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   function initPrintControls() {
     ensurePrintStyles();
+    ensurePrintStaticSnapshotStyles();
 
     let btn = document.getElementById("mapPrintBtn");
 
@@ -2609,12 +2735,70 @@ clusters.on("clustermouseout", (a) => {
     });
   }
 
+
+  function removeStaticPrintPage() {
+    const page = document.getElementById("bimoPrintPage");
+    if (page) page.remove();
+    document.body.classList.remove("bimo-print-static");
+  }
+
+  function createStaticPrintPage(options) {
+    ensurePrintStaticSnapshotStyles();
+    removeStaticPrintPage();
+
+    const page = document.createElement("div");
+    page.id = "bimoPrintPage";
+    page.className = "bimoPrintPage";
+    page.setAttribute("aria-hidden", "true");
+
+    const mapClone = mapEl.cloneNode(true);
+    mapClone.id = "bimoPrintMapClone";
+    mapClone.classList.add("bimoPrintPageMap");
+    mapClone.removeAttribute("tabindex");
+    mapClone.querySelectorAll(".leaflet-control-container, .leaflet-control-attribution, .bimoZoomSlider, .projTooltip, script").forEach((node) => node.remove());
+    mapClone.querySelectorAll(".leaflet-tile").forEach((tile) => {
+      if (tile instanceof HTMLImageElement) {
+        tile.loading = "eager";
+        tile.decoding = "sync";
+      }
+    });
+    page.appendChild(mapClone);
+
+    if (options.showLegend && elLegend && !elLegend.hidden) {
+      const legendClone = elLegend.cloneNode(true);
+      legendClone.id = "bimoPrintLegendClone";
+      legendClone.classList.add("bimoPrintPageLegend");
+      page.appendChild(legendClone);
+    }
+
+    const overseasInset = document.querySelector(".bimoPrintOverseasInset");
+    if (overseasInset) {
+      const overseasClone = overseasInset.cloneNode(true);
+      overseasClone.classList.add("bimoPrintPageOverseas");
+      page.appendChild(overseasClone);
+    }
+
+    document.body.appendChild(page);
+    document.body.classList.add("bimo-print-static");
+    return page;
+  }
+
+  function cleanupStaticPrintLayout() {
+    removeStaticPrintPage();
+    document.body.classList.remove("bimo-print-mode", "bimo-print-no-legend");
+    removePrintOverseasInset();
+    window.setTimeout(() => {
+      map.invalidateSize(true);
+      renderMapLabels();
+      updateClearButtonState();
+    }, 80);
+  }
+
   async function prepareAndPrintMap(options) {
     try {
-      // Les réglages choisis servent maintenant aussi de réglages de carte.
-      // On ne restaure plus l'ancien état après l'impression : cela évite les
-      // problèmes de timing avec l'aperçu PDF de Chrome/Edge et garde la carte
-      // exactement comme elle a été préparée.
+      // Les réglages choisis servent aussi de réglages de carte.
+      // Pour l'impression, on crée ensuite une copie statique de la carte déjà rendue :
+      // Chrome/Edge imprime cette copie au lieu de recalculer Leaflet en mode print.
       applyPrintState(options);
       const bounds = options.scope === "antenna" ? antennaBounds(options.antenna) : FRANCE_BOUNDS;
 
@@ -2628,13 +2812,18 @@ clusters.on("clustermouseout", (a) => {
       await waitForAnimationFrames(2);
       map.invalidateSize(true);
       renderMapLabels();
-      await waitForLeafletTiles(2800);
-      await waitForAnimationFrames(2);
-      updateClearButtonState();
+      await waitForLeafletTiles(3200);
+      await waitForAnimationFrames(4);
 
+      createStaticPrintPage(options);
+      await waitForAnimationFrames(2);
+
+      const cleanupAfterPrint = () => cleanupStaticPrintLayout();
+      window.addEventListener("afterprint", cleanupAfterPrint, { once: true });
       window.print();
     } catch (err) {
       console.error("[BIMO] Impression impossible", err);
+      cleanupStaticPrintLayout();
       window.alert("L’impression n’a pas pu être préparée. Consultez la console pour le détail technique.");
     }
   }
