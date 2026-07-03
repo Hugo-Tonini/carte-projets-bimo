@@ -5,11 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Carte des projets en cours du BIMO</title>
   <meta name="description" content="Carte interactive des projets en cours et finis du BIMO." />
-
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin="anonymous" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin="anonymous" />
-
   <link rel="preload" href="assets/fonts/Marianne-Regular.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/fonts/Marianne-Bold.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/fonts/Marianne-ExtraBold.woff2" as="font" type="font/woff2" crossorigin />
@@ -31,7 +29,6 @@
         </label>
       </div>
     </div>
-
     <div id="toolbar" class="toolbar" role="region" aria-label="Filtres">
       <fieldset class="types" aria-label="Type de projet">
         <legend class="sr-only">Type de projet</legend>
@@ -39,18 +36,14 @@
         <label><input class="typeFilter" type="checkbox" value="AMO" checked /> AMO</label>
         <label><input class="typeFilter" type="checkbox" value="EXP" checked /> EXP</label>
       </fieldset>
-
       <button id="clear" type="button">Réinitialiser</button>
       <button id="antennaSummaryBtn" type="button" aria-pressed="false" aria-controls="antennaSummaryOverlay">Synthèse</button>
       <button id="projListBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="projListMenu">Liste projets</button>
       <button id="advancedFiltersBtn" type="button" aria-expanded="false" aria-controls="advancedFiltersPanel">Filtres avancés</button>
-      <button id="mapPrintBtn" class="bimoPrintBtn" type="button" aria-label="Préparer l’impression de la carte">Imprimer</button>
-
       <div id="projectModeSwitch" class="projectModeSwitch" role="group" aria-label="Afficher les projets en cours ou les projets finis">
         <button id="currentProjectsBtn" class="projectModeBtn is-active" type="button" data-project-mode="current" aria-pressed="true">En cours</button>
         <button id="completedProjectsBtn" class="projectModeBtn" type="button" data-project-mode="completed" aria-pressed="false">Finis</button>
       </div>
-
       <div id="advancedFiltersPanel" class="advancedFiltersPanel" hidden role="region" aria-label="Filtres avancés">
         <div class="advancedFiltersGrid">
           <label>Montant min.
@@ -90,7 +83,6 @@
           </label>
         </div>
       </div>
-
       <div id="projListMenu" class="projListMenu" hidden role="region" aria-label="Liste des projets">
         <div class="projListTop">
           <input id="projListSearch" class="projListSearch" type="text" placeholder="Rechercher un projet…" autocomplete="off" aria-label="Rechercher dans la liste des projets" />
@@ -108,13 +100,11 @@
         </div>
         <div id="projListItems" class="projListItems"></div>
       </div>
-
       <div class="brand" aria-label="Ministères économiques et financiers">
         <img class="brandLogo" src="assets/logo-ministere.png" alt="Ministères économiques et financiers – Secrétariat général" />
       </div>
     </div>
   </header>
-
   <main id="layout" class="layout">
     <div id="map" class="map" role="region" tabindex="0" aria-label="Carte des projets du BIMO" aria-describedby="mapHelp"></div>
     <p id="mapHelp" class="sr-only">Carte interactive. Utilisez les contrôles de zoom, les filtres et la liste des projets pour naviguer dans les projets.</p>
@@ -131,9 +121,8 @@
     </div>
     <div id="status" class="status" aria-live="polite" hidden></div>
   </main>
-
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin="anonymous"></script>
-  <script src="script.js?v=2026-07-03-print8"></script>
+  <script src="script.js?v=2026-07-02c"></script>
 </body>
 </html>
