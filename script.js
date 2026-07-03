@@ -4678,7 +4678,8 @@ clusters.on("clustermouseout", (a) => {
     .printStatus{ font-size:13px; color:#555; font-weight:700; }
     .sheetWrap{ min-height:calc(100vh - 58px); display:flex; align-items:center; justify-content:center; padding:10px; }
     .sheet{ position:relative; width:297mm; height:210mm; max-width:calc(100vw - 36px); max-height:calc((100vw - 36px) * 210 / 297); aspect-ratio:297/210; background:#fff; box-shadow:0 12px 34px rgba(0,0,0,.24); overflow:hidden; }
-    #printMap{ position:absolute; inset:2mm; background:#fff; }
+    #printMap{ position:absolute; inset:2mm; background:#fff; pointer-events:none!important; }
+    #printMap *, #printMap .leaflet-container, #printMap .leaflet-pane, #printMap .leaflet-layer, #printMap .leaflet-marker-pane, #printMap .leaflet-overlay-pane{ pointer-events:none!important; }
     .printLegend{ position:absolute; left:5mm; bottom:5mm; z-index:1500; max-width:72mm; max-height:86mm; overflow:hidden; padding:8px 10px; border:1px solid #d0d0d0; border-radius:10px; background:rgba(255,255,255,.96); box-shadow:0 6px 18px rgba(0,0,0,.14); font-size:11px; line-height:1.25; }
     .printLegendTitle,.printLegendSubtitle{ font-weight:800; margin-bottom:6px; }
     .printLegendSubtitle{ margin-top:8px; }
@@ -4992,15 +4993,69 @@ clusters.on("clustermouseout", (a) => {
       return { overlay, svg, html, width: size.x, height: size.y };
     }
 
-    function appendLeaderLine(svg, anchorPoint, labelRect) {
+    function appendLeaderLine(svg, anchorPoint, labelRect, labelId = "") {
       const labelEdgeX = Math.max(labelRect.left, Math.min(anchorPoint.x, labelRect.right));
       const labelEdgeY = Math.max(labelRect.top, Math.min(anchorPoint.y, labelRect.bottom));
       const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      if (labelId) line.dataset.printLabelId = labelId;
       line.setAttribute("x1", String(Math.round(anchorPoint.x)));
       line.setAttribute("y1", String(Math.round(anchorPoint.y)));
       line.setAttribute("x2", String(Math.round(labelEdgeX)));
       line.setAttribute("y2", String(Math.round(labelEdgeY)));
       svg.appendChild(line);
+      return line;
+    }
+
+    function expandRect(rect, margin = 0) {
+      return {
+        left: rect.left - margin,
+        top: rect.top - margin,
+        right: rect.right + margin,
+        bottom: rect.bottom + margin,
+        width: rect.width + margin * 2,
+        height: rect.height + margin * 2
+      };
+    }
+
+    function removePrintedLabel(label) {
+      if (!label) return;
+      const id = label.dataset?.printLabelId || "";
+      if (id) {
+        const root = label.closest?.(".leaflet-container") || document;
+        root.querySelectorAll(`[data-print-label-id="${id}"]`).forEach((node) => {
+          if (node !== label) node.remove();
+        });
+      }
+      label.remove();
+    }
+
+    function pruneOverlappingPrintedLabels(map) {
+      const mapContainer = map?.getContainer?.();
+      if (!mapContainer) return;
+
+      const keptRects = [];
+      for (const selector of [".printLegend:not([hidden])", ".printMapTitle"]) {
+        const rect = rectFromElementInMap(document.querySelector(selector), mapContainer);
+        if (rect) keptRects.push(expandRect(rect, 6));
+      }
+
+      const labels = Array.from(mapContainer.querySelectorAll(".printLabel"));
+      labels.forEach((label) => {
+        const rect = rectFromElementInMap(label, mapContainer);
+        if (!rect) {
+          removePrintedLabel(label);
+          return;
+        }
+
+        const safeRect = expandRect(rect, 4);
+        const hasOverlap = keptRects.some((kept) => rectsOverlap(safeRect, kept, 0));
+        if (hasOverlap) {
+          removePrintedLabel(label);
+          return;
+        }
+
+        keptRects.push(safeRect);
+      });
     }
 
     function buildLabelCandidates(labelWidth, labelHeight, kind = "city") {
@@ -5061,6 +5116,8 @@ clusters.on("clustermouseout", (a) => {
       const el = document.createElement("div");
       el.className = className;
       el.textContent = text;
+      const labelId = `print-label-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      el.dataset.printLabelId = labelId;
       el.style.visibility = "hidden";
       el.style.left = "-9999px";
       el.style.top = "-9999px";
@@ -5099,7 +5156,7 @@ clusters.on("clustermouseout", (a) => {
 
       placedRects.push(best.rect);
       el.style.visibility = "visible";
-      if (best.leader) appendLeaderLine(svg, anchorPoint, best.rect);
+      if (best.leader) appendLeaderLine(svg, anchorPoint, best.rect, labelId);
       return true;
     }
 
@@ -5214,13 +5271,15 @@ clusters.on("clustermouseout", (a) => {
       const container = map?.getContainer?.();
       if (!container || container.__bimoPrintInteractionsLocked) return;
       container.__bimoPrintInteractionsLocked = true;
+      container.style.pointerEvents = "none";
+      container.setAttribute("tabindex", "-1");
 
       const stopMapInteraction = (event) => {
         event.preventDefault();
-        event.stopPropagation();
+        event.stopImmediatePropagation();
       };
 
-      ["wheel", "mousewheel", "DOMMouseScroll", "dblclick", "mousedown", "pointerdown", "touchstart", "touchmove"].forEach((eventName) => {
+      ["wheel", "mousewheel", "DOMMouseScroll", "dblclick", "mousedown", "pointerdown", "touchstart", "touchmove", "keydown"].forEach((eventName) => {
         container.addEventListener(eventName, stopMapInteraction, { passive: false, capture: true });
       });
     }
@@ -5246,7 +5305,7 @@ clusters.on("clustermouseout", (a) => {
       if (isAntennaScope) {
         const currentZoom = map.getZoom();
         if (Number.isFinite(currentZoom)) {
-          const boostedZoom = Math.min(19, currentZoom + 0.18);
+          const boostedZoom = Math.min(19, currentZoom + 0.35);
           map.setView(bounds.getCenter(), boostedZoom, { animate: false });
         }
       }
@@ -5340,6 +5399,8 @@ clusters.on("clustermouseout", (a) => {
       map.invalidateSize(true);
       lockPrintMapZoom(map);
       renderMapLabels(map);
+      await wait(80);
+      pruneOverlappingPrintedLabels(map);
 
       const projectCount = (payload.projects || []).length;
       const scopeLabel = payload.scope === "antenna" && payload.scopeAntenna
@@ -5361,7 +5422,7 @@ clusters.on("clustermouseout", (a) => {
     });
   }
 
-  console.info("[BIMO] module impression carte actuelle v4 chargé");
+  console.info("[BIMO] module impression carte actuelle v5 chargé");
   initMapPrintModule();
   // ---- FIN MODULE IMPRESSION A4 - CARTE ACTUELLE ----
 
