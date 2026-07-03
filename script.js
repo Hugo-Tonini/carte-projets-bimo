@@ -132,6 +132,9 @@
   let suppressProjectUrlUpdate = false;
   let completedTimelineOutOfRangeReported = false;
   let mapLabelsRenderFrame = 0;
+  let printDepartmentsVisibleOverride = null;
+  let printModalEl = null;
+  const OVERSEAS_DEPT_CODES = Object.freeze(new Set(["971", "972", "973", "974", "975", "976"]));
 
   function markerElement(marker) {
     if (!marker || typeof marker.getElement !== "function") return null;
@@ -1680,7 +1683,834 @@ clusters.on("clustermouseout", (a) => {
       renderOffices();
     });
 
+
     renderOffices();
+  }
+
+  function ensurePrintStyles() {
+    if (document.getElementById("bimoPrintStyles")) return;
+
+    const style = document.createElement("style");
+    style.id = "bimoPrintStyles";
+    style.textContent = `
+      .bimoPrintBtn {
+        white-space: nowrap;
+      }
+
+      .bimoPrintModalBackdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 100000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+        background: rgba(15, 23, 42, 0.45);
+      }
+
+      .bimoPrintModal {
+        width: min(760px, calc(100vw - 24px));
+        max-height: calc(100vh - 36px);
+        overflow: auto;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 24px 70px rgba(15, 23, 42, 0.30);
+        color: #111827;
+      }
+
+      .bimoPrintModalHeader {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 20px 22px 14px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .bimoPrintModalTitle {
+        margin: 0 0 4px;
+        font-size: 1.2rem;
+        line-height: 1.2;
+      }
+
+      .bimoPrintModalIntro {
+        margin: 0;
+        color: #4b5563;
+        font-size: 0.92rem;
+      }
+
+      .bimoPrintClose {
+        border: 0;
+        border-radius: 999px;
+        width: 34px;
+        height: 34px;
+        background: #f3f4f6;
+        color: #111827;
+        font-size: 1.2rem;
+        cursor: pointer;
+      }
+
+      .bimoPrintForm {
+        padding: 18px 22px 22px;
+      }
+
+      .bimoPrintFieldset {
+        margin: 0 0 16px;
+        padding: 14px 16px;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+      }
+
+      .bimoPrintFieldset legend {
+        padding: 0 6px;
+        font-weight: 700;
+      }
+
+      .bimoPrintGrid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px 18px;
+      }
+
+      .bimoPrintOption,
+      .bimoPrintRadio {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 30px;
+        font-size: 0.94rem;
+      }
+
+      .bimoPrintScopeRow {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px 18px;
+      }
+
+      .bimoPrintSelect {
+        min-width: min(330px, 100%);
+        padding: 7px 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        background: #fff;
+        font: inherit;
+      }
+
+      .bimoPrintPinControls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .bimoPrintPinBtn {
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        min-width: 38px;
+        height: 34px;
+        background: #f8fafc;
+        color: #111827;
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      .bimoPrintPinValue {
+        min-width: 74px;
+        text-align: center;
+        font-weight: 700;
+      }
+
+      .bimoPrintActions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding-top: 4px;
+      }
+
+      .bimoPrintActionBtn {
+        border: 1px solid #cbd5e1;
+        border-radius: 12px;
+        padding: 9px 14px;
+        background: #fff;
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      .bimoPrintActionBtn--primary {
+        border-color: #111827;
+        background: #111827;
+        color: #fff;
+      }
+
+      .bimoPrintOverseasInset {
+        position: absolute;
+        right: 14px;
+        top: 14px;
+        z-index: 9000;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(92px, 1fr));
+        gap: 7px;
+        max-width: min(330px, 38vw);
+        padding: 8px;
+        border: 1px solid rgba(17, 24, 39, 0.22);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.16);
+        pointer-events: none;
+      }
+
+      .bimoPrintOverseasTitle {
+        grid-column: 1 / -1;
+        font-weight: 800;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #111827;
+      }
+
+      .bimoPrintOverseasDept {
+        position: relative;
+        min-height: 68px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #f8fafc, #eef2ff);
+        overflow: hidden;
+      }
+
+      .bimoPrintOverseasPins {
+        display: flex;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        gap: 4px;
+        padding: 8px 8px 24px;
+      }
+
+      .bimoPrintOverseasPin {
+        width: 12px;
+        height: 12px;
+        border: 3px solid #2563eb;
+        border-radius: 999px;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.28);
+      }
+
+      .bimoPrintOverseasNames {
+        padding: 0 8px 25px;
+        font-size: 0.68rem;
+        line-height: 1.15;
+        color: #111827;
+      }
+
+      .bimoPrintOverseasProjectName {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .bimoPrintOverseasDeptName {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 4px 6px;
+        background: rgba(255, 255, 255, 0.92);
+        border-top: 1px solid rgba(148, 163, 184, 0.45);
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-align: center;
+      }
+
+      @media (max-width: 720px) {
+        .bimoPrintGrid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media print {
+        @page {
+          size: A4 landscape;
+          margin: 6mm;
+        }
+
+        html,
+        body {
+          width: 100%;
+          height: 100%;
+          margin: 0 !important;
+          padding: 0 !important;
+          overflow: hidden !important;
+          background: #fff !important;
+        }
+
+        body.bimo-print-mode > * {
+          visibility: hidden !important;
+        }
+
+        body.bimo-print-mode #map,
+        body.bimo-print-mode #map *,
+        body.bimo-print-mode #legend,
+        body.bimo-print-mode #legend *,
+        body.bimo-print-mode .bimoPrintOverseasInset,
+        body.bimo-print-mode .bimoPrintOverseasInset * {
+          visibility: visible !important;
+        }
+
+        body.bimo-print-mode #map {
+          position: fixed !important;
+          inset: 0 !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          min-height: 0 !important;
+          z-index: 1 !important;
+          background: #fff !important;
+        }
+
+        body.bimo-print-mode .leaflet-control-container,
+        body.bimo-print-mode .leaflet-control-container * {
+          visibility: hidden !important;
+        }
+
+        body.bimo-print-mode #legend,
+        body.bimo-print-mode #legend * {
+          visibility: visible !important;
+        }
+
+        body.bimo-print-mode #legend {
+          display: block !important;
+          position: fixed !important;
+          left: 8mm !important;
+          bottom: 8mm !important;
+          z-index: 10000 !important;
+          max-width: 84mm !important;
+          max-height: 64mm !important;
+          overflow: hidden !important;
+          background: rgba(255, 255, 255, 0.94) !important;
+          box-shadow: 0 2px 10px rgba(15, 23, 42, 0.18) !important;
+          border: 1px solid rgba(15, 23, 42, 0.14) !important;
+        }
+
+        body.bimo-print-mode.bimo-print-no-legend #legend {
+          display: none !important;
+          visibility: hidden !important;
+        }
+
+        body.bimo-print-mode .bimoPrintOverseasInset {
+          position: fixed !important;
+          top: 8mm !important;
+          right: 8mm !important;
+          z-index: 10001 !important;
+          max-width: 94mm !important;
+          box-shadow: 0 2px 10px rgba(15, 23, 42, 0.16) !important;
+        }
+
+        body.bimo-print-mode .bimoPrintModalBackdrop,
+        body.bimo-print-mode .projTooltip,
+        body.bimo-print-mode #panel,
+        body.bimo-print-mode .panel,
+        body.bimo-print-mode .leaflet-control-attribution,
+        body.bimo-print-mode .bimoZoomSlider,
+        body.bimo-print-mode .leaflet-control-zoom {
+          display: none !important;
+          visibility: hidden !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function initPrintControls() {
+    ensurePrintStyles();
+
+    if (document.getElementById("mapPrintBtn")) return;
+
+    const btn = document.createElement("button");
+    btn.id = "mapPrintBtn";
+    btn.type = "button";
+    btn.textContent = "Imprimer";
+    btn.className = `${elAdvancedFiltersBtn?.className || ""} bimoPrintBtn`.trim() || "bimoPrintBtn";
+    btn.setAttribute("aria-label", "Préparer l’impression de la carte");
+
+    const target = elAdvancedFiltersBtn || elProjListBtn || elClear || elProjectModeSwitch;
+    if (target?.insertAdjacentElement) {
+      target.insertAdjacentElement("afterend", btn);
+    } else if (mapEl?.parentNode) {
+      mapEl.parentNode.insertBefore(btn, mapEl);
+    }
+
+    btn.addEventListener("click", openPrintModal);
+    syncToolbarControlHeights();
+  }
+
+  function activeTypeFilterKeys() {
+    return Array.from(document.querySelectorAll(".typeFilter:checked"))
+      .map((input) => String(input.value || "").toLowerCase().trim())
+      .filter((value) => PROJECT_TYPE_FILTER_KEYS.includes(value));
+  }
+
+  function setTypeFilterKeys(typeKeys) {
+    const wanted = new Set(typeKeys || []);
+    document.querySelectorAll(".typeFilter").forEach((input) => {
+      const key = String(input.value || "").toLowerCase().trim();
+      input.checked = wanted.has(key);
+    });
+  }
+
+  function clampPrintPinScale(value) {
+    return clampProjectPinSizeScale(value);
+  }
+
+  function openPrintModal() {
+    ensurePrintStyles();
+    closePrintModal();
+
+    let localPinScale = projectPinSizeScale;
+    const activeTypes = new Set(activeTypeFilterKeys());
+    if (!activeTypes.size) PROJECT_TYPE_FILTER_KEYS.forEach((key) => activeTypes.add(key));
+
+    printModalEl = document.createElement("div");
+    printModalEl.className = "bimoPrintModalBackdrop";
+    printModalEl.innerHTML = `
+      <div class="bimoPrintModal" role="dialog" aria-modal="true" aria-labelledby="bimoPrintTitle">
+        <div class="bimoPrintModalHeader">
+          <div>
+            <h2 id="bimoPrintTitle" class="bimoPrintModalTitle">Imprimer la carte</h2>
+            <p class="bimoPrintModalIntro">L’impression part des filtres actifs, puis applique les options ci-dessous.</p>
+          </div>
+          <button class="bimoPrintClose" type="button" aria-label="Fermer">×</button>
+        </div>
+        <form class="bimoPrintForm">
+          <fieldset class="bimoPrintFieldset">
+            <legend>Périmètre</legend>
+            <div class="bimoPrintScopeRow">
+              <label class="bimoPrintRadio">
+                <input type="radio" name="bimoPrintScope" value="all" ${selectedAntenna ? "" : "checked"}>
+                <span>Toute la France métropolitaine</span>
+              </label>
+              <label class="bimoPrintRadio">
+                <input type="radio" name="bimoPrintScope" value="antenna" ${selectedAntenna ? "checked" : ""}>
+                <span>Une antenne</span>
+              </label>
+              <select class="bimoPrintSelect" id="bimoPrintAntennaSelect" aria-label="Choisir une antenne">
+                ${ANTENNA_LEGEND_ORDER.map((antenna) => `<option value="${escapeAttr(antenna)}" ${selectedAntenna === antenna ? "selected" : ""}>${escapeHtml(antennaDisplayLabel(antenna))}</option>`).join("")}
+              </select>
+            </div>
+          </fieldset>
+
+          <fieldset class="bimoPrintFieldset">
+            <legend>Types d’opérations</legend>
+            <div class="bimoPrintGrid">
+              ${PROJECT_TYPE_FILTER_KEYS.map((key) => `
+                <label class="bimoPrintOption">
+                  <input type="checkbox" class="bimoPrintType" value="${escapeAttr(key)}" ${activeTypes.has(key) ? "checked" : ""}>
+                  <span>${escapeHtml(projectTypeLabelByKey(key))}</span>
+                </label>
+              `).join("")}
+            </div>
+          </fieldset>
+
+          <fieldset class="bimoPrintFieldset">
+            <legend>Taille des pins</legend>
+            <div class="bimoPrintPinControls">
+              <button class="bimoPrintPinBtn" type="button" data-pin-step="-0.1" aria-label="Diminuer la taille des pins">−</button>
+              <button class="bimoPrintPinBtn" type="button" data-pin-reset="1" aria-label="Revenir à la taille normale">O</button>
+              <button class="bimoPrintPinBtn" type="button" data-pin-step="0.1" aria-label="Augmenter la taille des pins">+</button>
+              <span class="bimoPrintPinValue" aria-live="polite"></span>
+            </div>
+          </fieldset>
+
+          <fieldset class="bimoPrintFieldset">
+            <legend>Affichage</legend>
+            <div class="bimoPrintGrid">
+              <label class="bimoPrintOption"><input type="checkbox" id="bimoPrintCities" ${cityLabelsEnabled ? "checked" : ""}> <span>Noms des villes</span></label>
+              <label class="bimoPrintOption"><input type="checkbox" id="bimoPrintProjects" ${projectLabelsEnabled ? "checked" : ""}> <span>Noms des projets</span></label>
+              <label class="bimoPrintOption"><input type="checkbox" id="bimoPrintOffices" ${officesEnabled ? "checked" : ""}> <span>Pins des antennes et du siège</span></label>
+              <label class="bimoPrintOption"><input type="checkbox" id="bimoPrintDepartments" checked> <span>Départements colorés</span></label>
+              <label class="bimoPrintOption"><input type="checkbox" id="bimoPrintLegend" ${elLegend && !elLegend.hidden ? "checked" : ""}> <span>Légende</span></label>
+            </div>
+          </fieldset>
+
+          <div class="bimoPrintActions">
+            <button class="bimoPrintActionBtn" type="button" data-print-cancel="1">Annuler</button>
+            <button class="bimoPrintActionBtn bimoPrintActionBtn--primary" type="submit">Imprimer</button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    document.body.appendChild(printModalEl);
+
+    const form = printModalEl.querySelector(".bimoPrintForm");
+    const closeBtn = printModalEl.querySelector(".bimoPrintClose");
+    const cancelBtn = printModalEl.querySelector("[data-print-cancel]");
+    const antennaSelect = printModalEl.querySelector("#bimoPrintAntennaSelect");
+    const pinValue = printModalEl.querySelector(".bimoPrintPinValue");
+
+    const syncScope = () => {
+      const scope = String(form?.querySelector('input[name="bimoPrintScope"]:checked')?.value || "all");
+      if (antennaSelect) antennaSelect.disabled = scope !== "antenna";
+    };
+
+    const syncPinValue = () => {
+      if (pinValue) pinValue.textContent = `${Math.round(localPinScale * 100)} %`;
+    };
+
+    form?.querySelectorAll('input[name="bimoPrintScope"]').forEach((input) => {
+      input.addEventListener("change", syncScope);
+    });
+
+    form?.querySelectorAll(".bimoPrintPinBtn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (btn.hasAttribute("data-pin-reset")) localPinScale = 1;
+        else localPinScale = clampPrintPinScale(localPinScale + (Number(btn.getAttribute("data-pin-step")) || 0));
+        syncPinValue();
+      });
+    });
+
+    const close = () => closePrintModal();
+    closeBtn?.addEventListener("click", close);
+    cancelBtn?.addEventListener("click", close);
+    printModalEl.addEventListener("click", (event) => {
+      if (event.target === printModalEl) close();
+    });
+
+    const keyHandler = (event) => {
+      if (event.key === "Escape") close();
+    };
+    printModalEl.__bimoKeyHandler = keyHandler;
+    document.addEventListener("keydown", keyHandler);
+
+    form?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const selectedTypes = Array.from(form.querySelectorAll(".bimoPrintType:checked"))
+        .map((input) => String(input.value || "").toLowerCase().trim())
+        .filter((value) => PROJECT_TYPE_FILTER_KEYS.includes(value));
+
+      if (!selectedTypes.length) {
+        window.alert("Cochez au moins un type d’opération à imprimer.");
+        return;
+      }
+
+      const scope = String(form.querySelector('input[name="bimoPrintScope"]:checked')?.value || "all");
+      const antenna = scope === "antenna" ? String(antennaSelect?.value || "") : "";
+
+      const options = {
+        scope,
+        antenna,
+        selectedTypes,
+        pinScale: localPinScale,
+        showCityLabels: !!form.querySelector("#bimoPrintCities")?.checked,
+        showProjectLabels: !!form.querySelector("#bimoPrintProjects")?.checked,
+        showOffices: !!form.querySelector("#bimoPrintOffices")?.checked,
+        showDepartments: !!form.querySelector("#bimoPrintDepartments")?.checked,
+        showLegend: !!form.querySelector("#bimoPrintLegend")?.checked
+      };
+
+      closePrintModal();
+      prepareAndPrintMap(options);
+    });
+
+    syncScope();
+    syncPinValue();
+    closeBtn?.focus();
+  }
+
+  function closePrintModal() {
+    if (!printModalEl) return;
+    if (printModalEl.__bimoKeyHandler) {
+      document.removeEventListener("keydown", printModalEl.__bimoKeyHandler);
+    }
+    printModalEl.remove();
+    printModalEl = null;
+  }
+
+  function getDeptCodeFromFeature(feature) {
+    const props = feature?.properties || {};
+    return normalizeDeptCode(
+      props.code ??
+      props.CODE ??
+      props.dep ??
+      props.DEP ??
+      props.insee ??
+      props.INSEE ??
+      props.code_dept ??
+      props.CODE_DEPT ??
+      ""
+    );
+  }
+
+  function antennaBounds(antennaName) {
+    if (!deptLayer || typeof deptLayer.eachLayer !== "function") return FRANCE_BOUNDS;
+
+    const wanted = antennaKeyFromText(antennaName);
+    if (!wanted) return FRANCE_BOUNDS;
+
+    let bounds = null;
+    deptLayer.eachLayer((layer) => {
+      const code = getDeptCodeFromFeature(layer.feature);
+      if (!code || deptCodeToAntenna[code] !== wanted) return;
+      if (typeof layer.getBounds !== "function") return;
+      const layerBounds = layer.getBounds();
+      if (!layerBounds?.isValid?.()) return;
+      bounds = bounds ? bounds.extend(layerBounds) : L.latLngBounds(layerBounds.getSouthWest(), layerBounds.getNorthEast());
+    });
+
+    return bounds?.isValid?.() ? bounds : FRANCE_BOUNDS;
+  }
+
+  function currentLegendState() {
+    return {
+      hidden: elLegend ? elLegend.hidden : true,
+      rowDisplays: Array.from(document.querySelectorAll("#legend .legend-row")).map((row) => [row, row.style.display])
+    };
+  }
+
+  function restoreLegendState(state) {
+    if (!state) return;
+    if (elLegend) elLegend.hidden = !!state.hidden;
+    for (const [row, display] of state.rowDisplays || []) {
+      if (row?.style) row.style.display = display;
+    }
+  }
+
+  function legendRowTypeKey(row) {
+    const explicit = String(row?.dataset?.type || row?.querySelector?.(".pin-swatch")?.dataset?.type || "").toLowerCase().trim();
+    if (PROJECT_TYPE_CONFIG[explicit]) return explicit;
+
+    const text = normalizeForLookup(row?.textContent || "");
+    return PROJECT_TYPE_FILTER_KEYS.find((key) => text.includes(key)) || "";
+  }
+
+  function legendRowAntennaKey(row) {
+    const explicit = antennaKeyFromText(row?.dataset?.antenna || "");
+    if (explicit) return explicit;
+
+    const text = normalizeForLookup(row?.textContent || "");
+    return ANTENNA_LEGEND_ORDER.find((antenna) => text.includes(normalizeForLookup(antenna))) || "";
+  }
+
+  function applyPrintLegendVisibility(options) {
+    if (!elLegend) return;
+    elLegend.hidden = !options.showLegend;
+    if (!options.showLegend) return;
+
+    const visibleProjectTypes = new Set(filteredProjects().map(projectTypeKey));
+    const selectedTypes = new Set(options.selectedTypes || []);
+    const shouldShowAntennaLegend = !!(options.showDepartments || options.showOffices);
+    const selectedAntennaKey = options.scope === "antenna" ? antennaKeyFromText(options.antenna) : "";
+
+    document.querySelectorAll("#legend .legend-row").forEach((row) => {
+      let show = true;
+      const typeKey = legendRowTypeKey(row);
+      const antennaKey = legendRowAntennaKey(row);
+
+      if (typeKey) {
+        show = selectedTypes.has(typeKey) && visibleProjectTypes.has(typeKey);
+      }
+
+      if (antennaKey) {
+        show = shouldShowAntennaLegend && (!selectedAntennaKey || antennaKey === selectedAntennaKey);
+      }
+
+      row.style.display = show ? "" : "none";
+    });
+  }
+
+  function isOverseasProject(project) {
+    const code = deptCodeFromProject(project);
+    return OVERSEAS_DEPT_CODES.has(code);
+  }
+
+  function removePrintOverseasInset() {
+    document.querySelectorAll(".bimoPrintOverseasInset").forEach((el) => el.remove());
+  }
+
+  function renderPrintOverseasInset(options) {
+    removePrintOverseasInset();
+
+    const groups = new Map();
+    for (const project of filteredProjects()) {
+      if (!isOverseasProject(project)) continue;
+      const code = deptCodeFromProject(project);
+      const name = deptNameFromProject(project) || OVERSEAS_AREA_RULES.find((rule) => rule.code === code)?.name || code;
+      if (!groups.has(code)) groups.set(code, { code, name, projects: [] });
+      groups.get(code).projects.push(project);
+    }
+
+    if (!groups.size) return null;
+
+    const wrap = document.createElement("div");
+    wrap.className = "bimoPrintOverseasInset";
+    wrap.setAttribute("aria-label", "Départements d’outre-mer avec projets");
+
+    const ordered = Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name, "fr", { sensitivity: "base" }));
+    wrap.innerHTML = `
+      <div class="bimoPrintOverseasTitle">Outre-mer</div>
+      ${ordered.map((group) => {
+        const projects = group.projects.slice().sort((a, b) => projectDisplayName(a).localeCompare(projectDisplayName(b), "fr", { sensitivity: "base", numeric: true }));
+        const pins = projects.slice(0, 18).map((project) => {
+          const color = projectTypeColorByKey(projectTypeKey(project));
+          return `<span class="bimoPrintOverseasPin" style="border-color:${escapeAttr(color)}" aria-hidden="true"></span>`;
+        }).join("");
+        const names = options.showProjectLabels
+          ? projects.map((project) => projectDisplayName(project)).filter(Boolean).slice(0, 7)
+          : [];
+        return `
+          <div class="bimoPrintOverseasDept">
+            <div class="bimoPrintOverseasPins">${pins}</div>
+            ${names.length ? `<div class="bimoPrintOverseasNames">${names.map((name) => `<div class="bimoPrintOverseasProjectName">${escapeHtml(name)}</div>`).join("")}</div>` : ""}
+            <div class="bimoPrintOverseasDeptName">${escapeHtml(group.name)}</div>
+          </div>
+        `;
+      }).join("")}
+    `;
+
+    document.body.appendChild(wrap);
+    return wrap;
+  }
+
+  function capturePrintState() {
+    const selectedPid = selectedMarker?.options?.__projId || "";
+    const officeToggle = document.getElementById("officesToggle");
+    const cityToggle = document.getElementById("cityLabelsToggle");
+    const projectToggle = document.getElementById("projectLabelsToggle");
+
+    return {
+      center: map.getCenter(),
+      zoom: map.getZoom(),
+      selectedAntenna,
+      selectedPid,
+      typeKeys: activeTypeFilterKeys(),
+      projectPinSizeScale,
+      cityLabelsEnabled,
+      projectLabelsEnabled,
+      officesEnabled,
+      printDepartmentsVisibleOverride,
+      officeToggleChecked: officeToggle ? officeToggle.checked : null,
+      cityToggleChecked: cityToggle ? cityToggle.checked : null,
+      projectToggleChecked: projectToggle ? projectToggle.checked : null,
+      legend: currentLegendState(),
+      bodyHadPrintMode: document.body.classList.contains("bimo-print-mode"),
+      bodyHadNoLegend: document.body.classList.contains("bimo-print-no-legend")
+    };
+  }
+
+  function syncPrintToggleInputs() {
+    const officeToggle = document.getElementById("officesToggle");
+    const cityToggle = document.getElementById("cityLabelsToggle");
+    const projectToggle = document.getElementById("projectLabelsToggle");
+    if (officeToggle) officeToggle.checked = officesEnabled;
+    if (cityToggle) cityToggle.checked = cityLabelsEnabled;
+    if (projectToggle) projectToggle.checked = projectLabelsEnabled;
+  }
+
+  function applyPrintState(options) {
+    setTypeFilterKeys(options.selectedTypes);
+    selectedAntenna = options.scope === "antenna" ? antennaKeyFromText(options.antenna) : null;
+    projectPinSizeScale = clampPrintPinScale(options.pinScale);
+    cityLabelsEnabled = !!options.showCityLabels;
+    projectLabelsEnabled = !!options.showProjectLabels;
+    officesEnabled = !!options.showOffices;
+    printDepartmentsVisibleOverride = !!options.showDepartments;
+    syncPrintToggleInputs();
+
+    document.body.classList.add("bimo-print-mode");
+    document.body.classList.toggle("bimo-print-no-legend", !options.showLegend);
+
+    updateDeptSelectedStat();
+    updateDeptStyle();
+    renderOffices();
+    renderMarkers();
+    applyPrintLegendVisibility(options);
+    renderPrintOverseasInset(options);
+  }
+
+  function restorePrintState(state) {
+    if (!state) return;
+
+    setTypeFilterKeys(state.typeKeys);
+    selectedAntenna = state.selectedAntenna;
+    projectPinSizeScale = state.projectPinSizeScale;
+    cityLabelsEnabled = state.cityLabelsEnabled;
+    projectLabelsEnabled = state.projectLabelsEnabled;
+    officesEnabled = state.officesEnabled;
+    printDepartmentsVisibleOverride = state.printDepartmentsVisibleOverride;
+
+    const officeToggle = document.getElementById("officesToggle");
+    const cityToggle = document.getElementById("cityLabelsToggle");
+    const projectToggle = document.getElementById("projectLabelsToggle");
+    if (officeToggle && state.officeToggleChecked !== null) officeToggle.checked = state.officeToggleChecked;
+    if (cityToggle && state.cityToggleChecked !== null) cityToggle.checked = state.cityToggleChecked;
+    if (projectToggle && state.projectToggleChecked !== null) projectToggle.checked = state.projectToggleChecked;
+
+    document.body.classList.toggle("bimo-print-mode", !!state.bodyHadPrintMode);
+    document.body.classList.toggle("bimo-print-no-legend", !!state.bodyHadNoLegend);
+    removePrintOverseasInset();
+    restoreLegendState(state.legend);
+
+    updateDeptSelectedStat();
+    updateDeptStyle();
+    renderOffices();
+    renderMarkers();
+
+    if (state.center && Number.isFinite(state.zoom)) {
+      map.setView(state.center, state.zoom, { animate: false });
+    }
+
+    if (state.selectedPid) {
+      const marker = projectIdToMarker.get(state.selectedPid);
+      if (marker) setSelectedMarker(marker);
+    }
+
+    scheduleCityLabelsRender();
+    updateClearButtonState();
+  }
+
+  function waitForMapIdle(timeoutMs = 700) {
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        map.off("moveend", finish);
+        window.clearTimeout(timer);
+        resolve();
+      };
+      const timer = window.setTimeout(finish, timeoutMs);
+      map.once("moveend", finish);
+    });
+  }
+
+  async function prepareAndPrintMap(options) {
+    const previousState = capturePrintState();
+    let restored = false;
+
+    const restoreOnce = () => {
+      if (restored) return;
+      restored = true;
+      window.removeEventListener("afterprint", restoreOnce);
+      restorePrintState(previousState);
+    };
+
+    try {
+      applyPrintState(options);
+      const bounds = options.scope === "antenna" ? antennaBounds(options.antenna) : FRANCE_BOUNDS;
+
+      map.invalidateSize(true);
+      if (bounds?.isValid?.()) {
+        map.fitBounds(bounds, { padding: [8, 8], animate: false });
+      }
+      await waitForMapIdle();
+      map.invalidateSize(true);
+      renderMapLabels();
+
+      window.addEventListener("afterprint", restoreOnce, { once: true });
+      window.print();
+      window.setTimeout(restoreOnce, 1200);
+    } catch (err) {
+      console.error("[BIMO] Impression impossible", err);
+      window.alert("L’impression n’a pas pu être préparée. Consultez la console pour le détail technique.");
+      restoreOnce();
+    }
   }
 
   map.on("click", () => closePanel());
@@ -3971,6 +4801,16 @@ clusters.on("clustermouseout", (a) => {
   }
 
   function styleDept(feature) {
+    if (printDepartmentsVisibleOverride === false) {
+      return {
+        weight: 0,
+        color: "transparent",
+        opacity: 0,
+        fillColor: "transparent",
+        fillOpacity: 0
+      };
+    }
+
     const props = feature?.properties || {};
     const codeRaw =
       props.code ??
@@ -4165,6 +5005,7 @@ clusters.on("clustermouseout", (a) => {
     renderMarkers();
   }));
   initOfficesToggle();
+  initPrintControls();
   normalizeToolbarCheckboxes();
   window.setTimeout(() => {
     initProjectClusterDistanceControls(
