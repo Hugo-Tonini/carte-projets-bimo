@@ -4788,6 +4788,8 @@ clusters.on("clustermouseout", (a) => {
     .printLegendPin{ width:13px; height:13px; border-radius:999px; border:4px solid blue; background:rgba(0,0,0,.05); flex:0 0 auto; }
     .printMapTitle{ position:absolute; top:5mm; left:5mm; z-index:1400; padding:5px 8px; border-radius:8px; background:rgba(255,255,255,.92); border:1px solid rgba(0,0,0,.10); font-size:12px; font-weight:800; box-shadow:0 4px 14px rgba(0,0,0,.10); }
     .pin-dot{ background:transparent; border:0; }
+    .projectPinScaleWrap{ width:100%; height:100%; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+    .projectPinScaleWrap .pin-dot-inner{ flex:0 0 auto; }
     .pin-dot-inner{ width:18px; height:18px; border-radius:50%; background:rgba(0,0,0,.05); border:4px solid blue; box-sizing:border-box; }
     .pin-dot-cluster-wrap{ background:transparent; border:0; }
     .pin-dot-inner.pin-dot-cluster{ width:18px; height:18px; border:0; background:transparent!important; position:relative; display:flex; align-items:center; justify-content:center; overflow:visible; }
@@ -4954,9 +4956,9 @@ clusters.on("clustermouseout", (a) => {
       const size = projectPinSize(22);
       return L.divIcon({
         className: "pin-dot",
-        html: `<div class="pin-dot-inner" style="border-color:${escapeHtml(color)};${projectPinTransformStyle()}"></div>`,
+        html: `<div class="projectPinScaleWrap"><div class="pin-dot-inner" style="border-color:${escapeHtml(color)};${projectPinTransformStyle()}"></div></div>`,
         iconSize: [size, size],
-        iconAnchor: [Math.round(size / 2), Math.round(size / 2)]
+        iconAnchor: [projectPinSize(11), projectPinSize(11)]
       });
     }
 
@@ -5011,9 +5013,9 @@ clusters.on("clustermouseout", (a) => {
       const size = projectPinSize(32);
       return L.divIcon({
         className: "pin-dot pin-dot-cluster-wrap",
-        html: `<div class="pin-dot-inner pin-dot-cluster" style="${projectPinTransformStyle()}">${svg}<span class="pin-dot-count">${count}</span></div>`,
+        html: `<div class="projectPinScaleWrap"><div class="pin-dot-inner pin-dot-cluster" style="${projectPinTransformStyle()}">${svg}<span class="pin-dot-count">${count}</span></div></div>`,
         iconSize: [size, size],
-        iconAnchor: [Math.round(size / 2), Math.round(size / 2)]
+        iconAnchor: [projectPinSize(16), projectPinSize(16)]
       });
     }
 
@@ -5547,7 +5549,7 @@ clusters.on("clustermouseout", (a) => {
     });
   }
 
-  console.info("[BIMO] module impression carte actuelle v6 chargé");
+  console.info("[BIMO] module impression carte actuelle v7 chargé");
   initMapPrintModule();
   // ---- FIN MODULE IMPRESSION A4 - CARTE ACTUELLE ----
 
