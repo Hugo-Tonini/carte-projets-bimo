@@ -1,7 +1,7 @@
 // Carte Projets — Leaflet + clustering + départements colorés par antenne
 (() => {
   "use strict";
-  console.info("[BIMO] script impression v7 chargé");
+  console.info("[BIMO] script impression v8 chargé");
 
   /*
    * Organisation générale du fichier
@@ -2138,78 +2138,53 @@ clusters.on("clustermouseout", (a) => {
         background: #e5e7eb !important;
         border: 0 !important;
         box-shadow: none !important;
+      }
+
+      .bimoPrintPageMap,
+      .bimoPrintPageMap * {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
       }
 
-      .bimoPrintPageMap .leaflet-pane,
+      .bimoPrintPageMap .leaflet-map-pane,
       .bimoPrintPageMap .leaflet-tile-pane,
       .bimoPrintPageMap .leaflet-overlay-pane,
-      .bimoPrintPageMap .leaflet-marker-pane,
-      .bimoPrintPageMap .leaflet-tile-container,
-      .bimoPrintPageMap .leaflet-tile,
-      .bimoPrintPageMap .leaflet-marker-icon,
-      .bimoPrintPageMap svg,
-      .bimoPrintPageMap path {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-      }
-
-      .bimoPrintPageMap .leaflet-map-pane {
-        position: absolute !important;
-        z-index: 1 !important;
-      }
-
-      .bimoPrintPageMap .leaflet-tile-pane {
-        z-index: 200 !important;
-      }
-
-      .bimoPrintPageMap .leaflet-overlay-pane {
-        z-index: 450 !important;
-        pointer-events: none !important;
-        mix-blend-mode: multiply !important;
-      }
-
-      .bimoPrintPageMap .leaflet-shadow-pane {
-        z-index: 500 !important;
-      }
-
       .bimoPrintPageMap .leaflet-marker-pane {
-        z-index: 650 !important;
+        position: absolute !important;
       }
 
-      .bimoPrintPageMap .leaflet-tooltip-pane,
-      .bimoPrintPageMap .leaflet-popup-pane {
-        display: none !important;
-        visibility: hidden !important;
-      }
+      .bimoPrintPageMap .leaflet-tile-pane { z-index: 200 !important; }
+      .bimoPrintPageMap .leaflet-overlay-pane { z-index: 450 !important; }
+      .bimoPrintPageMap .leaflet-shadow-pane { z-index: 500 !important; }
+      .bimoPrintPageMap .leaflet-marker-pane { z-index: 650 !important; }
 
       .bimoPrintPageMap .leaflet-overlay-pane svg {
-        overflow: visible !important;
         display: block !important;
-        visibility: visible !important;
+        overflow: visible !important;
         opacity: 1 !important;
+        visibility: visible !important;
       }
 
       .bimoPrintPageMap .leaflet-overlay-pane path {
         display: block !important;
-        visibility: visible !important;
         opacity: 1 !important;
-        fill-opacity: 0.65 !important;
-        stroke-opacity: 1 !important;
+        visibility: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
       }
 
+      .bimoPrintPageMap #legend,
+      .bimoPrintPageMap .legend,
       .bimoPrintPageMap .leaflet-control-container,
       .bimoPrintPageMap .leaflet-control-attribution,
       .bimoPrintPageMap .bimoZoomSlider,
       .bimoPrintPageMap .projTooltip,
       .bimoPrintPageMap .leaflet-tooltip,
       .bimoPrintPageMap .leaflet-popup,
+      .bimoPrintPageMap .leaflet-tooltip-pane,
+      .bimoPrintPageMap .leaflet-popup-pane,
       .bimoPrintPageMap [role="tooltip"] {
         display: none !important;
         visibility: hidden !important;
@@ -2219,67 +2194,57 @@ clusters.on("clustermouseout", (a) => {
         position: absolute !important;
         left: 8mm !important;
         bottom: 8mm !important;
-        z-index: 30 !important;
+        z-index: 900 !important;
         width: auto !important;
-        min-width: 58mm !important;
-        max-width: 86mm !important;
-        max-height: 184mm !important;
+        max-width: 78mm !important;
+        max-height: 112mm !important;
         overflow: visible !important;
-        background: rgba(255, 255, 255, 0.97) !important;
+        background: rgba(255, 255, 255, 0.96) !important;
         box-shadow: 0 2px 10px rgba(15, 23, 42, 0.18) !important;
         border: 1px solid rgba(15, 23, 42, 0.14) !important;
-        border-radius: 8px !important;
-        padding: 5mm !important;
-        transform: none !important;
-        font-size: 9.2pt !important;
-        line-height: 1.16 !important;
+        border-radius: 7px !important;
+        padding: 3.2mm 3.8mm !important;
+        font: 10.5px/1.25 Arial, sans-serif !important;
         color: #111827 !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
+      }
+
+      .bimoPrintPageLegendSection + .bimoPrintPageLegendSection {
+        margin-top: 4mm !important;
       }
 
       .bimoPrintPageLegendTitle {
-        font-weight: 800 !important;
-        margin: 0 0 2.5mm 0 !important;
-        font-size: 9.4pt !important;
-      }
-
-      .bimoPrintPageLegendSection {
-        margin: 0 0 4mm 0 !important;
-      }
-
-      .bimoPrintPageLegendSection:last-child {
-        margin-bottom: 0 !important;
+        font-weight: 700 !important;
+        margin-bottom: 2mm !important;
       }
 
       .bimoPrintPageLegendRow {
         display: flex !important;
         align-items: center !important;
-        gap: 2.5mm !important;
-        margin: 1.4mm 0 !important;
+        gap: 2mm !important;
+        margin: 1.3mm 0 !important;
         white-space: nowrap !important;
       }
 
       .bimoPrintLegendSvgSwatch {
-        display: inline-block !important;
         width: 14px !important;
-        height: 10px !important;
+        height: 12px !important;
         flex: 0 0 14px !important;
-        vertical-align: -1px !important;
+        display: inline-block !important;
       }
 
       .bimoPrintPageOverseas {
         position: absolute !important;
         top: 8mm !important;
         right: 8mm !important;
-        z-index: 21 !important;
+        z-index: 901 !important;
         max-width: 94mm !important;
         opacity: 1 !important;
         visibility: visible !important;
       }
 
       @media print {
+        @page { size: A4 landscape; margin: 0; }
+
         body.bimo-print-static > *:not(#bimoPrintPage) {
           display: none !important;
           visibility: hidden !important;
@@ -2312,13 +2277,6 @@ clusters.on("clustermouseout", (a) => {
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
           color-adjust: exact !important;
-        }
-
-        body.bimo-print-static #bimoPrintPage .leaflet-tooltip,
-        body.bimo-print-static #bimoPrintPage .leaflet-popup,
-        body.bimo-print-static #bimoPrintPage .projTooltip {
-          display: none !important;
-          visibility: hidden !important;
         }
 
         body.bimo-print-static #bimoPrintMapClone {
@@ -2858,6 +2816,38 @@ clusters.on("clustermouseout", (a) => {
     document.body.classList.remove("bimo-print-static");
   }
 
+  function removeAllLeafletTooltipsForPrint(root = document) {
+    root.querySelectorAll(".leaflet-tooltip, .leaflet-popup, .projTooltip, [role='tooltip']").forEach((node) => node.remove());
+    root.querySelectorAll(".leaflet-tooltip-pane, .leaflet-popup-pane").forEach((pane) => {
+      pane.innerHTML = "";
+      pane.style.setProperty("display", "none", "important");
+      pane.style.setProperty("visibility", "hidden", "important");
+    });
+  }
+
+  function forceStaticCloneLayerOrder(mapClone) {
+    if (!mapClone) return;
+    const panes = [
+      [".leaflet-tile-pane", 200],
+      [".leaflet-overlay-pane", 450],
+      [".leaflet-shadow-pane", 500],
+      [".leaflet-marker-pane", 650],
+      [".leaflet-tooltip-pane", 0],
+      [".leaflet-popup-pane", 0]
+    ];
+
+    for (const [selector, zIndex] of panes) {
+      mapClone.querySelectorAll(selector).forEach((pane) => {
+        pane.style.setProperty("position", "absolute", "important");
+        pane.style.setProperty("z-index", String(zIndex), "important");
+        if (selector.includes("tooltip") || selector.includes("popup")) {
+          pane.style.setProperty("display", "none", "important");
+          pane.style.setProperty("visibility", "hidden", "important");
+        }
+      });
+    }
+  }
+
   function forcePrintSvgPathColors(root) {
     if (!root) return;
 
@@ -2886,6 +2876,9 @@ clusters.on("clustermouseout", (a) => {
       if (fillOpacity) {
         path.setAttribute("fill-opacity", fillOpacity);
         path.style.setProperty("fill-opacity", fillOpacity, "important");
+      } else {
+        path.setAttribute("fill-opacity", "0.65");
+        path.style.setProperty("fill-opacity", "0.65", "important");
       }
       if (strokeOpacity) {
         path.setAttribute("stroke-opacity", strokeOpacity);
@@ -2901,68 +2894,6 @@ clusters.on("clustermouseout", (a) => {
       path.style.setProperty("opacity", "1", "important");
       path.style.setProperty("pointer-events", "none", "important");
     });
-  }
-
-  function replaceLegendColorSwatchesWithSvg(legendClone) {
-    if (!legendClone) return;
-
-    legendClone.querySelectorAll(".swatch").forEach((swatch) => {
-      const inlineColor = swatch.style.backgroundColor || swatch.style.background || swatch.getAttribute("data-print-color") || "";
-      const color = String(inlineColor || "").trim();
-      if (!color) return;
-
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("class", "bimoPrintLegendSvgSwatch");
-      svg.setAttribute("viewBox", "0 0 14 10");
-      svg.setAttribute("aria-hidden", "true");
-      svg.setAttribute("focusable", "false");
-
-      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-      rect.setAttribute("x", "0");
-      rect.setAttribute("y", "0");
-      rect.setAttribute("width", "14");
-      rect.setAttribute("height", "10");
-      rect.setAttribute("rx", "2");
-      rect.setAttribute("fill", color);
-      rect.setAttribute("stroke", "rgba(15, 23, 42, 0.22)");
-      rect.setAttribute("stroke-width", "0.6");
-      svg.appendChild(rect);
-
-      swatch.textContent = "";
-      swatch.removeAttribute("style");
-      swatch.style.setProperty("display", "inline-flex", "important");
-      swatch.style.setProperty("align-items", "center", "important");
-      swatch.style.setProperty("justify-content", "center", "important");
-      swatch.style.setProperty("width", "14px", "important");
-      swatch.style.setProperty("height", "10px", "important");
-      swatch.style.setProperty("background", "transparent", "important");
-      swatch.appendChild(svg);
-    });
-  }
-
-
-
-  function forceStaticCloneLayerOrder(mapClone) {
-    if (!mapClone) return;
-    const panes = [
-      [".leaflet-tile-pane", 200],
-      [".leaflet-overlay-pane", 450],
-      [".leaflet-shadow-pane", 500],
-      [".leaflet-marker-pane", 650],
-      [".leaflet-tooltip-pane", 0],
-      [".leaflet-popup-pane", 0]
-    ];
-
-    for (const [selector, zIndex] of panes) {
-      mapClone.querySelectorAll(selector).forEach((pane) => {
-        pane.style.setProperty("position", "absolute", "important");
-        pane.style.setProperty("z-index", String(zIndex), "important");
-        if (selector.includes("tooltip") || selector.includes("popup")) {
-          pane.style.setProperty("display", "none", "important");
-          pane.style.setProperty("visibility", "hidden", "important");
-        }
-      });
-    }
   }
 
   function buildPrintLegendSvgSwatch(color, shape = "rect") {
@@ -3020,8 +2951,7 @@ clusters.on("clustermouseout", (a) => {
     const selectedTypes = new Set(options.selectedTypes || []);
     const selectedAntennaKey = options.scope === "antenna" ? antennaKeyFromText(options.antenna) : "";
 
-    const showAntennaSection = !!(options.showDepartments || options.showOffices);
-    if (showAntennaSection) {
+    if (options.showDepartments || options.showOffices) {
       const section = document.createElement("div");
       section.className = "bimoPrintPageLegendSection";
 
@@ -3031,10 +2961,7 @@ clusters.on("clustermouseout", (a) => {
       section.appendChild(title);
 
       const antennas = selectedAntennaKey ? [selectedAntennaKey] : ANTENNA_LEGEND_ORDER;
-      antennas.forEach((antenna) => {
-        appendPrintLegendRow(section, antennaColorByName(antenna), antennaDisplayLabel(antenna), "rect");
-      });
-
+      antennas.forEach((antenna) => appendPrintLegendRow(section, antennaColorByName(antenna), antennaDisplayLabel(antenna), "rect"));
       legend.appendChild(section);
     }
 
@@ -3052,10 +2979,7 @@ clusters.on("clustermouseout", (a) => {
       title.textContent = "Type de projet (pins)";
       section.appendChild(title);
 
-      typeKeys.forEach((typeKey) => {
-        appendPrintLegendRow(section, projectTypeColorByKey(typeKey), projectTypeLabelByKey(typeKey), "circle");
-      });
-
+      typeKeys.forEach((typeKey) => appendPrintLegendRow(section, projectTypeColorByKey(typeKey), projectTypeLabelByKey(typeKey), "circle"));
       legend.appendChild(section);
     }
 
@@ -3070,6 +2994,8 @@ clusters.on("clustermouseout", (a) => {
     page.id = "bimoPrintPage";
     page.className = "bimoPrintPage";
     page.setAttribute("aria-hidden", "true");
+
+    removeAllLeafletTooltipsForPrint(document);
 
     const mapClone = mapEl.cloneNode(true);
     mapClone.id = "bimoPrintMapClone";
@@ -3133,7 +3059,7 @@ clusters.on("clustermouseout", (a) => {
       await waitForLeafletTiles(3200);
       await waitForAnimationFrames(4);
       if (typeof map.closeTooltip === "function") map.closeTooltip();
-      document.querySelectorAll(".leaflet-tooltip-pane, .leaflet-popup-pane, .leaflet-tooltip, .leaflet-popup, .projTooltip, [role='tooltip']").forEach((node) => node.remove());
+      removeAllLeafletTooltipsForPrint(document);
       await waitForAnimationFrames(1);
 
       createStaticPrintPage(options);
