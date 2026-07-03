@@ -1683,216 +1683,6 @@ clusters.on("clustermouseout", (a) => {
     renderOffices();
   }
 
-  // ---- MODULE IMPRESSION A4 AUTONOME ----
-  // Tout le code de la carte imprimable est contenu ici, dans script.js.
-  // Aucun fichier print.html / print.js / print.css séparé n'est nécessaire.
-  const BIMO_GENERATED_PRINT_HTML = "<!doctype html>\n<html lang=\"fr\">\n<head>\n  <meta charset=\"utf-8\" />\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n  <title>Impression carte BIMO</title>\n  <link rel=\"stylesheet\" href=\"https://unpkg.com/leaflet@1.9.4/dist/leaflet.css\" crossorigin=\"anonymous\" />\n  <link rel=\"stylesheet\" href=\"https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css\" crossorigin=\"anonymous\" />\n  <link rel=\"stylesheet\" href=\"https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css\" crossorigin=\"anonymous\" />\n  <style>\n    @font-face{font-family:\"Marianne\";src:url(\"assets/fonts/Marianne-Regular.woff2\") format(\"woff2\");font-weight:400;font-style:normal;font-display:swap;}\n    @font-face{font-family:\"Marianne\";src:url(\"assets/fonts/Marianne-Bold.woff2\") format(\"woff2\");font-weight:700;font-style:normal;font-display:swap;}\n    @font-face{font-family:\"Marianne\";src:url(\"assets/fonts/Marianne-ExtraBold.woff2\") format(\"woff2\");font-weight:800;font-style:normal;font-display:swap;}\n    :root{--sheet-w:297mm;--sheet-h:210mm;--sheet-pad:6mm;--border:#d0d0d0;--accent:#000091;}\n    *{box-sizing:border-box;}\n    html,body{margin:0;min-height:100%;font-family:\"Marianne\",Arial,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#111;background:#3a3a3a;}\n    .printToolbar{position:sticky;top:0;z-index:10000;display:flex;gap:10px;align-items:center;justify-content:center;padding:10px;background:#fff;border-bottom:1px solid #ddd;box-shadow:0 3px 16px rgba(0,0,0,.12);}\n    .printToolbar button{border:1px solid var(--border);border-radius:10px;background:#fff;padding:8px 13px;font-weight:700;cursor:pointer;}\n    .printToolbar button.primary{background:var(--accent);border-color:var(--accent);color:#fff;}\n    .printToolbar .status{font-size:13px;color:#555;}\n    .printPageWrap{min-height:calc(100vh - 54px);display:flex;align-items:center;justify-content:center;padding:18px;}\n    .printSheet{position:relative;width:var(--sheet-w);height:var(--sheet-h);background:#fff;padding:var(--sheet-pad);box-shadow:0 8px 30px rgba(0,0,0,.35);overflow:hidden;}\n    .printMapFrame{position:relative;width:100%;height:100%;overflow:hidden;background:#fff;}\n    #printMap{position:absolute;inset:0;width:100%;height:100%;background:#fff;}\n    .leaflet-control-container{display:none !important;}\n    .leaflet-tooltip,.leaflet-popup{display:none !important;}\n    .leaflet-overlay-pane svg path{print-color-adjust:exact;-webkit-print-color-adjust:exact;}\n    .pin-dot{background:transparent;border:none;}\n    .pin-dot-inner{width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.78);border:4px solid blue;box-sizing:border-box;box-shadow:0 1px 3px rgba(0,0,0,.18);}\n    .pin-dot-cluster{position:relative;display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:999px;background:#fff;border:3px solid #111;box-shadow:0 1px 4px rgba(0,0,0,.2);font-size:11px;font-weight:800;color:#111;}\n    .pin-office-wrap{width:22px;height:22px;border-radius:999px;background:#fff;border:2px solid #111;display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 2px 6px rgba(0,0,0,.22);}\n    .pin-office-svg{width:14px;height:14px;fill:#111;display:block;}\n    .pin-office-badge{position:absolute;top:-7px;right:-7px;width:16px;height:16px;border-radius:999px;background:#111;color:#fff;font-size:11px;line-height:16px;text-align:center;}\n    .printCityLabel,.printProjectLabel{font-weight:800;font-size:11px;line-height:1.1;color:#111;background:rgba(255,255,255,.82);border:1px solid rgba(0,0,0,.16);border-radius:6px;padding:2px 4px;box-shadow:0 1px 3px rgba(0,0,0,.08);white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;}\n    .printProjectLabel{font-size:10px;font-weight:700;border-style:dashed;}\n    .printLegend{position:absolute;left:9mm;bottom:9mm;z-index:6000;background:rgba(255,255,255,.96);border:1px solid var(--border);border-radius:12px;padding:9px 11px;font-size:11px;box-shadow:0 2px 10px rgba(0,0,0,.14);max-width:64mm;max-height:78mm;overflow:hidden;}\n    .printLegendTitle{font-weight:800;margin-bottom:6px;}\n    .printLegendSubtitle{font-weight:800;margin:7px 0 5px;}\n    .printLegendRow{display:flex;align-items:center;gap:7px;margin:3px 0;line-height:1.15;}\n    .printSwatch{width:15px;height:11px;border:1px solid var(--border);border-radius:3px;flex:0 0 auto;}\n    .printPinSwatch{width:13px;height:13px;border-radius:999px;background:rgba(255,255,255,.75);border:4px solid blue;flex:0 0 auto;}\n    .overseasInset{position:absolute;right:9mm;top:9mm;z-index:6000;background:rgba(255,255,255,.96);border:1px solid var(--border);border-radius:12px;padding:8px 9px;box-shadow:0 2px 10px rgba(0,0,0,.14);min-width:42mm;max-width:72mm;}\n    .overseasTitle{font-size:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px;}\n    .overseasGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(28mm,1fr));gap:6px;}\n    .overseasCard{border:1px solid #cfd8e3;border-radius:8px;background:#f8fafc;overflow:hidden;min-height:24mm;display:flex;flex-direction:column;justify-content:space-between;}\n    .overseasPins{display:flex;flex-wrap:wrap;align-content:flex-start;gap:4px;padding:6px;min-height:13mm;background:#fff;}\n    .overseasDot{width:10px;height:10px;border-radius:999px;background:rgba(255,255,255,.75);border:3px solid blue;display:inline-block;}\n    .overseasProjects{padding:0 6px 4px;font-size:9px;line-height:1.12;}\n    .overseasDept{border-top:1px solid #cfd8e3;text-align:center;font-weight:900;font-size:10px;padding:4px 5px;background:#fff;}\n    .printStatusBox{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#fff;z-index:9000;font-weight:800;color:#555;}\n    @page{size:A4 landscape;margin:0;}\n    @media print{\n      html,body{width:297mm;height:210mm;background:#fff !important;overflow:hidden !important;}\n      .printToolbar{display:none !important;}\n      .printPageWrap{display:block;padding:0;margin:0;min-height:0;width:297mm;height:210mm;background:#fff;}\n      .printSheet{width:297mm !important;height:210mm !important;padding:6mm !important;margin:0 !important;box-shadow:none !important;overflow:hidden !important;print-color-adjust:exact;-webkit-print-color-adjust:exact;}\n      .printMapFrame,#printMap,.printLegend,.overseasInset,.pin-dot-inner,.pin-office-wrap,.printSwatch,.printPinSwatch,.overseasDot{print-color-adjust:exact;-webkit-print-color-adjust:exact;}\n    }\n  </style>\n</head>\n<body>\n  <div class=\"printToolbar\">\n    <button id=\"printNowBtn\" class=\"primary\" type=\"button\">Imprimer</button>\n    <button id=\"closeBtn\" type=\"button\">Fermer</button>\n    <span id=\"printStatus\" class=\"status\">Préparation de la carte…</span>\n  </div>\n  <div class=\"printPageWrap\">\n    <section id=\"printSheet\" class=\"printSheet\" aria-label=\"Carte imprimable BIMO\">\n      <div class=\"printMapFrame\">\n        <div id=\"printMap\"></div>\n        <div id=\"printLegend\" class=\"printLegend\" hidden></div>\n        <div id=\"overseasInset\" class=\"overseasInset\" hidden></div>\n        <div id=\"printLoading\" class=\"printStatusBox\">Préparation de la carte…</div>\n      </div>\n    </section>\n  </div>\n  <script src=\"https://unpkg.com/leaflet@1.9.4/dist/leaflet.js\" crossorigin=\"anonymous\"></script>\n  <script src=\"https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js\" crossorigin=\"anonymous\"></script>\n  <script>window.__BIMO_PRINT_STATE__ = __BIMO_PRINT_STATE_JSON__;</script>\n  <script>\n__BIMO_PRINT_RUNTIME_CODE__\n  </script>\n</body>\n</html>\n";
-  const BIMO_GENERATED_PRINT_RUNTIME = "// Impression dédiée — Carte Projets BIMO\n(() => {\n  \"use strict\";\n\n  const DATA_VERSION = \"2026-05-21b\";\n  const CURRENT_PROJECTS_URL = `export_projets_web.json?v=${encodeURIComponent(DATA_VERSION)}`;\n  const COMPLETED_PROJECTS_URL = `export_projets_finis_web.json?v=${encodeURIComponent(DATA_VERSION)}`;\n  const DEPTS_URL = `departements.geojson?v=${encodeURIComponent(DATA_VERSION)}`;\n\n  const FRANCE_BOUNDS = [[41.0, -5.5], [51.6, 9.8]];\n  const COMPLETED_YEAR_DEFAULT_MIN = 2008;\n  const PROJECT_MODES = { current: { key: \"current\" }, completed: { key: \"completed\" } };\n\n  function escapeHtml(s) {\n    return String(s ?? \"\")\n      .replace(/&/g, \"&amp;\")\n      .replace(/</g, \"&lt;\")\n      .replace(/>/g, \"&gt;\")\n      .replace(/\"/g, \"&quot;\")\n      .replace(/'/g, \"&#39;\");\n  }\n  function escapeAttr(s) { return escapeHtml(s); }\n  function cleanText(value) { return value == null ? \"\" : String(value).trim(); }\n  function firstNonEmpty(...values) { for (const value of values) { const text = cleanText(value); if (text) return text; } return \"\"; }\n  function normalizeForLookup(s) {\n    const str = String(s || \"\").trim().toLowerCase();\n    if (!str) return \"\";\n    return str.normalize(\"NFD\").replace(/\\p{Diacritic}/gu, \"\")\n      .replace(/[’']/g, \" \")\n      .replace(/-/g, \" \")\n      .replace(/\\s+/g, \" \")\n      .trim();\n  }\n  function normalizeSearchText(s) { return normalizeForLookup(s); }\n\n  const ANTENNA_CONFIG = Object.freeze({\n    \"Alpes Centre-Est\": {\n      label: \"Alpes Centre-Est\",\n      color: \"#8B5CF6\",\n      summaryPlacement: { point: [45.35, 7.75], align: \"outside-east\" }\n    },\n    \"Atlantique Grand-Ouest\": {\n      label: \"Atlantique Grand-Ouest\",\n      color: \"#3B82F6\",\n      summaryPlacement: { point: [47.05, -4.75], align: \"outside-west\" }\n    },\n    \"Grand Sud-Ouest\": {\n      label: \"Grand Sud-Ouest\",\n      color: \"#F59E0B\",\n      summaryPlacement: { point: [44.05, -2.55], align: \"outside-west\" }\n    },\n    \"Méditerranée Grand-Sud\": {\n      label: \"Méditerranée Grand-Sud\",\n      color: \"#36540e\",\n      summaryPlacement: { point: [42.85, 6.30], align: \"outside-south\" }\n    },\n    \"Nord-Est\": {\n      label: \"Nord-Est\",\n      color: \"#10B981\",\n      summaryPlacement: { point: [48.95, 8.15], align: \"outside-east\" }\n    },\n    \"Nord-Ouest Île-de-France\": {\n      label: \"Nord-Ouest Île-de-France\",\n      color: \"#EF4444\",\n      summaryPlacement: { point: [49.72, -1.95], align: \"outside-west\" }\n    },\n    \"Siège\": {\n      label: \"Siège\",\n      color: \"#111827\",\n      summaryPlacement: null,\n      includeInLegend: false,\n      includeInSummary: false\n    }\n  });\n\n  const ANTENNA_KEYS = Object.freeze(Object.keys(ANTENNA_CONFIG));\n  const ANTENNA_LEGEND_ORDER = Object.freeze(ANTENNA_KEYS.filter((antenna) => ANTENNA_CONFIG[antenna]?.includeInLegend !== false));\n\n  function antennaKeyFromText(value) {\n    const text = normalizeForLookup(value);\n    if (!text) return \"\";\n    return ANTENNA_KEYS.find((antenna) => normalizeForLookup(antenna) === text) || \"\";\n  }\n\n  function antennaConfigByName(antennaName) {\n    const key = antennaKeyFromText(antennaName);\n    return key ? ANTENNA_CONFIG[key] : null;\n  }\n\n  function antennaColorByName(antennaName, fallback = \"#FFFFFF\") {\n    return antennaConfigByName(antennaName)?.color || fallback;\n  }\n\n  function antennaSummaryPlacementByName(antennaName) {\n    return antennaConfigByName(antennaName)?.summaryPlacement || null;\n  }\n\n  function antennaDisplayLabel(antennaName) {\n    return antennaConfigByName(antennaName)?.label || String(antennaName || \"\").trim();\n  }\n\n  function renderLegendAntennas() {\n    if (!elLegendAntennas) return;\n\n    elLegendAntennas.innerHTML = ANTENNA_LEGEND_ORDER.map((antenna) => {\n      const color = antennaColorByName(antenna);\n      const label = antennaDisplayLabel(antenna);\n      return `\n        <div class=\"legend-row\" data-antenna=\"${escapeAttr(antenna)}\">\n          <span class=\"swatch\" style=\"background:${escapeAttr(color)};\"></span>\n          <span>${escapeHtml(label)}</span>\n        </div>\n      `;\n    }).join(\"\");\n  }\n\n  const PROJECT_TYPE_CONFIG = Object.freeze({\n    mom: { key: \"mom\", label: \"MOM\", color: \"blue\", aliases: [\"mom\"] },\n    amo: { key: \"amo\", label: \"AMO\", color: \"red\", aliases: [\"amo\"] },\n    exp: { key: \"exp\", label: \"EXP\", color: \"green\", aliases: [\"exp\"] }\n  });\n\n  const PROJECT_TYPE_FILTER_KEYS = Object.freeze([\"mom\", \"amo\", \"exp\"]);\n  const PROJECT_TYPE_CLUSTER_ORDER = Object.freeze([\"amo\", \"mom\", \"exp\"]);\n\n  const PROJECT_TYPE_COLORS = Object.freeze(Object.fromEntries(\n    Object.entries(PROJECT_TYPE_CONFIG).map(([key, config]) => [key, config.color])\n  ));\n\n  const PROJECT_TYPE_LABELS = Object.freeze(Object.fromEntries(\n    Object.entries(PROJECT_TYPE_CONFIG).map(([key, config]) => [key, config.label])\n  ));\n\n  function projectTypeConfigByKey(typeKey) {\n    const key = String(typeKey || \"\").toLowerCase().trim();\n    return PROJECT_TYPE_CONFIG[key] || PROJECT_TYPE_CONFIG.mom;\n  }\n\n  function projectTypeColorByKey(typeKey) {\n    return projectTypeConfigByKey(typeKey).color;\n  }\n\n  function projectTypeLabelByKey(typeKey) {\n    return projectTypeConfigByKey(typeKey).label;\n  }\n\n  function projectTypeKeyFromText(value) {\n    const text = normalizeForLookup(value);\n    if (!text) return PROJECT_TYPE_CONFIG.mom.key;\n\n    for (const key of PROJECT_TYPE_FILTER_KEYS) {\n      const config = PROJECT_TYPE_CONFIG[key];\n      if (config.aliases.some((alias) => text.includes(alias))) return config.key;\n    }\n\n    return PROJECT_TYPE_CONFIG.mom.key;\n  }\n\n  function syncProjectTypeLegendColors() {\n    if (!elLegend) return;\n\n    const rows = Array.from(elLegend.querySelectorAll(\".legend-row\"));\n    for (const row of rows) {\n      const swatch = row.querySelector(\".pin-swatch\");\n      if (!swatch) continue;\n\n      const explicitType = String(swatch.dataset?.type || row.dataset?.type || \"\").toLowerCase().trim();\n      const typeKey = PROJECT_TYPE_CONFIG[explicitType]\n        ? explicitType\n        : projectTypeKeyFromText(row.textContent || \"\");\n      const color = projectTypeColorByKey(typeKey);\n\n      if (color) swatch.style.borderColor = color;\n    }\n  }\n\n  // ---- 7. Configuration métier : correspondances départements / antennes ----\n  // Table “corrigée” : département (nom) -> antenne\n  const DEPT_TO_ANTENNA_BY_NAME = new Map(Object.entries({\n    // Alpes Centre-Est\n    \"ain\": \"Alpes Centre-Est\",\n    \"allier\": \"Alpes Centre-Est\",\n    \"ardeche\": \"Alpes Centre-Est\",\n    \"cantal\": \"Alpes Centre-Est\",\n    \"cote d or\": \"Alpes Centre-Est\",\n    \"drome\": \"Alpes Centre-Est\",\n    \"haute loire\": \"Alpes Centre-Est\",\n    \"haute savoie\": \"Alpes Centre-Est\",\n    \"isere\": \"Alpes Centre-Est\",\n    \"jura\": \"Alpes Centre-Est\",\n    \"loire\": \"Alpes Centre-Est\",\n    \"nievre\": \"Alpes Centre-Est\",\n    \"puy de dome\": \"Alpes Centre-Est\",\n    \"rhone\": \"Alpes Centre-Est\",\n    \"saone et loire\": \"Alpes Centre-Est\",\n    \"savoie\": \"Alpes Centre-Est\",\n    \"yonne\": \"Alpes Centre-Est\",\n\n    // Atlantique Grand-Ouest\n    \"charente\": \"Atlantique Grand-Ouest\",\n    \"charente maritime\": \"Atlantique Grand-Ouest\",\n    \"cotes d armor\": \"Atlantique Grand-Ouest\",\n    \"deux sevres\": \"Atlantique Grand-Ouest\",\n    \"finistere\": \"Atlantique Grand-Ouest\",\n    \"ille et vilaine\": \"Atlantique Grand-Ouest\",\n    \"indre\": \"Atlantique Grand-Ouest\",\n    \"indre et loire\": \"Atlantique Grand-Ouest\",\n    \"loire atlantique\": \"Atlantique Grand-Ouest\",\n    \"loir et cher\": \"Atlantique Grand-Ouest\",\n    \"maine et loire\": \"Atlantique Grand-Ouest\",\n    \"mayenne\": \"Atlantique Grand-Ouest\",\n    \"morbihan\": \"Atlantique Grand-Ouest\",\n    \"sarthe\": \"Atlantique Grand-Ouest\",\n    \"vendee\": \"Atlantique Grand-Ouest\",\n    \"vienne\": \"Atlantique Grand-Ouest\",\n\n    // Grand Sud-Ouest\n    \"ariege\": \"Grand Sud-Ouest\",\n    \"aude\": \"Grand Sud-Ouest\",\n    \"aveyron\": \"Grand Sud-Ouest\",\n    \"correze\": \"Grand Sud-Ouest\",\n    \"creuse\": \"Grand Sud-Ouest\",\n    \"dordogne\": \"Grand Sud-Ouest\",\n    \"gers\": \"Grand Sud-Ouest\",\n    \"gironde\": \"Grand Sud-Ouest\",\n    \"haute garonne\": \"Grand Sud-Ouest\",\n    \"hautes pyrenees\": \"Grand Sud-Ouest\",\n    \"haute vienne\": \"Grand Sud-Ouest\",\n    \"landes\": \"Grand Sud-Ouest\",\n    \"lot\": \"Grand Sud-Ouest\",\n    \"lot et garonne\": \"Grand Sud-Ouest\",\n    \"pyrenees atlantiques\": \"Grand Sud-Ouest\",\n    \"pyrenees orientales\": \"Grand Sud-Ouest\",\n    \"tarn\": \"Grand Sud-Ouest\",\n    \"tarn et garonne\": \"Grand Sud-Ouest\",\n\n    // Méditerranée Grand-Sud\n    \"alpes de haute provence\": \"Méditerranée Grand-Sud\",\n    \"alpes maritimes\": \"Méditerranée Grand-Sud\",\n    \"bouches du rhone\": \"Méditerranée Grand-Sud\",\n    \"corse du sud\": \"Méditerranée Grand-Sud\",\n    \"gard\": \"Méditerranée Grand-Sud\",\n    \"haute corse\": \"Méditerranée Grand-Sud\",\n    \"hautes alpes\": \"Méditerranée Grand-Sud\",\n    \"herault\": \"Méditerranée Grand-Sud\",\n    \"lozere\": \"Méditerranée Grand-Sud\",\n    \"var\": \"Méditerranée Grand-Sud\",\n    \"vaucluse\": \"Méditerranée Grand-Sud\",\n\n    // Nord-Est\n    \"ardennes\": \"Nord-Est\",\n    \"aube\": \"Nord-Est\",\n    \"bas rhin\": \"Nord-Est\",\n    \"doubs\": \"Nord-Est\",\n    \"haute marne\": \"Nord-Est\",\n    \"haute saone\": \"Nord-Est\",\n    \"haut rhin\": \"Nord-Est\",\n    \"marne\": \"Nord-Est\",\n    \"meurthe et moselle\": \"Nord-Est\",\n    \"meuse\": \"Nord-Est\",\n    \"moselle\": \"Nord-Est\",\n    \"territoire de belfort\": \"Nord-Est\",\n    \"vosges\": \"Nord-Est\",\n\n    // Nord-Ouest Île-de-France\n    \"aisne\": \"Nord-Ouest Île-de-France\",\n    \"calvados\": \"Nord-Ouest Île-de-France\",\n    \"cher\": \"Nord-Ouest Île-de-France\",\n    \"essonne\": \"Nord-Ouest Île-de-France\",\n    \"eure\": \"Nord-Ouest Île-de-France\",\n    \"eure et loir\": \"Nord-Ouest Île-de-France\",\n    \"hauts de seine\": \"Nord-Ouest Île-de-France\",\n    \"loiret\": \"Nord-Ouest Île-de-France\",\n    \"manche\": \"Nord-Ouest Île-de-France\",\n    \"nord\": \"Nord-Ouest Île-de-France\",\n    \"oise\": \"Nord-Ouest Île-de-France\",\n    \"orne\": \"Nord-Ouest Île-de-France\",\n    \"paris\": \"Nord-Ouest Île-de-France\",\n    \"pas de calais\": \"Nord-Ouest Île-de-France\",\n    \"seine et marne\": \"Nord-Ouest Île-de-France\",\n    \"seine maritime\": \"Nord-Ouest Île-de-France\",\n    \"seine saint denis\": \"Nord-Ouest Île-de-France\",\n    \"somme\": \"Nord-Ouest Île-de-France\",\n    \"val de marne\": \"Nord-Ouest Île-de-France\",\n    \"val d oise\": \"Nord-Ouest Île-de-France\",\n    \"yvelines\": \"Nord-Ouest Île-de-France\"\n  }));\n\n  const DEPT_TO_ANTENNA_BY_CODE = {\n    \"01\": \"Alpes Centre-Est\", \"03\": \"Alpes Centre-Est\", \"07\": \"Alpes Centre-Est\", \"15\": \"Alpes Centre-Est\", \"21\": \"Alpes Centre-Est\", \"26\": \"Alpes Centre-Est\", \"38\": \"Alpes Centre-Est\", \"39\": \"Alpes Centre-Est\", \"42\": \"Alpes Centre-Est\", \"43\": \"Alpes Centre-Est\", \"58\": \"Alpes Centre-Est\", \"63\": \"Alpes Centre-Est\", \"69\": \"Alpes Centre-Est\", \"71\": \"Alpes Centre-Est\", \"73\": \"Alpes Centre-Est\", \"74\": \"Alpes Centre-Est\", \"89\": \"Alpes Centre-Est\",\n    \"16\": \"Atlantique Grand-Ouest\", \"17\": \"Atlantique Grand-Ouest\", \"22\": \"Atlantique Grand-Ouest\", \"29\": \"Atlantique Grand-Ouest\", \"35\": \"Atlantique Grand-Ouest\", \"36\": \"Atlantique Grand-Ouest\", \"37\": \"Atlantique Grand-Ouest\", \"41\": \"Atlantique Grand-Ouest\", \"44\": \"Atlantique Grand-Ouest\", \"49\": \"Atlantique Grand-Ouest\", \"53\": \"Atlantique Grand-Ouest\", \"56\": \"Atlantique Grand-Ouest\", \"72\": \"Atlantique Grand-Ouest\", \"79\": \"Atlantique Grand-Ouest\", \"85\": \"Atlantique Grand-Ouest\", \"86\": \"Atlantique Grand-Ouest\",\n    \"09\": \"Grand Sud-Ouest\", \"11\": \"Grand Sud-Ouest\", \"12\": \"Grand Sud-Ouest\", \"19\": \"Grand Sud-Ouest\", \"23\": \"Grand Sud-Ouest\", \"24\": \"Grand Sud-Ouest\", \"31\": \"Grand Sud-Ouest\", \"32\": \"Grand Sud-Ouest\", \"33\": \"Grand Sud-Ouest\", \"40\": \"Grand Sud-Ouest\", \"46\": \"Grand Sud-Ouest\", \"47\": \"Grand Sud-Ouest\", \"64\": \"Grand Sud-Ouest\", \"65\": \"Grand Sud-Ouest\", \"66\": \"Grand Sud-Ouest\", \"81\": \"Grand Sud-Ouest\", \"82\": \"Grand Sud-Ouest\", \"87\": \"Grand Sud-Ouest\",\n    \"04\": \"Méditerranée Grand-Sud\", \"05\": \"Méditerranée Grand-Sud\", \"06\": \"Méditerranée Grand-Sud\", \"13\": \"Méditerranée Grand-Sud\", \"2A\": \"Méditerranée Grand-Sud\", \"2B\": \"Méditerranée Grand-Sud\", \"30\": \"Méditerranée Grand-Sud\", \"34\": \"Méditerranée Grand-Sud\", \"48\": \"Méditerranée Grand-Sud\", \"83\": \"Méditerranée Grand-Sud\", \"84\": \"Méditerranée Grand-Sud\",\n    \"08\": \"Nord-Est\", \"10\": \"Nord-Est\", \"25\": \"Nord-Est\", \"51\": \"Nord-Est\", \"52\": \"Nord-Est\", \"54\": \"Nord-Est\", \"55\": \"Nord-Est\", \"57\": \"Nord-Est\", \"67\": \"Nord-Est\", \"68\": \"Nord-Est\", \"70\": \"Nord-Est\", \"88\": \"Nord-Est\", \"90\": \"Nord-Est\",\n    \"02\": \"Nord-Ouest Île-de-France\", \"14\": \"Nord-Ouest Île-de-France\", \"18\": \"Nord-Ouest Île-de-France\", \"27\": \"Nord-Ouest Île-de-France\", \"28\": \"Nord-Ouest Île-de-France\", \"45\": \"Nord-Ouest Île-de-France\", \"50\": \"Nord-Ouest Île-de-France\", \"59\": \"Nord-Ouest Île-de-France\", \"60\": \"Nord-Ouest Île-de-France\", \"61\": \"Nord-Ouest Île-de-France\", \"62\": \"Nord-Ouest Île-de-France\", \"75\": \"Nord-Ouest Île-de-France\", \"76\": \"Nord-Ouest Île-de-France\", \"77\": \"Nord-Ouest Île-de-France\", \"78\": \"Nord-Ouest Île-de-France\", \"80\": \"Nord-Ouest Île-de-France\", \"91\": \"Nord-Ouest Île-de-France\", \"92\": \"Nord-Ouest Île-de-France\", \"93\": \"Nord-Ouest Île-de-France\", \"94\": \"Nord-Ouest Île-de-France\", \"95\": \"Nord-Ouest Île-de-France\"\n  };\n\n  const OVERSEAS_AREA_RULES = [\n    {\n      code: \"971\",\n      name: \"Guadeloupe\",\n      matches: ({ cityBlob, allBlob, lat, lon }) =>\n        cityBlob.includes(\"guadeloupe\") || allBlob.includes(\"guadeloupe\") ||\n        (lat >= 15.75 && lat <= 16.55 && lon >= -61.9 && lon <= -60.95)\n    },\n    {\n      code: \"972\",\n      name: \"Martinique\",\n      matches: ({ cityBlob, allBlob, lat, lon }) =>\n        cityBlob.includes(\"martinique\") || allBlob.includes(\"martinique\") ||\n        (lat >= 14.25 && lat <= 15.05 && lon >= -61.35 && lon <= -60.75)\n    },\n    {\n      code: \"973\",\n      name: \"Guyane\",\n      matches: ({ cityBlob, allBlob, lat, lon }) =>\n        cityBlob.includes(\"guyane\") || allBlob.includes(\"guyane\") ||\n        (lat >= 1.8 && lat <= 6.1 && lon >= -54.75 && lon <= -51.4)\n    },\n    {\n      code: \"974\",\n      name: \"La Réunion\",\n      matches: ({ cityBlob, allBlob, lat, lon }) =>\n        cityBlob.includes(\"reunion\") || cityBlob.includes(\"la reunion\") || allBlob.includes(\"reunion\") ||\n        (lat >= -21.45 && lat <= -20.8 && lon >= 55.15 && lon <= 55.95)\n    },\n    {\n      code: \"975\",\n      name: \"Saint-Pierre-et-Miquelon\",\n      matches: ({ cityBlob, allBlob, lat, lon }) =>\n        cityBlob.includes(\"saint pierre et miquelon\") || allBlob.includes(\"saint pierre et miquelon\") ||\n        (lat >= 46.7 && lat <= 47.25 && lon >= -56.55 && lon <= -56.05)\n    },\n    {\n      code: \"976\",\n      name: \"Mayotte\",\n      matches: ({ cityBlob, allBlob, lat, lon }) =>\n        cityBlob.includes(\"mayotte\") || allBlob.includes(\"mayotte\") ||\n        (lat >= -13.2 && lat <= -12.45 && lon >= 45.0 && lon <= 45.35)\n    }\n  ];\n\n\n\n  const OFFICES = [\n    { type_lieu: \"antenne\", nom: \"Alpes Centre-Est\", antenne: \"Alpes Centre-Est\", adresse: \"10 rue Stella, 69002 Lyon\", latitude: 45.76061, longitude: 4.83664 },\n    { type_lieu: \"antenne\", nom: \"Nord-Ouest Île-de-France\", antenne: \"Nord-Ouest Île-de-France\", adresse: \"10 rue du Centre, 93196 Noisy-le-Grand Cedex\", latitude: 48.838387, longitude: 2.545001 },\n    { type_lieu: \"antenne\", nom: \"Méditerranée Grand-Sud\", antenne: \"Méditerranée Grand-Sud\", adresse: \"52 rue Liandier, 13008 Marseille\", latitude: 43.2780891, longitude: 5.3913314 },\n    { type_lieu: \"antenne\", nom: \"Nord-Est\", antenne: \"Nord-Est\", adresse: \"14 rue du Maréchal Juin, 67000 Strasbourg\", latitude: 48.577957, longitude: 7.762085 },\n    { type_lieu: \"antenne\", nom: \"Grand Sud-Ouest\", antenne: \"Grand Sud-Ouest\", adresse: \"1 Place Émile Blouin, 31952 Toulouse\", latitude: 43.61456, longitude: 1.466043 },\n    { type_lieu: \"antenne\", nom: \"Atlantique Grand-Ouest\", antenne: \"Atlantique Grand-Ouest\", adresse: \"10 boulevard Gaston Doumergue, 44964 Nantes Cedex 9\", latitude: 47.20811, longitude: -1.544726 },\n    { type_lieu: \"siege\", nom: \"Siège\", antenne: \"Siège\", adresse: \"120 rue de Bercy, 75012 Paris\", latitude: 48.841095, longitude: 2.3778439 }\n  ];\n\n  const params = new URLSearchParams(window.location.search);\n  const embeddedState = (window.__BIMO_PRINT_STATE__ && typeof window.__BIMO_PRINT_STATE__ === \"object\") ? window.__BIMO_PRINT_STATE__ : {};\n  const hasEmbedded = (name) => Object.prototype.hasOwnProperty.call(embeddedState, name);\n  const pickString = (name, fallback = \"\") => String(hasEmbedded(name) ? embeddedState[name] : fallback);\n  const pickBool = (name, fallback = false) => hasEmbedded(name) ? !!embeddedState[name] : !!fallback;\n  const pickNumber = (name, fallback = 0) => {\n    const value = Number(hasEmbedded(name) ? embeddedState[name] : fallback);\n    return Number.isFinite(value) ? value : Number(fallback) || 0;\n  };\n  const embeddedTypes = Array.isArray(embeddedState.types) ? embeddedState.types : null;\n  const state = {\n    mode: pickString(\"mode\", params.get(\"mode\") === PROJECT_MODES.completed.key ? PROJECT_MODES.completed.key : PROJECT_MODES.current.key) === PROJECT_MODES.completed.key ? PROJECT_MODES.completed.key : PROJECT_MODES.current.key,\n    query: pickString(\"query\", params.get(\"q\") || \"\"),\n    types: new Set((embeddedTypes || (params.get(\"types\") || \"mom,amo,exp\").split(\",\")).map((x) => String(x || \"\").trim().toLowerCase()).filter(Boolean)),\n    scope: pickString(\"scope\", params.get(\"scope\") === \"antenna\" ? \"antenna\" : \"all\") === \"antenna\" ? \"antenna\" : \"all\",\n    antenna: pickString(\"antenna\", params.get(\"antenna\") || \"\"),\n    pinScale: clamp(pickNumber(\"pinScale\", Number(params.get(\"pinScale\") || \"1\")), 0.6, 1.8),\n    cities: pickBool(\"cities\", params.get(\"cities\") === \"1\"),\n    projects: pickBool(\"projects\", params.get(\"projects\") === \"1\"),\n    offices: pickBool(\"offices\", params.get(\"offices\") === \"1\"),\n    departments: pickBool(\"departments\", params.get(\"departments\") !== \"0\"),\n    legend: pickBool(\"legend\", params.get(\"legend\") !== \"0\"),\n    completedYear: pickNumber(\"completedYear\", Number(params.get(\"completedYear\") || COMPLETED_YEAR_DEFAULT_MIN)),\n    completedShowAll: pickBool(\"completedShowAll\", params.get(\"completedShowAll\") === \"1\"),\n    amountMin: pickString(\"amountMin\", params.get(\"amountMin\") || \"\"),\n    amountMax: pickString(\"amountMax\", params.get(\"amountMax\") || \"\"),\n    phase: pickString(\"phase\", params.get(\"phase\") || \"\"),\n    client: pickString(\"client\", params.get(\"client\") || \"\"),\n    programme: pickString(\"programme\", params.get(\"programme\") || \"\"),\n    theme: pickString(\"theme\", params.get(\"theme\") || \"\"),\n    dept: pickString(\"dept\", params.get(\"dept\") || \"\"),\n    photos: pickString(\"photos\", params.get(\"photos\") || \"\"),\n    energy: pickString(\"energy\", params.get(\"energy\") || \"\"),\n    autoprint: pickBool(\"autoprint\", params.get(\"autoprint\") === \"1\")\n  };\n\n  const elStatus = document.getElementById(\"printStatus\");\n  const elLoading = document.getElementById(\"printLoading\");\n  const elLegend = document.getElementById(\"printLegend\");\n  const elOverseas = document.getElementById(\"overseasInset\");\n\n  function clamp(value, min, max) {\n    return Number.isFinite(value) ? Math.max(min, Math.min(max, value)) : min;\n  }\n  function setStatus(text) { if (elStatus) elStatus.textContent = text; }\n  function hideLoading() { if (elLoading) elLoading.hidden = true; }\n  function showError(message, err) {\n    console.error(\"[BIMO PRINT]\", message, err || \"\");\n    setStatus(message);\n    if (elLoading) elLoading.textContent = message;\n  }\n  function normalizeDeptCode(code) {\n    const c = String(code || \"\").trim().toUpperCase();\n    if (!c) return \"\";\n    if (c === \"2A\" || c === \"2B\") return c;\n    if (/^\\d{1,2}$/.test(c)) return c.padStart(2, \"0\");\n    if (/^\\d{3}$/.test(c)) return c;\n    return c;\n  }\n  function projectId(p) {\n    const source = p && typeof p === \"object\" ? p : {};\n    return String(source.__projectId ?? source[\"Code projet\"] ?? source[\"ID\"] ?? source.code_projet ?? source.codeProjet ?? source.id ?? \"\").trim();\n  }\n  function ensureProjectIds(projects, modeKey) {\n    return projects.map((project, index) => {\n      const source = project && typeof project === \"object\" ? project : {};\n      const existingId = String(source[\"Code projet\"] ?? source[\"ID\"] ?? source.code_projet ?? source.codeProjet ?? source.id ?? \"\").trim();\n      return { ...source, __projectMode: modeKey, __projectId: existingId || `${modeKey}-${index + 1}` };\n    });\n  }\n  function normalizeProjectsPayload(data) {\n    if (Array.isArray(data?.projets)) return data.projets;\n    if (Array.isArray(data)) return data;\n    return [];\n  }\n  async function fetchJson(url) {\n    const response = await fetch(url, { headers: { Accept: \"application/json\" } });\n    if (!response.ok) throw new Error(`HTTP ${response.status} sur ${url}`);\n    const text = await response.text();\n    return JSON.parse(text.replace(/^﻿/, \"\"));\n  }\n  function projectDisplayName(project) {\n    const source = project && typeof project === \"object\" ? project : {};\n    return firstNonEmpty(source[\"Nom de projet\"], source.nom);\n  }\n  function projectCity(p) {\n    const source = p && typeof p === \"object\" ? p : {};\n    return String(source[\"Ville\"] ?? source.ville ?? source[\"Commune\"] ?? source.commune ?? source[\"Adresse ville\"] ?? \"\").trim();\n  }\n  function projectType(p) {\n    const source = p && typeof p === \"object\" ? p : {};\n    return String(source[\"Type de projet\"] ?? source.type ?? \"\").toLowerCase().trim();\n  }\n  function projectTypeKey(p) { return projectTypeKeyFromText(projectType(p)); }\n  function projectLatLon(p) {\n    const source = p && typeof p === \"object\" ? p : {};\n    const lat = parseFloat(String(source[\"Latitude\"] ?? source.latitude ?? source.lat ?? \"\").replace(\",\", \".\"));\n    const lon = parseFloat(String(source[\"Longitude\"] ?? source.longitude ?? source.lon ?? \"\").replace(\",\", \".\"));\n    return Number.isFinite(lat) && Number.isFinite(lon) ? [lat, lon] : null;\n  }\n  function amountNumber(v) {\n    if (v == null) return NaN;\n    if (typeof v === \"number\") return v;\n    const cleaned = String(v).trim().replace(/[\\s  ]/g, \"\").replace(/€/g, \"\").replace(/,/g, \".\").replace(/[^0-9.+-]/g, \"\");\n    const n = Number(cleaned);\n    return Number.isFinite(n) ? n : NaN;\n  }\n  function projectStartYear(p) {\n    const raw = String(p[\"Début\"] ?? p.debut ?? p[\"Debut\"] ?? p.deb ?? \"\").trim();\n    const match = raw.match(/\\b(19|20)\\d{2}\\b/);\n    return match ? Number(match[0]) : null;\n  }\n  function projectEndYear(p) {\n    const raw = String(p[\"Fin\"] ?? p.fin ?? \"\").trim();\n    const match = raw.match(/\\b(19|20)\\d{2}\\b/);\n    return match ? Number(match[0]) : null;\n  }\n  function isProjectPresentInYear(p, year) {\n    const startYear = projectStartYear(p);\n    const endYear = projectEndYear(p);\n    if (startYear == null && endYear == null) return true;\n    if (startYear == null) return year <= endYear;\n    if (endYear == null) return startYear <= year;\n    return Math.min(startYear, endYear) <= year && year <= Math.max(startYear, endYear);\n  }\n  function hasProjectPhotos(p) { return Array.isArray(p?.photos) && p.photos.some(Boolean); }\n  function fieldValue(p, fields) {\n    for (const field of fields) {\n      const value = p?.[field];\n      if (value !== undefined && value !== null && String(value).trim()) return value;\n    }\n    return \"\";\n  }\n  function hasProjectEnergyData(p) {\n    return !!(\n      fieldValue(p, [\"Consommation énergétique - avant travaux\", \"Consommation énergetique - avant travaux\", \"Consommation energetique - avant travaux\"]) ||\n      fieldValue(p, [\"Consommation énergétique - après travaux\", \"Consommation énergetique - après travaux\", \"Consommation energetique - apres travaux\"]) ||\n      fieldValue(p, [\"Émission GES - avant travaux\", \"Emission GES - avant travaux\", \"GES - avant travaux\"]) ||\n      fieldValue(p, [\"Émission GES - après travaux\", \"Emission GES - après travaux\", \"GES - après travaux\"])\n    );\n  }\n  function buildProjectSearchBlob(p) {\n    const values = [\n      projectId(p), projectDisplayName(p), p?.[\"Nom de projet\"], p?.nom, p?.[\"Adresse\"], p?.adresse,\n      projectCity(p), p?.[\"Client\"], p?.client, p?.[\"Type de projet\"], p?.type, p?.[\"Type de montage\"], p?.type_montage,\n      p?.[\"Montant\"], p?.montant, p?.[\"Antenne\"], p?.antenne, p?.[\"Phase projet\"], p?.phase, p?.[\"Programme\"], p?.programme,\n      p?.[\"Début\"], p?.debut, p?.[\"Fin\"], p?.fin, p?.[\"Thématique\"], p?.thematique, p?.[\"Région\"], p?.region,\n      p?.[\"Nom département\"], p?.[\"Département\"], p?.departement, p?.__deptName, p?.__deptCode\n    ];\n    return normalizeSearchText(values.filter((value) => value != null && String(value).trim()).join(\" \"));\n  }\n\n  let deptNameToCode = new Map();\n  let deptCodeToName = {};\n  let deptCodeToAntenna = {};\n  let deptSpatialIndex = [];\n\n  function collectGeometryPoints(coords, out = []) {\n    if (!Array.isArray(coords) || !coords.length) return out;\n    if (typeof coords[0] === \"number\" && typeof coords[1] === \"number\") { out.push(coords); return out; }\n    coords.forEach((item) => collectGeometryPoints(item, out));\n    return out;\n  }\n  function getGeometryBbox(geometry) {\n    const pts = collectGeometryPoints(geometry?.coordinates, []);\n    if (!pts.length) return null;\n    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;\n    for (const [x, y] of pts) { minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x); maxY = Math.max(maxY, y); }\n    return [minX, minY, maxX, maxY];\n  }\n  function bboxContainsPoint(bbox, point) {\n    if (!bbox) return false;\n    const [minX, minY, maxX, maxY] = bbox;\n    const [x, y] = point;\n    return x >= minX && x <= maxX && y >= minY && y <= maxY;\n  }\n  function pointInRing(point, ring) {\n    if (!Array.isArray(ring) || ring.length < 3) return false;\n    const [x, y] = point;\n    let inside = false;\n    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {\n      const [xi, yi] = ring[i];\n      const [xj, yj] = ring[j];\n      const denom = (yj - yi) || Number.EPSILON;\n      if (((yi > y) !== (yj > y)) && (x < ((xj - xi) * (y - yi)) / denom + xi)) inside = !inside;\n    }\n    return inside;\n  }\n  function pointInPolygonCoords(point, polygonCoords) {\n    if (!Array.isArray(polygonCoords) || !polygonCoords.length) return false;\n    if (!pointInRing(point, polygonCoords[0])) return false;\n    for (let i = 1; i < polygonCoords.length; i += 1) if (pointInRing(point, polygonCoords[i])) return false;\n    return true;\n  }\n  function pointInGeometry(point, geometry) {\n    if (!geometry) return false;\n    if (geometry.type === \"Polygon\") return pointInPolygonCoords(point, geometry.coordinates);\n    if (geometry.type === \"MultiPolygon\") return geometry.coordinates.some((poly) => pointInPolygonCoords(point, poly));\n    return false;\n  }\n  function inferDeptFromLatLon(lat, lon) {\n    const point = [lon, lat];\n    for (const entry of deptSpatialIndex) {\n      if (!bboxContainsPoint(entry.bbox, point)) continue;\n      if (pointInGeometry(point, entry.geometry)) return { code: entry.code, name: entry.name };\n    }\n    return null;\n  }\n  function inferOverseasArea(project, lat, lon) {\n    const cityBlob = normalizeSearchText(projectCity(project));\n    const allBlob = normalizeSearchText(Object.values(project || {}).join(\" \"));\n    for (const rule of OVERSEAS_AREA_RULES) {\n      if (rule.matches({ cityBlob, allBlob, lat, lon })) return { code: rule.code, name: rule.name };\n    }\n    return null;\n  }\n  function buildDeptMaps(geo) {\n    deptNameToCode = new Map();\n    deptCodeToName = {};\n    deptCodeToAntenna = {};\n    deptSpatialIndex = [];\n    for (const f of geo?.features || []) {\n      const props = f?.properties || {};\n      const codeRaw = props.code ?? props.CODE ?? props.dep ?? props.DEP ?? props.insee ?? props.INSEE ?? props.code_dept ?? props.CODE_DEPT ?? \"\";\n      const nameRaw = props.nom ?? props.NOM ?? props.name ?? props.NAME ?? props.libelle ?? props.LIBELLE ?? \"\";\n      const code = normalizeDeptCode(codeRaw);\n      const key = normalizeForLookup(nameRaw);\n      if (code && key) {\n        deptNameToCode.set(key, code);\n        deptCodeToName[code] = String(nameRaw || \"\").trim();\n        const antenna = DEPT_TO_ANTENNA_BY_CODE[code] || DEPT_TO_ANTENNA_BY_NAME.get(key) || \"\";\n        if (antenna) deptCodeToAntenna[code] = antenna;\n      }\n      if (code && f?.geometry) deptSpatialIndex.push({ code, name: String(nameRaw || \"\").trim(), geometry: f.geometry, bbox: getGeometryBbox(f.geometry) });\n    }\n  }\n  function enrichProjectsWithDepartments(projects) {\n    for (const p of projects) {\n      const existingCode = normalizeDeptCode(p.__deptCode ?? p[\"Code département\"] ?? p.code_departement ?? p[\"Département\"] ?? p.departement ?? \"\");\n      if (/^(\\d{2}|\\d{3}|2A|2B)$/.test(existingCode)) {\n        p.__deptCode = existingCode;\n        p.__deptName = String(p.__deptName ?? p[\"Nom département\"] ?? deptCodeToName[existingCode] ?? p.__deptName ?? \"\").trim();\n        p.__searchBlob = buildProjectSearchBlob(p);\n        continue;\n      }\n      const ll = projectLatLon(p);\n      const inferred = ll ? (inferDeptFromLatLon(ll[0], ll[1]) || inferOverseasArea(p, ll[0], ll[1])) : null;\n      if (inferred) { p.__deptCode = inferred.code; p.__deptName = inferred.name; }\n      p.__searchBlob = buildProjectSearchBlob(p);\n    }\n  }\n  function deptCodeFromProject(p) {\n    const codeLike = String(p?.__deptCode ?? p?.[\"Code département\"] ?? p?.code_departement ?? p?.[\"Département\"] ?? p?.departement ?? \"\").trim();\n    if (codeLike) {\n      const maybeCode = normalizeDeptCode(codeLike);\n      if (/^(\\d{2}|\\d{3}|2A|2B)$/.test(maybeCode)) return maybeCode;\n    }\n    const rawName = String(p?.__deptName ?? p?.[\"Nom département\"] ?? p?.[\"Département\"] ?? p?.departement ?? \"\").trim();\n    return rawName ? (deptNameToCode.get(normalizeForLookup(rawName)) || \"\") : \"\";\n  }\n  function deptNameFromProject(p) {\n    const rawName = String(p?.__deptName ?? p?.[\"Nom département\"] ?? \"\").trim();\n    if (rawName) return rawName;\n    const code = deptCodeFromProject(p);\n    return code ? String(deptCodeToName[code] ?? \"\").trim() : \"\";\n  }\n\n  function matchesAdvancedFilters(p) {\n    const minAmount = Number(state.amountMin);\n    const maxAmount = Number(state.amountMax);\n    const amount = amountNumber(p[\"Montant\"] ?? p.montant);\n    if (Number.isFinite(minAmount) && state.amountMin && (!Number.isFinite(amount) || amount < minAmount)) return false;\n    if (Number.isFinite(maxAmount) && state.amountMax && (!Number.isFinite(amount) || amount > maxAmount)) return false;\n\n    const exactChecks = [\n      [state.phase, p[\"Phase projet\"] ?? p.phase],\n      [state.client, p[\"Client\"] ?? p.client],\n      [state.programme, p[\"Programme\"] ?? p.programme],\n      [state.theme, p[\"Thématique\"] ?? p.thematique]\n    ];\n    for (const [wanted, raw] of exactChecks) {\n      if (wanted && normalizeForLookup(raw) !== normalizeForLookup(wanted)) return false;\n    }\n    if (state.dept) {\n      const code = deptCodeFromProject(p);\n      const name = deptNameFromProject(p);\n      const label = code && name ? `${code} - ${name}` : (name || code);\n      if (normalizeForLookup(label) !== normalizeForLookup(state.dept)) return false;\n    }\n    if (state.photos === \"yes\" && !hasProjectPhotos(p)) return false;\n    if (state.photos === \"no\" && hasProjectPhotos(p)) return false;\n    if (state.energy === \"yes\" && !hasProjectEnergyData(p)) return false;\n    if (state.energy === \"no\" && hasProjectEnergyData(p)) return false;\n    return true;\n  }\n  function matchesProject(p) {\n    if (state.types.size && !state.types.has(projectTypeKey(p))) return false;\n    if (state.query) {\n      const blob = p.__searchBlob || buildProjectSearchBlob(p);\n      if (!blob.includes(normalizeSearchText(state.query))) return false;\n    }\n    if (!matchesAdvancedFilters(p)) return false;\n    if (state.mode === PROJECT_MODES.completed.key && !state.completedShowAll && !isProjectPresentInYear(p, state.completedYear)) return false;\n    if (state.scope === \"antenna\") {\n      const wantedAntenna = antennaKeyFromText(state.antenna);\n      if (wantedAntenna && antennaKeyFromText(p[\"Antenne\"] ?? p.antenne) !== wantedAntenna) return false;\n    }\n    return true;\n  }\n  function isOverseasCode(code) { return /^97[1-6]$/.test(String(code || \"\")); }\n  function isMetroProject(project) { return !isOverseasCode(deptCodeFromProject(project)); }\n\n  function projectPinSize(baseSize) { return Math.max(6, Math.round(baseSize * state.pinScale)); }\n  function projectPinTransformStyle() { return `transform:scale(${state.pinScale});transform-origin:center center;`; }\n\n  function makeProjectIcon(typeKey) {\n    const color = projectTypeColorByKey(typeKey);\n    return L.divIcon({\n      className: \"pin-dot\",\n      html: `<div class=\"pin-dot-inner\" style=\"border-color:${escapeAttr(color)};${projectPinTransformStyle()}\"></div>`,\n      iconSize: [projectPinSize(22), projectPinSize(22)],\n      iconAnchor: [projectPinSize(11), projectPinSize(11)]\n    });\n  }\n  function makeClusterIcon(cluster) {\n    const count = cluster.getChildCount();\n    const kids = cluster.getAllChildMarkers();\n    const colors = new Set(kids.map((m) => m.options.__bimoTypeColor).filter(Boolean));\n    const color = colors.size === 1 ? Array.from(colors)[0] : \"#111\";\n    return L.divIcon({\n      className: \"pin-dot\",\n      html: `<div class=\"pin-dot-cluster\" style=\"border-color:${escapeAttr(color)};transform:scale(${state.pinScale});transform-origin:center center;\">${count}</div>`,\n      iconSize: [projectPinSize(28), projectPinSize(28)],\n      iconAnchor: [projectPinSize(14), projectPinSize(14)]\n    });\n  }\n  function addLabel(layerGroup, latLng, text, className, offsetY) {\n    if (!text) return;\n    layerGroup.addLayer(L.marker(latLng, {\n      interactive: false,\n      keyboard: false,\n      icon: L.divIcon({\n        className: \"\",\n        html: `<div class=\"${className}\">${escapeHtml(text)}</div>`,\n        iconSize: null,\n        iconAnchor: [-8, offsetY]\n      })\n    }));\n  }\n\n  function officeIcon(isHQ) {\n    const officeSvg = `<svg class=\"pin-office-svg\" viewBox=\"0 0 24 24\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4 22h16v-2H4v2zm2-4h12V4H6v14zm2-2V6h2v10H8zm4 0V6h2v10h-2z\"/></svg>`;\n    return L.divIcon({ className: \"pin-dot\", html: `<div class=\"pin-office-wrap\">${officeSvg}${isHQ ? `<div class=\"pin-office-badge\">★</div>` : ``}</div>`, iconSize: [22,22], iconAnchor: [11,11] });\n  }\n\n  function deptFeatureCode(feature) {\n    const props = feature?.properties || {};\n    return normalizeDeptCode(props.code ?? props.CODE ?? props.dep ?? props.DEP ?? props.insee ?? props.INSEE ?? props.code_dept ?? props.CODE_DEPT ?? \"\");\n  }\n  function styleDept(feature) {\n    const code = deptFeatureCode(feature);\n    const antenna = deptCodeToAntenna[code] || \"\";\n    const wantedAntenna = antennaKeyFromText(state.antenna);\n    const inScope = state.scope !== \"antenna\" || !wantedAntenna || antenna === wantedAntenna;\n    if (!state.departments) {\n      return { weight: 0.7, color: \"rgba(80,80,80,.42)\", fillColor: \"#ffffff\", fillOpacity: 0.02 };\n    }\n    return {\n      weight: inScope ? 1 : 0.55,\n      color: inScope ? \"#555\" : \"rgba(100,100,100,.28)\",\n      fillColor: inScope ? antennaColorByName(antenna, \"#ffffff\") : \"#ffffff\",\n      fillOpacity: inScope && antenna ? 0.56 : 0.02\n    };\n  }\n\n  function antennaBoundsFromGeoJson(geo, antennaName) {\n    const wanted = antennaKeyFromText(antennaName);\n    const bounds = [];\n    for (const feature of geo?.features || []) {\n      const code = deptFeatureCode(feature);\n      if (!code || isOverseasCode(code)) continue;\n      if (deptCodeToAntenna[code] !== wanted) continue;\n      const bbox = getGeometryBbox(feature.geometry);\n      if (!bbox) continue;\n      bounds.push([bbox[1], bbox[0]], [bbox[3], bbox[2]]);\n    }\n    return bounds.length ? L.latLngBounds(bounds) : L.latLngBounds(FRANCE_BOUNDS);\n  }\n\n  function renderLegend(filteredProjects) {\n    if (!elLegend) return;\n    if (!state.legend) { elLegend.hidden = true; return; }\n    const visibleTypes = PROJECT_TYPE_FILTER_KEYS.filter((key) => state.types.has(key));\n    const wantedAntenna = antennaKeyFromText(state.antenna);\n    const visibleAntennas = state.departments\n      ? ANTENNA_LEGEND_ORDER.filter((antenna) => state.scope !== \"antenna\" || !wantedAntenna || antenna === wantedAntenna)\n      : [];\n    const hasOffices = state.offices;\n    const rows = [];\n    if (visibleAntennas.length) {\n      rows.push(`<div class=\"printLegendTitle\">Antenne (départements)</div>`);\n      for (const antenna of visibleAntennas) {\n        rows.push(`<div class=\"printLegendRow\"><span class=\"printSwatch\" style=\"background:${escapeAttr(antennaColorByName(antenna))}\"></span><span>${escapeHtml(antennaDisplayLabel(antenna))}</span></div>`);\n      }\n    }\n    if (visibleTypes.length) {\n      rows.push(`<div class=\"printLegendSubtitle\">Type de projet (pins)</div>`);\n      for (const key of visibleTypes) {\n        rows.push(`<div class=\"printLegendRow\"><span class=\"printPinSwatch\" style=\"border-color:${escapeAttr(projectTypeColorByKey(key))}\"></span><span>${escapeHtml(projectTypeLabelByKey(key))}</span></div>`);\n      }\n    }\n    if (hasOffices) rows.push(`<div class=\"printLegendRow\"><span style=\"width:15px;height:15px;border:2px solid #111;border-radius:999px;background:#fff;display:inline-block;\"></span><span>Siège & antennes</span></div>`);\n    elLegend.innerHTML = rows.join(\"\");\n    elLegend.hidden = rows.length === 0;\n  }\n\n  function renderOverseasInset(projects) {\n    if (!elOverseas) return;\n    const overseas = projects.filter((p) => isOverseasCode(deptCodeFromProject(p)));\n    if (!overseas.length) { elOverseas.hidden = true; elOverseas.innerHTML = \"\"; return; }\n    const groups = new Map();\n    for (const p of overseas) {\n      const code = deptCodeFromProject(p);\n      const name = deptNameFromProject(p) || OVERSEAS_AREA_RULES.find((rule) => rule.code === code)?.name || code;\n      if (!groups.has(code)) groups.set(code, { code, name, projects: [] });\n      groups.get(code).projects.push(p);\n    }\n    const cards = Array.from(groups.values()).map((group) => {\n      const dots = group.projects.slice(0, 18).map((p) => `<span class=\"overseasDot\" style=\"border-color:${escapeAttr(projectTypeColorByKey(projectTypeKey(p)))}\"></span>`).join(\"\");\n      const more = group.projects.length > 18 ? `<span style=\"font-size:10px;font-weight:800;\">+${group.projects.length - 18}</span>` : \"\";\n      const names = state.projects\n        ? `<div class=\"overseasProjects\">${group.projects.map((p) => projectDisplayName(p)).filter(Boolean).slice(0, 6).map((name) => `<div>${escapeHtml(name)}</div>`).join(\"\")}</div>`\n        : \"\";\n      return `<div class=\"overseasCard\"><div class=\"overseasPins\">${dots}${more}</div>${names}<div class=\"overseasDept\">${escapeHtml(group.name)}</div></div>`;\n    }).join(\"\");\n    elOverseas.innerHTML = `<div class=\"overseasTitle\">Outre-mer</div><div class=\"overseasGrid\">${cards}</div>`;\n    elOverseas.hidden = false;\n  }\n\n  function wait(ms) { return new Promise((resolve) => window.setTimeout(resolve, ms)); }\n  function waitForMapIdle(map, timeout = 3200) {\n    return new Promise((resolve) => {\n      let done = false;\n      const finish = () => { if (done) return; done = true; resolve(); };\n      const timer = window.setTimeout(finish, timeout);\n      map.once(\"idle\", () => { window.clearTimeout(timer); finish(); });\n      window.setTimeout(() => { map.fire(\"idle\"); }, timeout - 250);\n    });\n  }\n\n  async function main() {\n    if (!window.L || typeof L.map !== \"function\") {\n      showError(\"Leaflet n'est pas chargé.\");\n      return;\n    }\n    const map = L.map(\"printMap\", {\n      preferCanvas: false,\n      zoomControl: false,\n      attributionControl: false,\n      dragging: false,\n      scrollWheelZoom: false,\n      doubleClickZoom: false,\n      boxZoom: false,\n      keyboard: false,\n      tap: false,\n      zoomSnap: 0.1,\n      zoomDelta: 0.25\n    });\n    L.tileLayer(\"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png\", { maxZoom: 19, crossOrigin: true }).addTo(map);\n\n    setStatus(\"Chargement des données…\");\n    const [geo, projectsPayload] = await Promise.all([\n      fetchJson(DEPTS_URL),\n      fetchJson(state.mode === PROJECT_MODES.completed.key ? COMPLETED_PROJECTS_URL : CURRENT_PROJECTS_URL)\n    ]);\n    buildDeptMaps(geo);\n    const projects = ensureProjectIds(normalizeProjectsPayload(projectsPayload), state.mode);\n    enrichProjectsWithDepartments(projects);\n    const filtered = projects.filter(matchesProject);\n    const metroProjects = filtered.filter(isMetroProject);\n\n    setStatus(\"Rendu de la carte…\");\n    L.geoJSON(geo, { style: styleDept, interactive: false }).addTo(map);\n\n    const clusterGroup = L.markerClusterGroup({\n      chunkedLoading: false,\n      showCoverageOnHover: false,\n      spiderfyOnMaxZoom: false,\n      zoomToBoundsOnClick: false,\n      maxClusterRadius: state.projects ? 1 : 10,\n      iconCreateFunction: makeClusterIcon\n    });\n    const labelLayer = L.layerGroup().addTo(map);\n    for (const p of metroProjects) {\n      const ll = projectLatLon(p);\n      if (!ll) continue;\n      const typeKey = projectTypeKey(p);\n      const marker = L.marker(ll, { icon: makeProjectIcon(typeKey), interactive: false, keyboard: false });\n      marker.options.__bimoTypeColor = projectTypeColorByKey(typeKey);\n      clusterGroup.addLayer(marker);\n      if (state.cities) addLabel(labelLayer, ll, projectCity(p), \"printCityLabel\", 24);\n      if (state.projects) addLabel(labelLayer, ll, projectDisplayName(p), \"printProjectLabel\", 42);\n    }\n    map.addLayer(clusterGroup);\n\n    if (state.offices) {\n      for (const office of OFFICES) {\n        const ll = [Number(office.latitude), Number(office.longitude)];\n        if (!Number.isFinite(ll[0]) || !Number.isFinite(ll[1])) continue;\n        L.marker(ll, { icon: officeIcon(office.type_lieu === \"siege\"), interactive: false, keyboard: false }).addTo(map);\n      }\n    }\n\n    renderLegend(filtered);\n    renderOverseasInset(filtered);\n\n    const bounds = state.scope === \"antenna\"\n      ? antennaBoundsFromGeoJson(geo, state.antenna)\n      : L.latLngBounds(FRANCE_BOUNDS);\n    map.fitBounds(bounds, { padding: [10, 10], animate: false });\n    await wait(120);\n    map.invalidateSize(false);\n    map.fitBounds(bounds, { padding: [10, 10], animate: false });\n    await waitForMapIdle(map);\n    await wait(700);\n    hideLoading();\n    setStatus(`${filtered.length} projet(s) sélectionné(s).`);\n    if (state.autoprint) window.setTimeout(() => window.print(), 500);\n  }\n\n  document.getElementById(\"printNowBtn\")?.addEventListener(\"click\", () => window.print());\n  document.getElementById(\"closeBtn\")?.addEventListener(\"click\", () => window.close());\n  main().catch((err) => showError(\"L'impression n'a pas pu être préparée. Consultez la console.\", err));\n})();\n";
-
-  function initMapPrintControl() {
-    let btn = document.getElementById("mapPrintBtn");
-    if (!btn && elAdvancedFiltersBtn?.insertAdjacentElement) {
-      btn = document.createElement("button");
-      btn.id = "mapPrintBtn";
-      btn.className = "panelPrint";
-      btn.type = "button";
-      btn.textContent = "Imprimer";
-      btn.setAttribute("aria-haspopup", "dialog");
-      elAdvancedFiltersBtn.insertAdjacentElement("afterend", btn);
-    }
-    if (!btn || btn.dataset.bimoPrintReady === "1") return;
-
-    btn.dataset.bimoPrintReady = "1";
-    ensurePrintModalStyles();
-    btn.addEventListener("click", openMapPrintDialog);
-  }
-
-  function ensurePrintModalStyles() {
-    if (document.getElementById("bimoPrintDialogStyles")) return;
-    const style = document.createElement("style");
-    style.id = "bimoPrintDialogStyles";
-    style.textContent = `
-      .bimoPrintBackdrop{position:fixed;inset:0;z-index:5000;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:20px;}
-      .bimoPrintDialog{width:min(680px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;background:#fff;border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.28);padding:18px;color:#111;font-family:inherit;}
-      .bimoPrintHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;}
-      .bimoPrintTitle{margin:0;font-size:22px;font-weight:800;line-height:1.15;}
-      .bimoPrintIntro{color:#555;margin-top:4px;line-height:1.35;}
-      .bimoPrintClose{border:1px solid #d0d0d0;background:#fff;border-radius:999px;width:34px;height:34px;cursor:pointer;font-weight:800;}
-      .bimoPrintGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-      .bimoPrintFieldset{border:1px solid #d0d0d0;border-radius:14px;padding:12px;margin:0;}
-      .bimoPrintFieldset legend{font-weight:800;padding:0 6px;}
-      .bimoPrintFieldset label{display:flex;align-items:center;gap:8px;margin:7px 0;line-height:1.2;}
-      .bimoPrintFieldset input[type="checkbox"],.bimoPrintFieldset input[type="radio"]{accent-color:#000091;}
-      .bimoPrintSelect{width:100%;padding:7px 9px;border:1px solid #d0d0d0;border-radius:10px;background:#fff;font:inherit;margin-top:6px;}
-      .bimoPrintPinControls{display:inline-flex;gap:6px;align-items:center;margin-top:6px;}
-      .bimoPrintPinControls button{border:1px solid #d0d0d0;background:#fff;border-radius:10px;min-width:34px;height:30px;cursor:pointer;font-weight:800;}
-      .bimoPrintPinValue{font-weight:800;color:#000091;margin-left:8px;}
-      .bimoPrintFooter{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;border-top:1px solid #eee;padding-top:14px;}
-      .bimoPrintFooter button{border:1px solid #d0d0d0;background:#fff;border-radius:10px;padding:8px 13px;cursor:pointer;font-weight:700;}
-      .bimoPrintFooter .bimoPrintPrimary{background:#000091;border-color:#000091;color:#fff;}
-      @media(max-width:720px){.bimoPrintGrid{grid-template-columns:1fr;}}
-    `;
-    document.head.appendChild(style);
-  }
-
-  function openMapPrintDialog() {
-    closeMapPrintDialog();
-
-    const activeTypes = new Set(getActiveTypes().map((x) => String(x || "").toLowerCase()));
-    const initialTypes = PROJECT_TYPE_FILTER_KEYS.filter((key) => activeTypes.has(key));
-    const selectedTypes = initialTypes.length ? initialTypes : PROJECT_TYPE_FILTER_KEYS.slice();
-    let dialogPinScale = projectPinSizeScale;
-    const initialAntenna = antennaKeyFromText(selectedAntenna || "");
-
-    const backdrop = document.createElement("div");
-    backdrop.id = "bimoPrintBackdrop";
-    backdrop.className = "bimoPrintBackdrop";
-    backdrop.innerHTML = `
-      <div class="bimoPrintDialog" role="dialog" aria-modal="true" aria-labelledby="bimoPrintTitle">
-        <div class="bimoPrintHeader">
-          <div>
-            <h2 id="bimoPrintTitle" class="bimoPrintTitle">Préparer l'impression</h2>
-            <div class="bimoPrintIntro">Une fenêtre A4 paysage sera générée par ce script, sans modifier la carte affichée.</div>
-          </div>
-          <button class="bimoPrintClose" type="button" aria-label="Fermer">×</button>
-        </div>
-        <div class="bimoPrintGrid">
-          <fieldset class="bimoPrintFieldset">
-            <legend>Périmètre</legend>
-            <label><input type="radio" name="printScope" value="all" ${initialAntenna ? "" : "checked"}> Toute la France métropolitaine</label>
-            <label><input type="radio" name="printScope" value="antenna" ${initialAntenna ? "checked" : ""}> Une seule antenne</label>
-            <select id="bimoPrintAntenna" class="bimoPrintSelect" aria-label="Choisir une antenne">
-              ${ANTENNA_LEGEND_ORDER.map((antenna) => `<option value="${escapeAttr(antenna)}" ${antenna === initialAntenna ? "selected" : ""}>${escapeHtml(antennaDisplayLabel(antenna))}</option>`).join("")}
-            </select>
-          </fieldset>
-          <fieldset class="bimoPrintFieldset">
-            <legend>Types d'opérations</legend>
-            ${PROJECT_TYPE_FILTER_KEYS.map((key) => `
-              <label><input class="bimoPrintType" type="checkbox" value="${escapeAttr(key)}" ${selectedTypes.includes(key) ? "checked" : ""}> ${escapeHtml(projectTypeLabelByKey(key))}</label>
-            `).join("")}
-          </fieldset>
-          <fieldset class="bimoPrintFieldset">
-            <legend>Taille des pins</legend>
-            <div class="bimoPrintPinControls">
-              <button id="bimoPrintPinMinus" type="button" aria-label="Diminuer la taille des pins">−</button>
-              <button id="bimoPrintPinReset" type="button" aria-label="Taille normale des pins">O</button>
-              <button id="bimoPrintPinPlus" type="button" aria-label="Augmenter la taille des pins">+</button>
-              <span id="bimoPrintPinValue" class="bimoPrintPinValue"></span>
-            </div>
-          </fieldset>
-          <fieldset class="bimoPrintFieldset">
-            <legend>Affichage</legend>
-            <label><input id="bimoPrintCities" type="checkbox" ${cityLabelsEnabled ? "checked" : ""}> Noms des villes</label>
-            <label><input id="bimoPrintProjects" type="checkbox" ${projectLabelsEnabled ? "checked" : ""}> Noms des projets</label>
-            <label><input id="bimoPrintOffices" type="checkbox" ${officesEnabled ? "checked" : ""}> Pins des antennes et du siège</label>
-            <label><input id="bimoPrintDepts" type="checkbox" checked> Départements colorés</label>
-            <label><input id="bimoPrintLegend" type="checkbox" ${elLegend && !elLegend.hidden ? "checked" : ""}> Légende</label>
-          </fieldset>
-        </div>
-        <div class="bimoPrintFooter">
-          <button class="bimoPrintCancel" type="button">Annuler</button>
-          <button class="bimoPrintPrimary" type="button">Imprimer</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(backdrop);
-
-    const close = () => closeMapPrintDialog();
-    backdrop.querySelector(".bimoPrintClose")?.addEventListener("click", close);
-    backdrop.querySelector(".bimoPrintCancel")?.addEventListener("click", close);
-    backdrop.addEventListener("click", (e) => { if (e.target === backdrop) close(); });
-
-    const syncPinValue = () => {
-      const pct = Math.round(dialogPinScale * 100);
-      const valueEl = backdrop.querySelector("#bimoPrintPinValue");
-      if (valueEl) valueEl.textContent = `${pct} %`;
-    };
-    const setPinScale = (value) => {
-      dialogPinScale = clampProjectPinSizeScale(value);
-      syncPinValue();
-    };
-    backdrop.querySelector("#bimoPrintPinMinus")?.addEventListener("click", () => setPinScale(dialogPinScale - 0.1));
-    backdrop.querySelector("#bimoPrintPinReset")?.addEventListener("click", () => setPinScale(1));
-    backdrop.querySelector("#bimoPrintPinPlus")?.addEventListener("click", () => setPinScale(dialogPinScale + 0.1));
-    syncPinValue();
-
-    const updateAntennaDisabled = () => {
-      const scope = backdrop.querySelector('input[name="printScope"]:checked')?.value || "all";
-      const select = backdrop.querySelector("#bimoPrintAntenna");
-      if (select) select.disabled = scope !== "antenna";
-    };
-    backdrop.querySelectorAll('input[name="printScope"]').forEach((radio) => radio.addEventListener("change", updateAntennaDisabled));
-    updateAntennaDisabled();
-
-    const submit = () => {
-      const checkedTypes = Array.from(backdrop.querySelectorAll(".bimoPrintType:checked")).map((cb) => cb.value);
-      if (!checkedTypes.length) {
-        alert("Sélectionnez au moins un type d'opération.");
-        return;
-      }
-      const printState = {
-        mode: currentProjectMode,
-        query: elQ?.value || "",
-        types: checkedTypes,
-        scope: backdrop.querySelector('input[name="printScope"]:checked')?.value || "all",
-        antenna: backdrop.querySelector("#bimoPrintAntenna")?.value || "",
-        pinScale: dialogPinScale,
-        cities: !!backdrop.querySelector("#bimoPrintCities")?.checked,
-        projects: !!backdrop.querySelector("#bimoPrintProjects")?.checked,
-        offices: !!backdrop.querySelector("#bimoPrintOffices")?.checked,
-        departments: !!backdrop.querySelector("#bimoPrintDepts")?.checked,
-        legend: !!backdrop.querySelector("#bimoPrintLegend")?.checked,
-        completedYear: completedYearFilter,
-        completedShowAll: !!showAllCompletedProjects,
-        amountMin: elAmountMin?.value || "",
-        amountMax: elAmountMax?.value || "",
-        phase: elPhaseFilter?.value || "",
-        client: elClientFilter?.value || "",
-        programme: elProgrammeFilter?.value || "",
-        theme: elThemeFilter?.value || "",
-        dept: elDeptFilter?.value || "",
-        photos: elPhotosFilter?.value || "",
-        energy: elEnergyFilter?.value || "",
-        autoprint: true
-      };
-
-      openGeneratedPrintPage(printState);
-      closeMapPrintDialog();
-    };
-    backdrop.querySelector(".bimoPrintPrimary")?.addEventListener("click", submit);
-    backdrop.querySelector(".bimoPrintDialog")?.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") close();
-    });
-    backdrop.querySelector(".bimoPrintClose")?.focus();
-  }
-
-  function openGeneratedPrintPage(printState) {
-    const win = window.open("", "_blank");
-    if (!win) {
-      alert("La fenêtre d'impression a été bloquée par le navigateur. Autorisez les fenêtres contextuelles pour ce site.");
-      return;
-    }
-
-    const stateJson = JSON.stringify(printState || {}).replace(/</g, "\u003c");
-    const runtimeCode = BIMO_GENERATED_PRINT_RUNTIME.replace(/<\/script/gi, "<\\/script");
-    const html = BIMO_GENERATED_PRINT_HTML
-      .replace("__BIMO_PRINT_STATE_JSON__", stateJson)
-      .replace("__BIMO_PRINT_RUNTIME_CODE__", runtimeCode);
-
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
-    try { win.focus(); } catch (err) { /* sans impact */ }
-  }
-
-  function closeMapPrintDialog() {
-    const existing = document.getElementById("bimoPrintBackdrop");
-    if (existing?.parentNode) existing.parentNode.removeChild(existing);
-  }
-
-  // ---- FIN MODULE IMPRESSION A4 AUTONOME ----
-
-
   map.on("click", () => closePanel());
 
   // ---- 11. Helpers données, formatage et filtres ----
@@ -4375,7 +4165,6 @@ clusters.on("clustermouseout", (a) => {
     renderMarkers();
   }));
   initOfficesToggle();
-  initMapPrintControl();
   normalizeToolbarCheckboxes();
   window.setTimeout(() => {
     initProjectClusterDistanceControls(
@@ -4487,6 +4276,811 @@ clusters.on("clustermouseout", (a) => {
     elProjListMenu.addEventListener("click", (e) => e.stopPropagation());
   }
 
+
+
+
+  // ---- MODULE IMPRESSION A4 - CARTE ACTUELLE ----
+  function initMapPrintModule() {
+    const existing = document.getElementById("mapPrintBtn");
+    if (existing) return;
+
+    injectMapPrintStyles();
+
+    const btn = document.createElement("button");
+    btn.id = "mapPrintBtn";
+    btn.type = "button";
+    btn.textContent = "Imprimer";
+    btn.setAttribute("aria-haspopup", "dialog");
+    btn.setAttribute("aria-label", "Préparer l’impression de la carte");
+
+    if (elAdvancedFiltersBtn?.insertAdjacentElement) {
+      elAdvancedFiltersBtn.insertAdjacentElement("afterend", btn);
+    } else {
+      document.getElementById("toolbar")?.appendChild(btn);
+    }
+
+    btn.addEventListener("click", () => {
+      closeLightbox();
+      openMapPrintScopeDialog();
+    });
+  }
+
+  function injectMapPrintStyles() {
+    if (document.getElementById("mapPrintModuleStyles")) return;
+
+    const style = document.createElement("style");
+    style.id = "mapPrintModuleStyles";
+    style.textContent = `
+      #mapPrintBtn{
+        cursor:pointer;
+        border:var(--bimo-button-border);
+        background:var(--bimo-button-bg);
+        border-radius:var(--bimo-button-radius);
+        padding:3px 10px;
+        line-height:1;
+        min-height:26px;
+        height:26px;
+        font:inherit;
+      }
+      #mapPrintBtn:hover{ filter:var(--bimo-button-hover-filter); }
+      .mapPrintDialogBackdrop{
+        position:fixed;
+        inset:0;
+        z-index:10000;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:20px;
+        background:rgba(15,23,42,0.42);
+      }
+      .mapPrintDialog{
+        width:min(460px, calc(100vw - 32px));
+        max-height:calc(100vh - 32px);
+        overflow:auto;
+        background:#fff;
+        color:#111;
+        border:1px solid var(--border);
+        border-radius:16px;
+        box-shadow:0 22px 60px rgba(0,0,0,0.26);
+        padding:18px;
+        font-family:"Marianne", Arial, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      }
+      .mapPrintDialog h2{
+        margin:0 0 8px 0;
+        font-size:20px;
+        line-height:1.2;
+        font-weight:800;
+      }
+      .mapPrintDialogIntro{
+        margin:0 0 14px 0;
+        color:#444;
+        font-size:13px;
+        line-height:1.35;
+      }
+      .mapPrintScopeList{
+        display:grid;
+        gap:8px;
+        margin:12px 0 16px;
+      }
+      .mapPrintScopeItem{
+        display:flex;
+        align-items:center;
+        gap:9px;
+        padding:9px 10px;
+        border:1px solid var(--border);
+        border-radius:10px;
+        background:#fff;
+        cursor:pointer;
+      }
+      .mapPrintScopeItem:hover{ background:#f8f8fb; }
+      .mapPrintScopeItem input{ margin:0; accent-color:var(--accent); }
+      .mapPrintDialogActions{
+        display:flex;
+        justify-content:flex-end;
+        gap:10px;
+        margin-top:12px;
+      }
+      .mapPrintDialogActions button{
+        cursor:pointer;
+        border:var(--bimo-button-border);
+        background:#fff;
+        border-radius:10px;
+        padding:8px 12px;
+        font:inherit;
+        font-weight:700;
+      }
+      .mapPrintDialogActions .mapPrintPrimary{
+        background:var(--accent);
+        border-color:var(--accent);
+        color:#fff;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function openMapPrintScopeDialog() {
+    closeMapPrintScopeDialog();
+
+    const dialogId = "mapPrintScopeDialog";
+    const backdrop = document.createElement("div");
+    backdrop.className = "mapPrintDialogBackdrop";
+    backdrop.id = `${dialogId}Backdrop`;
+
+    const antennaOptions = ANTENNA_LEGEND_ORDER.map((antenna) => {
+      const checked = selectedAntenna === antenna ? "checked" : "";
+      return `
+        <label class="mapPrintScopeItem">
+          <input type="radio" name="mapPrintScope" value="${escapeAttr(antenna)}" ${checked}>
+          <span>${escapeHtml(antennaDisplayLabel(antenna))}</span>
+        </label>`;
+    }).join("");
+
+    const franceChecked = selectedAntenna ? "" : "checked";
+    backdrop.innerHTML = `
+      <div id="${dialogId}" class="mapPrintDialog" role="dialog" aria-modal="true" aria-labelledby="mapPrintDialogTitle">
+        <h2 id="mapPrintDialogTitle">Imprimer la carte</h2>
+        <p class="mapPrintDialogIntro">
+          L’impression reprend les filtres et affichages actuellement visibles sur la carte.
+          Choisissez uniquement l’emprise à imprimer.
+        </p>
+        <div class="mapPrintScopeList" role="radiogroup" aria-label="Emprise à imprimer">
+          <label class="mapPrintScopeItem">
+            <input type="radio" name="mapPrintScope" value="__france__" ${franceChecked}>
+            <span>Toute la France</span>
+          </label>
+          ${antennaOptions}
+        </div>
+        <div class="mapPrintDialogActions">
+          <button type="button" class="mapPrintCancel">Annuler</button>
+          <button type="button" class="mapPrintPrimary">Préparer</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(backdrop);
+    const dialog = backdrop.querySelector(`#${dialogId}`);
+    const cancelBtn = backdrop.querySelector(".mapPrintCancel");
+    const primaryBtn = backdrop.querySelector(".mapPrintPrimary");
+
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") closeMapPrintScopeDialog();
+    };
+    backdrop.__bimoPrintEscapeHandler = closeOnEscape;
+    document.addEventListener("keydown", closeOnEscape);
+
+    backdrop.addEventListener("click", (event) => {
+      if (event.target === backdrop) closeMapPrintScopeDialog();
+    });
+
+    cancelBtn?.addEventListener("click", closeMapPrintScopeDialog);
+    primaryBtn?.addEventListener("click", () => {
+      const value = String(backdrop.querySelector('input[name="mapPrintScope"]:checked')?.value || "__france__");
+      closeMapPrintScopeDialog();
+      prepareMapPrintFromCurrentState(value);
+    });
+
+    dialog?.querySelector('input[name="mapPrintScope"]:checked')?.focus?.();
+  }
+
+  function closeMapPrintScopeDialog() {
+    const backdrop = document.getElementById("mapPrintScopeDialogBackdrop");
+    if (!backdrop) return;
+    if (backdrop.__bimoPrintEscapeHandler) {
+      document.removeEventListener("keydown", backdrop.__bimoPrintEscapeHandler);
+    }
+    backdrop.remove();
+  }
+
+  function applyMapPrintScope(scopeValue) {
+    const nextAntenna = scopeValue === "__france__" ? null : antennaKeyFromText(scopeValue);
+    selectedAntenna = nextAntenna || null;
+    closePanel();
+    updateDeptStyle();
+    updateDeptSelectedStat();
+    renderMarkers();
+
+    if (selectedAntenna) {
+      const bounds = boundsForAntennaDepartments(selectedAntenna);
+      if (bounds?.isValid?.()) {
+        map.fitBounds(bounds, { padding: [22, 22], animate: false });
+      }
+    } else {
+      zoomToFrance();
+    }
+
+    updateClearButtonState();
+  }
+
+  function boundsForAntennaDepartments(antennaName) {
+    if (!deptLayer || !antennaName) return null;
+    const target = antennaKeyFromText(antennaName);
+    if (!target) return null;
+    const bounds = L.latLngBounds();
+
+    deptLayer.eachLayer((layer) => {
+      const props = layer?.feature?.properties || {};
+      const code = normalizeDeptCode(
+        props.code ?? props.CODE ?? props.dep ?? props.DEP ?? props.insee ?? props.INSEE ?? props.code_dept ?? props.CODE_DEPT ?? ""
+      );
+      if (deptCodeToAntenna[code] !== target) return;
+      const layerBounds = layer.getBounds?.();
+      if (layerBounds?.isValid?.()) bounds.extend(layerBounds);
+    });
+
+    return bounds.isValid() ? bounds : null;
+  }
+
+  function serializePrintProject(project) {
+    const ll = projectLatLon(project);
+    if (!ll) return null;
+    const typeKey = projectTypeKey(project);
+    const antenna = antennaKeyFromText(project["Antenne"] ?? project.antenne);
+    return {
+      id: projectId(project),
+      name: projectDisplayName(project),
+      city: projectCity(project),
+      lat: ll[0],
+      lon: ll[1],
+      typeKey,
+      typeLabel: projectTypeLabelByKey(typeKey),
+      typeColor: projectTypeColorByKey(typeKey),
+      antenna,
+      deptCode: deptCodeFromProject(project),
+      deptName: deptNameFromProject(project)
+    };
+  }
+
+  function serializePrintOffice(office) {
+    return {
+      type: office.type_lieu,
+      name: office.nom,
+      antenna: office.antenne,
+      address: office.adresse,
+      lat: Number(office.latitude),
+      lon: Number(office.longitude)
+    };
+  }
+
+  function buildMapPrintPayload(scopeValue) {
+    const projects = filteredProjects()
+      .map(serializePrintProject)
+      .filter((project) => project && Number.isFinite(project.lat) && Number.isFinite(project.lon));
+
+    const selectedScopeAntenna = selectedAntenna ? antennaKeyFromText(selectedAntenna) : "";
+    const deptGeoJson = typeof deptLayer?.toGeoJSON === "function" ? deptLayer.toGeoJSON() : null;
+
+    return {
+      generatedAt: new Date().toISOString(),
+      title: selectedScopeAntenna
+        ? `Carte des projets BIMO — ${antennaDisplayLabel(selectedScopeAntenna)}`
+        : "Carte des projets BIMO — France",
+      scope: selectedScopeAntenna ? "antenna" : "france",
+      scopeAntenna: selectedScopeAntenna,
+      currentProjectMode,
+      projectModeTitle: projectModeMeta().title,
+      projects,
+      offices: OFFICES.map(serializePrintOffice).filter((office) => Number.isFinite(office.lat) && Number.isFinite(office.lon)),
+      deptGeoJson,
+      deptCodeToAntenna,
+      deptCodeToName,
+      antennaLegendOrder: ANTENNA_LEGEND_ORDER,
+      antennaConfig: ANTENNA_CONFIG,
+      projectTypeConfig: PROJECT_TYPE_CONFIG,
+      projectTypeOrder: PROJECT_TYPE_CLUSTER_ORDER,
+      franceBounds: [[FRANCE_BOUNDS.getSouth(), FRANCE_BOUNDS.getWest()], [FRANCE_BOUNDS.getNorth(), FRANCE_BOUNDS.getEast()]],
+      printState: {
+        legendVisible: !!(elLegend && !elLegend.hidden),
+        officesVisible: !!officesEnabled,
+        cityLabelsVisible: !!cityLabelsEnabled,
+        projectLabelsVisible: !!projectLabelsEnabled,
+        antennaSummaryVisible: !!antennaSummaryEnabled,
+        pinSizeScale: projectPinSizeScale,
+        clusterDistanceScale: projectClusterDistanceScale
+      }
+    };
+  }
+
+  function prepareMapPrintFromCurrentState(scopeValue) {
+    try {
+      applyMapPrintScope(scopeValue);
+      window.setTimeout(() => {
+        const payload = buildMapPrintPayload(scopeValue);
+        openMapPrintWindow(payload);
+      }, 180);
+    } catch (err) {
+      console.error("[BIMO] Préparation impression impossible", err);
+      window.alert("L’impression n’a pas pu être préparée. Consultez la console pour le détail technique.");
+    }
+  }
+
+  function openMapPrintWindow(payload) {
+    const printWin = window.open("", "_blank", "noopener,noreferrer,width=1300,height=900");
+    if (!printWin) {
+      window.alert("La fenêtre d’impression a été bloquée par le navigateur. Autorisez les pop-ups pour ce site puis réessayez.");
+      return;
+    }
+
+    const payloadJson = JSON.stringify(payload)
+      .replace(/</g, "\\u003c")
+      .replace(/>/g, "\\u003e")
+      .replace(/&/g, "\\u0026")
+      .replace(/\u2028/g, "\\u2028")
+      .replace(/\u2029/g, "\\u2029");
+
+    const html = `<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${escapeHtml(payload.title)}</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin="anonymous">
+  <style>
+    @page{ size:A4 landscape; margin:0; }
+    *{ box-sizing:border-box; }
+    html,body{ margin:0; min-height:100%; font-family:"Marianne", Arial, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:#e5e7eb; color:#111; }
+    .printToolbar{ position:sticky; top:0; z-index:5000; display:flex; align-items:center; justify-content:space-between; gap:14px; padding:10px 14px; background:#fff; border-bottom:1px solid #d0d0d0; box-shadow:0 2px 12px rgba(0,0,0,.08); }
+    .printToolbarTitle{ font-weight:800; line-height:1.2; }
+    .printToolbarMeta{ margin-top:3px; color:#555; font-size:13px; }
+    .printToolbarActions{ display:flex; align-items:center; gap:10px; }
+    .printToolbar button{ cursor:pointer; border:1px solid #c9c9c9; border-radius:10px; background:#fff; padding:8px 12px; font:inherit; font-weight:700; }
+    .printToolbar button.primary{ background:#000091; border-color:#000091; color:#fff; }
+    .printToolbar button:disabled{ opacity:.55; cursor:not-allowed; }
+    .printStatus{ font-size:13px; color:#555; font-weight:700; }
+    .sheetWrap{ min-height:calc(100vh - 58px); display:flex; align-items:center; justify-content:center; padding:18px; }
+    .sheet{ position:relative; width:297mm; height:210mm; max-width:calc(100vw - 36px); max-height:calc((100vw - 36px) * 210 / 297); aspect-ratio:297/210; background:#fff; box-shadow:0 12px 34px rgba(0,0,0,.24); overflow:hidden; }
+    #printMap{ position:absolute; inset:8mm; background:#fff; }
+    .printLegend{ position:absolute; left:11mm; bottom:11mm; z-index:1500; max-width:72mm; max-height:86mm; overflow:hidden; padding:8px 10px; border:1px solid #d0d0d0; border-radius:10px; background:rgba(255,255,255,.96); box-shadow:0 6px 18px rgba(0,0,0,.14); font-size:11px; line-height:1.25; }
+    .printLegendTitle,.printLegendSubtitle{ font-weight:800; margin-bottom:6px; }
+    .printLegendSubtitle{ margin-top:8px; }
+    .printLegendRow{ display:flex; align-items:center; gap:7px; margin:3px 0; white-space:nowrap; }
+    .printLegendSwatch{ width:16px; height:10px; border:1px solid #d0d0d0; border-radius:4px; flex:0 0 auto; }
+    .printLegendPin{ width:13px; height:13px; border-radius:999px; border:4px solid blue; background:rgba(0,0,0,.05); flex:0 0 auto; }
+    .printMapTitle{ position:absolute; top:11mm; left:11mm; z-index:1400; padding:5px 8px; border-radius:8px; background:rgba(255,255,255,.92); border:1px solid rgba(0,0,0,.10); font-size:12px; font-weight:800; box-shadow:0 4px 14px rgba(0,0,0,.10); }
+    .pin-dot{ background:transparent; border:0; }
+    .pin-dot-inner{ width:18px; height:18px; border-radius:50%; background:rgba(0,0,0,.05); border:4px solid blue; box-sizing:border-box; }
+    .pin-dot-cluster-wrap{ background:transparent; border:0; }
+    .pin-dot-inner.pin-dot-cluster{ width:18px; height:18px; border:0; background:transparent!important; position:relative; display:flex; align-items:center; justify-content:center; overflow:visible; }
+    .pin-dot-cluster-svg{ position:absolute; inset:0; width:18px; height:18px; display:block; overflow:visible; }
+    .pin-dot-cluster-center{ fill:rgba(0,0,0,.05); }
+    .pin-dot-count{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:2; font-weight:800; font-size:12px; color:#111; line-height:1; text-align:center; }
+    .marker-cluster,.marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{ background:transparent!important; }
+    .marker-cluster div,.marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{ width:22px!important; height:22px!important; line-height:22px!important; font-size:11px!important; margin:0!important; }
+    .pin-office-wrap{ width:22px; height:22px; border-radius:999px; background:#fff; border:2px solid #111; display:flex; align-items:center; justify-content:center; position:relative; box-shadow:0 5px 14px rgba(0,0,0,.20); }
+    .pin-office-svg{ width:14px; height:14px; fill:#111; display:block; }
+    .pin-office-badge{ position:absolute; top:-7px; right:-7px; width:16px; height:16px; border-radius:999px; background:#111; color:#fff; font-size:11px; line-height:16px; text-align:center; }
+    .printLabel{ background:rgba(255,255,255,.94); border:1px solid rgba(0,0,0,.16); border-radius:999px; box-shadow:0 3px 9px rgba(0,0,0,.12); color:#111; font-size:11px; font-weight:800; line-height:1.15; padding:3px 7px; white-space:nowrap; transform:translate(-50%, -30px); pointer-events:none; }
+    .printLabel--project{ border-radius:8px; font-size:10.5px; max-width:180px; overflow:hidden; text-overflow:ellipsis; transform:translate(12px, -28px); }
+    .leaflet-container{ font-family:"Marianne", Arial, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    .leaflet-control-container{ display:none!important; }
+    .leaflet-interactive,.printLegend,.printMapTitle,.pin-dot-inner,.pin-office-wrap,.pin-office-badge,.printLabel{ -webkit-print-color-adjust:exact; print-color-adjust:exact; color-adjust:exact; }
+    @media print{
+      html,body{ width:297mm; height:210mm; overflow:hidden; background:#fff!important; }
+      .printToolbar{ display:none!important; }
+      .sheetWrap{ display:block; padding:0; min-height:0; }
+      .sheet{ width:297mm!important; height:210mm!important; max-width:none!important; max-height:none!important; box-shadow:none!important; margin:0!important; page-break-after:avoid; overflow:hidden!important; }
+      #printMap{ inset:8mm!important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="printToolbar">
+    <div>
+      <div class="printToolbarTitle">${escapeHtml(payload.title)}</div>
+      <div id="printToolbarMeta" class="printToolbarMeta">Préparation de la carte…</div>
+    </div>
+    <div class="printToolbarActions">
+      <span id="printStatus" class="printStatus">Chargement…</span>
+      <button id="launchPrintBtn" class="primary" type="button" disabled>Lancer l’impression</button>
+      <button type="button" onclick="window.close()">Fermer</button>
+    </div>
+  </div>
+  <div class="sheetWrap">
+    <main class="sheet" aria-label="Carte prête pour impression">
+      <div id="printMap"></div>
+      <div class="printMapTitle">${escapeHtml(payload.title)}</div>
+      <div id="printLegend" class="printLegend" hidden></div>
+    </main>
+  </div>
+  <script>window.__BIMO_PRINT_PAYLOAD__=${payloadJson};<\/script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"><\/script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin="anonymous"><\/script>
+  <script>(${mapPrintWindowRuntime.toString()})();<\/script>
+</body>
+</html>`;
+
+    printWin.document.open();
+    printWin.document.write(html);
+    printWin.document.close();
+    printWin.focus();
+  }
+
+  function mapPrintWindowRuntime() {
+    const payload = window.__BIMO_PRINT_PAYLOAD__ || {};
+    const statusEl = document.getElementById("printStatus");
+    const metaEl = document.getElementById("printToolbarMeta");
+    const launchBtn = document.getElementById("launchPrintBtn");
+    const legendEl = document.getElementById("printLegend");
+
+    const PROJECT_TYPE_COLORS = Object.freeze({ mom: "blue", amo: "red", exp: "green" });
+    const PROJECT_TYPE_LABELS = Object.freeze({ mom: "MOM", amo: "AMO", exp: "EXP" });
+
+    function setStatus(text) {
+      if (statusEl) statusEl.textContent = text;
+    }
+
+    function setMeta(text) {
+      if (metaEl) metaEl.textContent = text;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function normalizeDeptCode(code) {
+      const c = String(code || "").trim().toUpperCase();
+      if (!c) return "";
+      if (c === "2A" || c === "2B") return c;
+      if (/^\d{1,2}$/.test(c)) return c.padStart(2, "0");
+      if (/^\d{3}$/.test(c)) return c;
+      return c;
+    }
+
+    function normalizeForLookup(value) {
+      return String(value || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[’']/g, " ")
+        .replace(/-/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function antennaDisplayLabel(antenna) {
+      return payload.antennaConfig?.[antenna]?.label || String(antenna || "").trim();
+    }
+
+    function antennaColor(antenna, fallback = "#ffffff") {
+      return payload.antennaConfig?.[antenna]?.color || fallback;
+    }
+
+    function projectTypeLabel(typeKey) {
+      return payload.projectTypeConfig?.[typeKey]?.label || PROJECT_TYPE_LABELS[typeKey] || String(typeKey || "").toUpperCase();
+    }
+
+    function projectTypeColor(typeKey) {
+      return payload.projectTypeConfig?.[typeKey]?.color || PROJECT_TYPE_COLORS[typeKey] || "blue";
+    }
+
+    function projectPinSize(baseSize) {
+      const scale = Number(payload.printState?.pinSizeScale) || 1;
+      return Math.max(6, Math.round(baseSize * scale));
+    }
+
+    function projectPinTransformStyle() {
+      const scale = Number(payload.printState?.pinSizeScale) || 1;
+      return `transform:scale(${scale});transform-origin:center center;`;
+    }
+
+    function projectClusterMaxRadius() {
+      const scale = Number(payload.printState?.clusterDistanceScale) || 1;
+      return Math.max(1, Math.round(10 * scale));
+    }
+
+    function extractDeptCode(feature) {
+      const props = feature?.properties || {};
+      return normalizeDeptCode(props.code ?? props.CODE ?? props.dep ?? props.DEP ?? props.insee ?? props.INSEE ?? props.code_dept ?? props.CODE_DEPT ?? "");
+    }
+
+    function styleDept(feature) {
+      const code = extractDeptCode(feature);
+      const antenna = payload.deptCodeToAntenna?.[code] || "";
+      const scopeAntenna = payload.scopeAntenna || "";
+      const focused = !!(scopeAntenna && antenna === scopeAntenna);
+      const hasAntenna = !!antenna;
+
+      return {
+        weight: focused ? 1.6 : 0.8,
+        color: focused ? "#111" : "#666",
+        fillColor: antennaColor(antenna, "#ffffff"),
+        fillOpacity: !hasAntenna ? 0.10 : (scopeAntenna ? (focused ? 0.72 : 0.22) : 0.62),
+        opacity: 0.85
+      };
+    }
+
+    function makeProjectIcon(project) {
+      const color = project.typeColor || projectTypeColor(project.typeKey);
+      const size = projectPinSize(22);
+      return L.divIcon({
+        className: "pin-dot",
+        html: `<div class="pin-dot-inner" style="border-color:${escapeHtml(color)};${projectPinTransformStyle()}"></div>`,
+        iconSize: [size, size],
+        iconAnchor: [Math.round(size / 2), Math.round(size / 2)]
+      });
+    }
+
+    function makeClusterIcon(cluster) {
+      const children = cluster.getAllChildMarkers();
+      const count = cluster.getChildCount();
+      const colorCounts = new Map();
+      for (const marker of children) {
+        const typeKey = marker?.options?.__bimoTypeKey || "mom";
+        const color = projectTypeColor(typeKey);
+        colorCounts.set(color, (colorCounts.get(color) || 0) + 1);
+      }
+
+      const orderedColors = (payload.projectTypeOrder || ["amo", "mom", "exp"])
+        .map(projectTypeColor)
+        .filter(Boolean);
+      const slices = [];
+      for (const color of orderedColors) {
+        const sliceCount = colorCounts.get(color) || 0;
+        if (sliceCount > 0) slices.push({ color, count: sliceCount });
+      }
+      for (const [color, sliceCount] of colorCounts.entries()) {
+        if (!orderedColors.includes(color) && sliceCount > 0) slices.push({ color, count: sliceCount });
+      }
+
+      const total = slices.reduce((sum, item) => sum + item.count, 0) || children.length || 1;
+      const segments = [];
+      let cursor = 0;
+      if (slices.length === 1) {
+        segments.push({ color: slices[0].color, start: 0, length: 100 });
+      } else if (slices.length > 1) {
+        slices.forEach((item, index) => {
+          const start = cursor;
+          const end = index === slices.length - 1 ? 100 : cursor + (item.count / total) * 100;
+          cursor = end;
+          segments.push({ color: item.color, start, length: Math.max(0, end - start) });
+        });
+      } else {
+        segments.push({ color: "blue", start: 0, length: 100 });
+      }
+
+      const ringSegments = segments
+        .filter((segment) => segment.length > 0)
+        .map((segment) => {
+          const length = Math.min(100, Math.max(0, segment.length));
+          const gap = Math.max(0, 100 - length);
+          return `<circle class="pin-dot-cluster-ring" cx="9" cy="9" r="7" fill="none" stroke="${escapeHtml(segment.color)}" stroke-width="4" pathLength="100" stroke-dasharray="${length.toFixed(3)} ${gap.toFixed(3)}" stroke-dashoffset="${(-segment.start).toFixed(3)}" transform="rotate(-90 9 9)" />`;
+        })
+        .join("");
+
+      const svg = `<svg class="pin-dot-cluster-svg" viewBox="0 0 18 18" aria-hidden="true" focusable="false">${ringSegments}<circle class="pin-dot-cluster-center" cx="9" cy="9" r="5" /></svg>`;
+      const size = projectPinSize(32);
+      return L.divIcon({
+        className: "pin-dot pin-dot-cluster-wrap",
+        html: `<div class="pin-dot-inner pin-dot-cluster" style="${projectPinTransformStyle()}">${svg}<span class="pin-dot-count">${count}</span></div>`,
+        iconSize: [size, size],
+        iconAnchor: [Math.round(size / 2), Math.round(size / 2)]
+      });
+    }
+
+    function makeOfficeIcon(office) {
+      const isHQ = office.type === "siege";
+      const svg = `<svg class="pin-office-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 22h16v-2H4v2zm2-4h12V4H6v14zm2-2V6h2v10H8zm4 0V6h2v10h-2z"/></svg>`;
+      return L.divIcon({
+        className: "pin-dot",
+        html: `<div class="pin-office-wrap">${svg}${isHQ ? `<div class="pin-office-badge">★</div>` : ""}</div>`,
+        iconSize: [22, 22],
+        iconAnchor: [11, 11]
+      });
+    }
+
+    function renderLegend() {
+      if (!legendEl || !payload.printState?.legendVisible) return;
+      const antennaRows = (payload.antennaLegendOrder || []).map((antenna) => `
+        <div class="printLegendRow">
+          <span class="printLegendSwatch" style="background:${escapeHtml(antennaColor(antenna))}"></span>
+          <span>${escapeHtml(antennaDisplayLabel(antenna))}</span>
+        </div>
+      `).join("");
+      const typeRows = ["amo", "mom", "exp"].map((typeKey) => `
+        <div class="printLegendRow">
+          <span class="printLegendPin" style="border-color:${escapeHtml(projectTypeColor(typeKey))}"></span>
+          <span>${escapeHtml(projectTypeLabel(typeKey))}</span>
+        </div>
+      `).join("");
+      legendEl.innerHTML = `<div class="printLegendTitle">Antenne (départements)</div>${antennaRows}<div class="printLegendSubtitle">Type de projet (pins)</div>${typeRows}`;
+      legendEl.hidden = false;
+    }
+
+    function renderCityLabels(map, labelLayer) {
+      if (!payload.printState?.cityLabelsVisible) return;
+      const groups = new Map();
+      for (const project of payload.projects || []) {
+        if (!project.city || !Number.isFinite(project.lat) || !Number.isFinite(project.lon)) continue;
+        const key = normalizeForLookup(project.city);
+        if (!key || groups.has(key)) continue;
+        groups.set(key, project);
+      }
+      for (const project of groups.values()) {
+        L.marker([project.lat, project.lon], {
+          interactive: false,
+          icon: L.divIcon({
+            className: "printLabel",
+            html: escapeHtml(project.city),
+            iconSize: null,
+            iconAnchor: [0, 0]
+          })
+        }).addTo(labelLayer);
+      }
+    }
+
+    function renderProjectLabels(map, labelLayer) {
+      if (!payload.printState?.projectLabelsVisible) return;
+      for (const project of payload.projects || []) {
+        if (!project.name || !Number.isFinite(project.lat) || !Number.isFinite(project.lon)) continue;
+        L.marker([project.lat, project.lon], {
+          interactive: false,
+          icon: L.divIcon({
+            className: "printLabel printLabel--project",
+            html: escapeHtml(project.name),
+            iconSize: null,
+            iconAnchor: [0, 0]
+          })
+        }).addTo(labelLayer);
+      }
+    }
+
+    function getAntennaDepartmentBounds(deptLayer) {
+      const target = payload.scopeAntenna || "";
+      if (!target || !deptLayer) return null;
+      const bounds = L.latLngBounds();
+      deptLayer.eachLayer((layer) => {
+        const code = extractDeptCode(layer?.feature);
+        const antenna = payload.deptCodeToAntenna?.[code] || "";
+        if (antenna !== target) return;
+        const layerBounds = layer.getBounds?.();
+        if (layerBounds?.isValid?.()) bounds.extend(layerBounds);
+      });
+      return bounds.isValid() ? bounds : null;
+    }
+
+    function getProjectBounds() {
+      const bounds = L.latLngBounds();
+      for (const project of payload.projects || []) {
+        if (Number.isFinite(project.lat) && Number.isFinite(project.lon)) bounds.extend([project.lat, project.lon]);
+      }
+      return bounds.isValid() ? bounds : null;
+    }
+
+    function getFranceBounds() {
+      const b = payload.franceBounds;
+      if (Array.isArray(b) && b.length === 2) return L.latLngBounds(b);
+      return L.latLngBounds([[41.0, -5.5], [51.6, 9.8]]);
+    }
+
+    function wait(ms) {
+      return new Promise((resolve) => window.setTimeout(resolve, ms));
+    }
+
+    function waitForTiles(layer, timeoutMs = 5000) {
+      return new Promise((resolve) => {
+        let resolved = false;
+        const finish = () => {
+          if (resolved) return;
+          resolved = true;
+          layer?.off?.("load", finish);
+          resolve();
+        };
+        layer?.on?.("load", finish);
+        window.setTimeout(finish, timeoutMs);
+      });
+    }
+
+    async function boot() {
+      if (!window.L || typeof L.map !== "function") {
+        setStatus("Erreur");
+        setMeta("Leaflet n’est pas disponible dans la fenêtre d’impression.");
+        return;
+      }
+
+      const map = L.map("printMap", {
+        preferCanvas: true,
+        zoomControl: false,
+        attributionControl: false,
+        zoomSnap: 0.1,
+        zoomDelta: 0.25,
+        wheelPxPerZoomLevel: 120
+      }).setView([46.8, 2.5], 6);
+
+      const tileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap",
+        maxZoom: 19,
+        crossOrigin: true
+      }).addTo(map);
+
+      let printDeptLayer = null;
+      if (payload.deptGeoJson) {
+        printDeptLayer = L.geoJSON(payload.deptGeoJson, {
+          style: styleDept,
+          interactive: false
+        }).addTo(map);
+        printDeptLayer.bringToBack();
+      }
+
+      const clusterLayer = typeof L.markerClusterGroup === "function"
+        ? L.markerClusterGroup({
+            chunkedLoading: false,
+            spiderfyOnMaxZoom: false,
+            showCoverageOnHover: false,
+            zoomToBoundsOnClick: false,
+            maxClusterRadius: () => projectClusterMaxRadius(),
+            iconCreateFunction: makeClusterIcon
+          })
+        : L.layerGroup();
+
+      for (const project of payload.projects || []) {
+        if (!Number.isFinite(project.lat) || !Number.isFinite(project.lon)) continue;
+        const marker = L.marker([project.lat, project.lon], { icon: makeProjectIcon(project) });
+        marker.options.__bimoTypeKey = project.typeKey || "mom";
+        clusterLayer.addLayer(marker);
+      }
+      clusterLayer.addTo(map);
+
+      if (payload.printState?.officesVisible) {
+        const officesLayer = L.layerGroup().addTo(map);
+        for (const office of payload.offices || []) {
+          if (!Number.isFinite(office.lat) || !Number.isFinite(office.lon)) continue;
+          L.marker([office.lat, office.lon], { icon: makeOfficeIcon(office), interactive: false }).addTo(officesLayer);
+        }
+      }
+
+      renderLegend();
+
+      await wait(120);
+      map.invalidateSize(true);
+
+      const bounds = payload.scope === "antenna"
+        ? (getAntennaDepartmentBounds(printDeptLayer) || getProjectBounds() || getFranceBounds())
+        : getFranceBounds();
+
+      if (bounds?.isValid?.()) {
+        map.fitBounds(bounds, { padding: [18, 18], animate: false });
+      }
+
+      await wait(350);
+      map.invalidateSize(true);
+
+      const labelLayer = L.layerGroup().addTo(map);
+      renderCityLabels(map, labelLayer);
+      renderProjectLabels(map, labelLayer);
+
+      await waitForTiles(tileLayer, 5200);
+      await wait(450);
+      map.invalidateSize(true);
+
+      const projectCount = (payload.projects || []).length;
+      const scopeLabel = payload.scope === "antenna" && payload.scopeAntenna
+        ? antennaDisplayLabel(payload.scopeAntenna)
+        : "Toute la France";
+      setStatus("Carte prête");
+      setMeta(`${scopeLabel} — ${projectCount} projet(s) localisé(s)`);
+      if (launchBtn) {
+        launchBtn.disabled = false;
+        launchBtn.addEventListener("click", () => window.print());
+        launchBtn.focus();
+      }
+    }
+
+    boot().catch((err) => {
+      console.error("[BIMO] Erreur préparation carte impression", err);
+      setStatus("Erreur");
+      setMeta("La carte n’a pas pu être préparée. Consultez la console pour le détail technique.");
+    });
+  }
+
+  initMapPrintModule();
+  // ---- FIN MODULE IMPRESSION A4 - CARTE ACTUELLE ----
 
   map.on("zoomstart movestart", clearCityLabels);
   map.on("zoomend moveend resize", scheduleCityLabelsRender);
