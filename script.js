@@ -2137,6 +2137,30 @@ clusters.on("clustermouseout", (a) => {
         background: #e5e7eb !important;
         border: 0 !important;
         box-shadow: none !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+
+      .bimoPrintPageMap .leaflet-pane,
+      .bimoPrintPageMap .leaflet-tile-pane,
+      .bimoPrintPageMap .leaflet-overlay-pane,
+      .bimoPrintPageMap .leaflet-marker-pane,
+      .bimoPrintPageMap .leaflet-tile-container,
+      .bimoPrintPageMap .leaflet-tile,
+      .bimoPrintPageMap .leaflet-marker-icon,
+      .bimoPrintPageMap svg,
+      .bimoPrintPageMap path {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+
+      .bimoPrintPageMap .leaflet-overlay-pane svg {
+        overflow: visible !important;
       }
 
       .bimoPrintPageMap .leaflet-control-container,
@@ -2152,12 +2176,39 @@ clusters.on("clustermouseout", (a) => {
         left: 8mm !important;
         bottom: 8mm !important;
         z-index: 20 !important;
-        max-width: 84mm !important;
-        max-height: 64mm !important;
-        overflow: hidden !important;
-        background: rgba(255, 255, 255, 0.94) !important;
+        max-width: 92mm !important;
+        max-height: none !important;
+        overflow: visible !important;
+        background: rgba(255, 255, 255, 0.96) !important;
         box-shadow: 0 2px 10px rgba(15, 23, 42, 0.18) !important;
         border: 1px solid rgba(15, 23, 42, 0.14) !important;
+        transform: scale(0.88) !important;
+        transform-origin: bottom left !important;
+        font-size: 0.78rem !important;
+        line-height: 1.15 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+
+      .bimoPrintPageLegend .legend-row {
+        margin-top: 2px !important;
+        margin-bottom: 2px !important;
+        gap: 6px !important;
+      }
+
+      .bimoPrintPageLegend h3,
+      .bimoPrintPageLegend .legend-title {
+        margin-top: 4px !important;
+        margin-bottom: 4px !important;
+      }
+
+      .bimoPrintLegendSvgSwatch {
+        display: inline-block !important;
+        width: 14px !important;
+        height: 10px !important;
+        flex: 0 0 14px !important;
+        vertical-align: -1px !important;
       }
 
       .bimoPrintPageOverseas {
@@ -2203,6 +2254,13 @@ clusters.on("clustermouseout", (a) => {
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
           color-adjust: exact !important;
+        }
+
+        body.bimo-print-static #bimoPrintPage .leaflet-tooltip,
+        body.bimo-print-static #bimoPrintPage .leaflet-popup,
+        body.bimo-print-static #bimoPrintPage .projTooltip {
+          display: none !important;
+          visibility: hidden !important;
         }
 
         body.bimo-print-static #bimoPrintMapClone {
@@ -2742,6 +2800,89 @@ clusters.on("clustermouseout", (a) => {
     document.body.classList.remove("bimo-print-static");
   }
 
+  function forcePrintSvgPathColors(root) {
+    if (!root) return;
+
+    root.querySelectorAll(".leaflet-overlay-pane svg").forEach((svg) => {
+      svg.style.setProperty("display", "block", "important");
+      svg.style.setProperty("visibility", "visible", "important");
+      svg.style.setProperty("opacity", "1", "important");
+      svg.style.setProperty("overflow", "visible", "important");
+    });
+
+    root.querySelectorAll(".leaflet-overlay-pane path").forEach((path) => {
+      const fill = path.style.fill || path.getAttribute("fill") || "";
+      const stroke = path.style.stroke || path.getAttribute("stroke") || "";
+      const fillOpacity = path.style.fillOpacity || path.getAttribute("fill-opacity") || "";
+      const strokeOpacity = path.style.strokeOpacity || path.getAttribute("stroke-opacity") || "";
+      const strokeWidth = path.style.strokeWidth || path.getAttribute("stroke-width") || "";
+
+      if (fill && fill !== "none" && fill !== "transparent") {
+        path.setAttribute("fill", fill);
+        path.style.setProperty("fill", fill, "important");
+      }
+      if (stroke && stroke !== "none" && stroke !== "transparent") {
+        path.setAttribute("stroke", stroke);
+        path.style.setProperty("stroke", stroke, "important");
+      }
+      if (fillOpacity) {
+        path.setAttribute("fill-opacity", fillOpacity);
+        path.style.setProperty("fill-opacity", fillOpacity, "important");
+      }
+      if (strokeOpacity) {
+        path.setAttribute("stroke-opacity", strokeOpacity);
+        path.style.setProperty("stroke-opacity", strokeOpacity, "important");
+      }
+      if (strokeWidth) {
+        path.setAttribute("stroke-width", strokeWidth);
+        path.style.setProperty("stroke-width", strokeWidth, "important");
+      }
+
+      path.style.setProperty("display", "block", "important");
+      path.style.setProperty("visibility", "visible", "important");
+      path.style.setProperty("opacity", "1", "important");
+      path.style.setProperty("pointer-events", "none", "important");
+    });
+  }
+
+  function replaceLegendColorSwatchesWithSvg(legendClone) {
+    if (!legendClone) return;
+
+    legendClone.querySelectorAll(".swatch").forEach((swatch) => {
+      const inlineColor = swatch.style.backgroundColor || swatch.style.background || swatch.getAttribute("data-print-color") || "";
+      const color = String(inlineColor || "").trim();
+      if (!color) return;
+
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("class", "bimoPrintLegendSvgSwatch");
+      svg.setAttribute("viewBox", "0 0 14 10");
+      svg.setAttribute("aria-hidden", "true");
+      svg.setAttribute("focusable", "false");
+
+      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      rect.setAttribute("x", "0");
+      rect.setAttribute("y", "0");
+      rect.setAttribute("width", "14");
+      rect.setAttribute("height", "10");
+      rect.setAttribute("rx", "2");
+      rect.setAttribute("fill", color);
+      rect.setAttribute("stroke", "rgba(15, 23, 42, 0.22)");
+      rect.setAttribute("stroke-width", "0.6");
+      svg.appendChild(rect);
+
+      swatch.textContent = "";
+      swatch.removeAttribute("style");
+      swatch.style.setProperty("display", "inline-flex", "important");
+      swatch.style.setProperty("align-items", "center", "important");
+      swatch.style.setProperty("justify-content", "center", "important");
+      swatch.style.setProperty("width", "14px", "important");
+      swatch.style.setProperty("height", "10px", "important");
+      swatch.style.setProperty("background", "transparent", "important");
+      swatch.appendChild(svg);
+    });
+  }
+
+
   function createStaticPrintPage(options) {
     ensurePrintStaticSnapshotStyles();
     removeStaticPrintPage();
@@ -2755,7 +2896,8 @@ clusters.on("clustermouseout", (a) => {
     mapClone.id = "bimoPrintMapClone";
     mapClone.classList.add("bimoPrintPageMap");
     mapClone.removeAttribute("tabindex");
-    mapClone.querySelectorAll(".leaflet-control-container, .leaflet-control-attribution, .bimoZoomSlider, .projTooltip, script").forEach((node) => node.remove());
+    mapClone.querySelectorAll(".leaflet-control-container, .leaflet-control-attribution, .bimoZoomSlider, .projTooltip, .leaflet-tooltip, .leaflet-popup, script").forEach((node) => node.remove());
+    forcePrintSvgPathColors(mapClone);
     mapClone.querySelectorAll(".leaflet-tile").forEach((tile) => {
       if (tile instanceof HTMLImageElement) {
         tile.loading = "eager";
@@ -2768,6 +2910,7 @@ clusters.on("clustermouseout", (a) => {
       const legendClone = elLegend.cloneNode(true);
       legendClone.id = "bimoPrintLegendClone";
       legendClone.classList.add("bimoPrintPageLegend");
+      replaceLegendColorSwatchesWithSvg(legendClone);
       page.appendChild(legendClone);
     }
 
@@ -2814,6 +2957,9 @@ clusters.on("clustermouseout", (a) => {
       renderMapLabels();
       await waitForLeafletTiles(3200);
       await waitForAnimationFrames(4);
+      if (typeof map.closeTooltip === "function") map.closeTooltip();
+      document.querySelectorAll(".leaflet-tooltip, .leaflet-popup, .projTooltip").forEach((node) => node.remove());
+      await waitForAnimationFrames(1);
 
       createStaticPrintPage(options);
       await waitForAnimationFrames(2);
