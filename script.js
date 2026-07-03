@@ -4548,6 +4548,102 @@ clusters.on("clustermouseout", (a) => {
     };
   }
 
+  function collectCurrentMapLabelOffsets() {
+    const city = {};
+    const project = {};
+
+    if (!map || !mapEl || !cityLabelsHtml) {
+      return { city, project };
+    }
+
+    try {
+      // On force un rendu immédiat des libellés de la carte principale avant de
+      // mémoriser leurs positions. L'impression doit reprendre leur placement,
+      // pas recalculer une nouvelle disposition différente.
+      map.invalidateSize(true);
+      renderMapLabels();
+    } catch (err) {
+      console.warn("[BIMO] Libellés de la carte principale non recalculés avant impression", err);
+    }
+
+    const mapRect = mapEl.getBoundingClientRect();
+    if (!mapRect.width || !mapRect.height) {
+      return { city, project };
+    }
+
+    const visibleProjects = filteredProjects()
+      .map((p) => ({
+        project: p,
+        id: projectId(p),
+        name: projectDisplayName(p),
+        city: projectCity(p),
+        ll: projectLatLon(p)
+      }))
+      .filter((entry) => entry.ll);
+
+    const cityAnchors = new Map();
+    for (const entry of visibleProjects) {
+      const key = normalizeForLookup(entry.city);
+      if (!key) continue;
+      if (!cityAnchors.has(key)) {
+        cityAnchors.set(key, entry);
+        continue;
+      }
+      const current = cityAnchors.get(key);
+      const currentPoint = map.latLngToContainerPoint(current.ll);
+      const candidatePoint = map.latLngToContainerPoint(entry.ll);
+      if (candidatePoint.y < currentPoint.y) cityAnchors.set(key, entry);
+    }
+
+    cityLabelsHtml.querySelectorAll(".cityLabel:not(.projectLabel)").forEach((label) => {
+      const text = String(label.textContent || "").trim();
+      const key = normalizeForLookup(text);
+      const anchor = cityAnchors.get(key);
+      if (!key || !anchor?.ll) return;
+
+      const rect = label.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+
+      const anchorPoint = map.latLngToContainerPoint(anchor.ll);
+      city[key] = {
+        text,
+        dx: (rect.left - mapRect.left) + rect.width / 2 - anchorPoint.x,
+        dy: (rect.top - mapRect.top) + rect.height / 2 - anchorPoint.y,
+        width: rect.width,
+        height: rect.height
+      };
+    });
+
+    const projectAnchorsById = new Map();
+    const projectAnchorsByName = new Map();
+    for (const entry of visibleProjects) {
+      if (entry.id) projectAnchorsById.set(entry.id, entry);
+      const nameKey = normalizeForLookup(entry.name);
+      if (nameKey && !projectAnchorsByName.has(nameKey)) projectAnchorsByName.set(nameKey, entry);
+    }
+
+    cityLabelsHtml.querySelectorAll(".projectLabel").forEach((label) => {
+      const text = String(label.textContent || "").trim();
+      const nameKey = normalizeForLookup(text);
+      const anchor = projectAnchorsByName.get(nameKey);
+      if (!anchor?.ll || !anchor.id) return;
+
+      const rect = label.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+
+      const anchorPoint = map.latLngToContainerPoint(anchor.ll);
+      project[anchor.id] = {
+        text,
+        dx: (rect.left - mapRect.left) + rect.width / 2 - anchorPoint.x,
+        dy: (rect.top - mapRect.top) + rect.height / 2 - anchorPoint.y,
+        width: rect.width,
+        height: rect.height
+      };
+    });
+
+    return { city, project };
+  }
+
   function buildMapPrintPayload(scopeValue) {
     const projects = filteredProjects()
       .map(serializePrintProject)
@@ -4555,6 +4651,7 @@ clusters.on("clustermouseout", (a) => {
 
     const selectedScopeAntenna = selectedAntenna ? antennaKeyFromText(selectedAntenna) : "";
     const deptGeoJson = typeof deptLayer?.toGeoJSON === "function" ? deptLayer.toGeoJSON() : null;
+    const labelOffsets = collectCurrentMapLabelOffsets();
 
     return {
       generatedAt: new Date().toISOString(),
@@ -4565,6 +4662,7 @@ clusters.on("clustermouseout", (a) => {
       scopeAntenna: selectedScopeAntenna,
       currentProjectMode,
       projectModeTitle: projectModeMeta().title,
+      labelOffsets,
       projects,
       offices: OFFICES.map(serializePrintOffice).filter((office) => Number.isFinite(office.lat) && Number.isFinite(office.lon)),
       deptGeoJson,
@@ -4592,13 +4690,15 @@ clusters.on("clustermouseout", (a) => {
       applyMapPrintScope(scopeValue);
       window.setTimeout(() => {
         try {
+          map.invalidateSize(true);
+          renderMapLabels();
           const payload = buildMapPrintPayload(scopeValue);
           openMapPrintWindow(payload, printWin);
         } catch (err) {
           console.error("[BIMO] Préparation impression impossible", err);
           writeMapPrintWindowError(printWin, "L’impression n’a pas pu être préparée. Consultez la console pour le détail technique.");
         }
-      }, 260);
+      }, 480);
     } catch (err) {
       console.error("[BIMO] Préparation impression impossible", err);
       writeMapPrintWindowError(printWin, "L’impression n’a pas pu être préparée. Consultez la console pour le détail technique.");
@@ -5058,6 +5158,34 @@ clusters.on("clustermouseout", (a) => {
       });
     }
 
+    function buildPreferredLabelCandidates(preferredOffset, kind = "city") {
+      if (!preferredOffset) return [];
+      const dx = Number(preferredOffset.dx);
+      const dy = Number(preferredOffset.dy);
+      if (!Number.isFinite(dx) || !Number.isFinite(dy)) return [];
+
+      const small = kind === "project" ? 5 : 6;
+      const adjustments = [
+        [0, 0],
+        [0, -small],
+        [0, small],
+        [small, 0],
+        [-small, 0],
+        [small, -small],
+        [-small, -small],
+        [small, small],
+        [-small, small],
+        [0, -small * 2],
+        [0, small * 2]
+      ];
+
+      return adjustments.map(([ax, ay]) => ({
+        offset: [dx + ax, dy + ay],
+        leader: false,
+        preferred: true
+      }));
+    }
+
     function buildLabelCandidates(labelWidth, labelHeight, kind = "city") {
       const halfW = Math.round(labelWidth / 2);
       const halfH = Math.round(labelHeight / 2);
@@ -5129,8 +5257,12 @@ clusters.on("clustermouseout", (a) => {
       const separation = kind === "project" ? 8 : 10;
       const blockedMargin = 5;
 
+      const preferredCandidates = buildPreferredLabelCandidates(entry.preferredOffset, kind);
+      const fallbackCandidates = preferredCandidates.length ? [] : buildLabelCandidates(labelWidth, labelHeight, kind);
+      const candidates = [...preferredCandidates, ...fallbackCandidates];
+
       let best = null;
-      for (const candidate of buildLabelCandidates(labelWidth, labelHeight, kind)) {
+      for (const candidate of candidates) {
         const [dx, dy] = candidate.offset;
         const centerX = anchorPoint.x + dx;
         const centerY = anchorPoint.y + dy;
@@ -5202,6 +5334,8 @@ clusters.on("clustermouseout", (a) => {
             return pa.y - pb.y || String(a.city).localeCompare(String(b.city), "fr", { sensitivity: "base", numeric: true });
           })
           .forEach((entry) => {
+            const key = normalizeForLookup(entry.city);
+            entry.preferredOffset = payload.labelOffsets?.city?.[key] || null;
             placeLabel({ map, svg, html, placedRects, blockedRects, entry, text: entry.city, className: "printLabel", kind: "city" });
           });
       }
@@ -5211,6 +5345,7 @@ clusters.on("clustermouseout", (a) => {
           .filter((project) => project.name && Number.isFinite(project.lat) && Number.isFinite(project.lon))
           .sort((a, b) => String(a.name).localeCompare(String(b.name), "fr", { sensitivity: "base", numeric: true }))
           .forEach((entry) => {
+            entry.preferredOffset = payload.labelOffsets?.project?.[entry.id] || null;
             placeLabel({ map, svg, html, placedRects, blockedRects, entry, text: entry.name, className: "printLabel printLabel--project", kind: "project" });
           });
       }
@@ -5297,18 +5432,8 @@ clusters.on("clustermouseout", (a) => {
     function fitPrintMapToBounds(map, bounds) {
       if (!map || !bounds?.isValid?.()) return;
       const isAntennaScope = payload.scope === "antenna";
-      const padding = isAntennaScope ? [0, 0] : [4, 4];
+      const padding = isAntennaScope ? [18, 18] : [8, 8];
       map.fitBounds(bounds, { padding, animate: false });
-
-      // En mode antenne, on resserre légèrement le cadrage pour utiliser au maximum
-      // la surface A4. Le gain reste faible afin de ne pas couper fortement les limites.
-      if (isAntennaScope) {
-        const currentZoom = map.getZoom();
-        if (Number.isFinite(currentZoom)) {
-          const boostedZoom = Math.min(19, currentZoom + 0.35);
-          map.setView(bounds.getCenter(), boostedZoom, { animate: false });
-        }
-      }
     }
 
     async function boot() {
@@ -5422,7 +5547,7 @@ clusters.on("clustermouseout", (a) => {
     });
   }
 
-  console.info("[BIMO] module impression carte actuelle v5 chargé");
+  console.info("[BIMO] module impression carte actuelle v6 chargé");
   initMapPrintModule();
   // ---- FIN MODULE IMPRESSION A4 - CARTE ACTUELLE ----
 
