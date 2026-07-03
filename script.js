@@ -124,7 +124,7 @@
   // Pin sélectionné (pour surligner/agrandir)
   let selectedMarker = null;
   let projectIdToMarker = new Map(); // "Code projet" -> Leaflet marker
-  let projectIdToName = new Map();  // "Code projet" -> Nom du projet (tooltips clusters)
+  let projectIdToName = new Map();  // "Code projet" -> Nom réel du projet (tooltips clusters)
   let projectListDirty = true;
   let completedProjectsLoadFailed = false;
   let completedProjectsLoaded = false;
@@ -539,7 +539,7 @@
     for (const p of allProjects) {
       const pid = projectId(p);
       const nm = projectDisplayName(p);
-      if (pid) projectIdToName.set(pid, nm);
+      if (pid && nm) projectIdToName.set(pid, nm);
     }
   }
 
@@ -1334,18 +1334,34 @@
 clusters.on("clustermouseover", (a) => {
   const cl = a.layer;
   const kids = cl.getAllChildMarkers();
+  const typeKeys = new Set();
+
+  for (const m of kids) {
+    const typeKey = String(m?.options?.__bimoTypeKey || "").trim();
+    if (typeKey) typeKeys.add(typeKey);
+  }
+
+  const hasMultipleProjectTypes = typeKeys.size > 1;
   const names = [];
+
   for (const m of kids) {
     const pid = m?.options?.__projId;
     const nm = pid ? (projectIdToName.get(pid) || "") : "";
-    if (nm) names.push(nm);
+    if (!nm) continue;
+
+    const typeLabel = projectTypeLabelByKey(m?.options?.__bimoTypeKey);
+    names.push({
+      name: nm,
+      label: hasMultipleProjectTypes && typeLabel ? `${nm} (${typeLabel})` : nm
+    });
   }
-  names.sort((x, y) => x.localeCompare(y, "fr"));
+
+  names.sort((x, y) => x.name.localeCompare(y.name, "fr", { sensitivity: "base", numeric: true }));
   const max = 25;
   // 1 ligne = 1 projet (pas de retour à la ligne automatique à l'intérieur d'un nom)
   let html = names
     .slice(0, max)
-    .map((n) => `<div class="ttLine">${escapeHtml(n)}</div>`)
+    .map((item) => `<div class="ttLine">${escapeHtml(item.label)}</div>`)
     .join("");
   if (names.length > max) html += `<div class="ttMore">+${names.length - max} autres</div>`;
   if (!html) html = `${kids.length} projets`;
@@ -2288,18 +2304,10 @@ clusters.on("clustermouseout", (a) => {
 
   function projectDisplayName(project) {
     const source = project && typeof project === "object" ? project : {};
-    const city = projectCity(source);
-    const deptName = deptNameFromProject(source);
-    const generatedId = cleanText(source.__projectId);
-
     return firstNonEmpty(
       source["Nom de projet"],
-      source.nom,
-      projectRawIdentifier(source),
-      city ? `Projet à ${city}` : "",
-      deptName ? `Projet — ${deptName}` : "",
-      generatedId ? `Projet ${generatedId}` : ""
-    ) || "Projet sans nom";
+      source.nom
+    );
   }
 
   function renderProjectLabels(existingPlacedRects = []) {
@@ -3283,7 +3291,8 @@ clusters.on("clustermouseout", (a) => {
       const ll = projectLatLon(p);
       if (!ll) continue;
 
-      const col = colorByType(p["Type de projet"] ?? p.type ?? "");
+      const typeKey = projectTypeKey(p);
+      const col = projectTypeColorByKey(typeKey);
       const marker = L.marker(ll, {
         icon: L.divIcon({
           className: "pin-dot",
@@ -3300,6 +3309,8 @@ clusters.on("clustermouseout", (a) => {
       }
 
       marker.options.__bimoType = col;
+      marker.options.__bimoTypeKey = typeKey;
+      marker.options.__bimoTypeLabel = projectTypeLabelByKey(typeKey);
 
       // Tooltip (survol) : nom du projet
       const pName = projectDisplayName(p);
