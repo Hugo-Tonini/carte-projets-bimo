@@ -2093,7 +2093,7 @@ clusters.on("clustermouseout", (a) => {
         <div class="bimoPrintModalHeader">
           <div>
             <h2 id="bimoPrintTitle" class="bimoPrintModalTitle">Imprimer la carte</h2>
-            <p class="bimoPrintModalIntro">L’impression part des filtres actifs, puis applique les options ci-dessous.</p>
+            <p class="bimoPrintModalIntro">Les options ci-dessous préparent la carte et restent appliquées après l’impression.</p>
           </div>
           <button class="bimoPrintClose" type="button" aria-label="Fermer">×</button>
         </div>
@@ -2500,17 +2500,11 @@ clusters.on("clustermouseout", (a) => {
   }
 
   async function prepareAndPrintMap(options) {
-    const previousState = capturePrintState();
-    let restored = false;
-
-    const restoreOnce = () => {
-      if (restored) return;
-      restored = true;
-      window.removeEventListener("afterprint", restoreOnce);
-      restorePrintState(previousState);
-    };
-
     try {
+      // Les réglages choisis servent maintenant aussi de réglages de carte.
+      // On ne restaure plus l'ancien état après l'impression : cela évite les
+      // problèmes de timing avec l'aperçu PDF de Chrome/Edge et garde la carte
+      // exactement comme elle a été préparée.
       applyPrintState(options);
       const bounds = options.scope === "antenna" ? antennaBounds(options.antenna) : FRANCE_BOUNDS;
 
@@ -2521,26 +2515,12 @@ clusters.on("clustermouseout", (a) => {
       await waitForMapIdle();
       map.invalidateSize(true);
       renderMapLabels();
-
-      window.addEventListener("afterprint", restoreOnce, { once: true });
-
-      // Chrome/Edge construisent parfois l’aperçu PDF APRÈS l’appel à window.print().
-      // Il ne faut donc surtout pas restaurer la carte avec un simple setTimeout,
-      // sinon l’aperçu peut capturer une page blanche. On restaure uniquement
-      // quand le navigateur signale la fin de l’impression, ou quand la fenêtre
-      // reprend le focus après fermeture de l’aperçu.
-      const restoreOnFocus = () => {
-        window.setTimeout(restoreOnce, 250);
-      };
-      window.setTimeout(() => {
-        if (!restored) window.addEventListener("focus", restoreOnFocus, { once: true });
-      }, 1200);
+      updateClearButtonState();
 
       window.print();
     } catch (err) {
       console.error("[BIMO] Impression impossible", err);
       window.alert("L’impression n’a pas pu être préparée. Consultez la console pour le détail technique.");
-      restoreOnce();
     }
   }
 
