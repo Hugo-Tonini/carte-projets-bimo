@@ -2021,23 +2021,34 @@ clusters.on("clustermouseout", (a) => {
   function initPrintControls() {
     ensurePrintStyles();
 
-    if (document.getElementById("mapPrintBtn")) return;
+    let btn = document.getElementById("mapPrintBtn");
 
-    const btn = document.createElement("button");
-    btn.id = "mapPrintBtn";
-    btn.type = "button";
-    btn.textContent = "Imprimer";
-    btn.className = `${elAdvancedFiltersBtn?.className || ""} bimoPrintBtn`.trim() || "bimoPrintBtn";
-    btn.setAttribute("aria-label", "Préparer l’impression de la carte");
+    if (!btn) {
+      btn = document.createElement("button");
+      btn.id = "mapPrintBtn";
+      btn.type = "button";
+      btn.textContent = "Imprimer";
+      btn.className = `${elAdvancedFiltersBtn?.className || ""} bimoPrintBtn`.trim() || "bimoPrintBtn";
 
-    const target = elAdvancedFiltersBtn || elProjListBtn || elClear || elProjectModeSwitch;
-    if (target?.insertAdjacentElement) {
-      target.insertAdjacentElement("afterend", btn);
-    } else if (mapEl?.parentNode) {
-      mapEl.parentNode.insertBefore(btn, mapEl);
+      const target = elAdvancedFiltersBtn || elProjListBtn || elClear || elProjectModeSwitch;
+      if (target?.insertAdjacentElement) {
+        target.insertAdjacentElement("afterend", btn);
+      } else if (mapEl?.parentNode) {
+        mapEl.parentNode.insertBefore(btn, mapEl);
+      }
+    } else {
+      btn.type = "button";
+      if (!String(btn.textContent || "").trim()) btn.textContent = "Imprimer";
+      btn.classList.add("bimoPrintBtn");
     }
 
-    btn.addEventListener("click", openPrintModal);
+    btn.setAttribute("aria-label", "Préparer l’impression de la carte");
+
+    if (btn.dataset.bimoPrintReady !== "1") {
+      btn.addEventListener("click", openPrintModal);
+      btn.dataset.bimoPrintReady = "1";
+    }
+
     syncToolbarControlHeights();
   }
 
