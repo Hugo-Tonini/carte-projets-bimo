@@ -1926,6 +1926,14 @@ clusters.on("clustermouseout", (a) => {
         }
       }
 
+      body.bimo-print-mode {
+        background: #fff;
+      }
+
+      body.bimo-print-mode #map {
+        background: #fff;
+      }
+
       @media print {
         @page {
           size: A4 landscape;
@@ -2515,8 +2523,20 @@ clusters.on("clustermouseout", (a) => {
       renderMapLabels();
 
       window.addEventListener("afterprint", restoreOnce, { once: true });
+
+      // Chrome/Edge construisent parfois l’aperçu PDF APRÈS l’appel à window.print().
+      // Il ne faut donc surtout pas restaurer la carte avec un simple setTimeout,
+      // sinon l’aperçu peut capturer une page blanche. On restaure uniquement
+      // quand le navigateur signale la fin de l’impression, ou quand la fenêtre
+      // reprend le focus après fermeture de l’aperçu.
+      const restoreOnFocus = () => {
+        window.setTimeout(restoreOnce, 250);
+      };
+      window.setTimeout(() => {
+        if (!restored) window.addEventListener("focus", restoreOnFocus, { once: true });
+      }, 1200);
+
       window.print();
-      window.setTimeout(restoreOnce, 1200);
     } catch (err) {
       console.error("[BIMO] Impression impossible", err);
       window.alert("L’impression n’a pas pu être préparée. Consultez la console pour le détail technique.");
@@ -4332,7 +4352,13 @@ clusters.on("clustermouseout", (a) => {
     lightboxPreviouslyFocused = null;
   }
 
-  window.addEventListener("beforeprint", closeLightbox);
+  window.addEventListener("beforeprint", () => {
+    closeLightbox();
+    if (document.body.classList.contains("bimo-print-mode")) {
+      map.invalidateSize(true);
+      renderMapLabels();
+    }
+  });
 
   function openPanel(html) {
     if (!elPanel) return;
