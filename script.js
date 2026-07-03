@@ -4489,10 +4489,10 @@ clusters.on("clustermouseout", (a) => {
     if (selectedAntenna) {
       const bounds = boundsForAntennaDepartments(selectedAntenna);
       if (bounds?.isValid?.()) {
-        map.fitBounds(bounds, { padding: [22, 22], animate: false });
+        map.fitBounds(bounds, { padding: [4, 4], animate: false });
       }
     } else {
-      zoomToFrance();
+      map.fitBounds(FRANCE_BOUNDS, { padding: [20, 20], animate: false });
     }
 
     updateClearButtonState();
@@ -4698,8 +4698,12 @@ clusters.on("clustermouseout", (a) => {
     .pin-office-wrap{ width:22px; height:22px; border-radius:999px; background:#fff; border:2px solid #111; display:flex; align-items:center; justify-content:center; position:relative; box-shadow:0 5px 14px rgba(0,0,0,.20); }
     .pin-office-svg{ width:14px; height:14px; fill:#111; display:block; }
     .pin-office-badge{ position:absolute; top:-7px; right:-7px; width:16px; height:16px; border-radius:999px; background:#111; color:#fff; font-size:11px; line-height:16px; text-align:center; }
-    .printLabel{ background:rgba(255,255,255,.94); border:1px solid rgba(0,0,0,.16); border-radius:999px; box-shadow:0 3px 9px rgba(0,0,0,.12); color:#111; font-size:11px; font-weight:800; line-height:1.15; padding:3px 7px; white-space:nowrap; transform:translate(-50%, -30px); pointer-events:none; }
-    .printLabel--project{ border-radius:8px; font-size:10.5px; max-width:180px; overflow:hidden; text-overflow:ellipsis; transform:translate(12px, -28px); }
+    .printLabelsOverlay{ position:absolute; inset:0; z-index:1200; pointer-events:none; overflow:hidden; }
+    .printLabelsSvg{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; }
+    .printLabelsSvg line{ stroke:#111; stroke-width:1.2; stroke-opacity:.42; }
+    .printLabelsHtml{ position:absolute; inset:0; pointer-events:none; }
+    .printLabel{ position:absolute; background:rgba(255,255,255,.94); border:1px solid rgba(0,0,0,.16); border-radius:999px; box-shadow:0 3px 9px rgba(0,0,0,.12); color:#111; font-size:11px; font-weight:800; line-height:1.15; padding:3px 7px; white-space:nowrap; pointer-events:none; overflow:hidden; text-overflow:ellipsis; }
+    .printLabel--project{ border-radius:8px; font-size:10.5px; max-width:180px; }
     .leaflet-container{ font-family:"Marianne", Arial, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
     .leaflet-control-container{ display:none!important; }
     .leaflet-interactive,.printLegend,.printMapTitle,.pin-dot-inner,.pin-office-wrap,.pin-office-badge,.printLabel{ -webkit-print-color-adjust:exact; print-color-adjust:exact; color-adjust:exact; }
@@ -4941,41 +4945,210 @@ clusters.on("clustermouseout", (a) => {
       legendEl.hidden = false;
     }
 
-    function renderCityLabels(map, labelLayer) {
-      if (!payload.printState?.cityLabelsVisible) return;
-      const groups = new Map();
-      for (const project of payload.projects || []) {
-        if (!project.city || !Number.isFinite(project.lat) || !Number.isFinite(project.lon)) continue;
-        const key = normalizeForLookup(project.city);
-        if (!key || groups.has(key)) continue;
-        groups.set(key, project);
-      }
-      for (const project of groups.values()) {
-        L.marker([project.lat, project.lon], {
-          interactive: false,
-          icon: L.divIcon({
-            className: "printLabel",
-            html: escapeHtml(project.city),
-            iconSize: null,
-            iconAnchor: [0, 0]
-          })
-        }).addTo(labelLayer);
-      }
+    function makeRect(left, top, width, height) {
+      return { left, top, right: left + width, bottom: top + height, width, height };
     }
 
-    function renderProjectLabels(map, labelLayer) {
-      if (!payload.printState?.projectLabelsVisible) return;
+    function rectsOverlap(a, b, margin = 0) {
+      return !(a.right + margin < b.left || a.left - margin > b.right || a.bottom + margin < b.top || a.top - margin > b.bottom);
+    }
+
+    function rectInsideMap(rect, width, height, padding = 4) {
+      return rect.left >= padding && rect.top >= padding && rect.right <= width - padding && rect.bottom <= height - padding;
+    }
+
+    function rectFromElementInMap(element, mapContainer) {
+      if (!element || !mapContainer) return null;
+      const mapRect = mapContainer.getBoundingClientRect();
+      const rect = element.getBoundingClientRect();
+      if (!rect.width || !rect.height) return null;
+      return {
+        left: rect.left - mapRect.left,
+        top: rect.top - mapRect.top,
+        right: rect.right - mapRect.left,
+        bottom: rect.bottom - mapRect.top,
+        width: rect.width,
+        height: rect.height
+      };
+    }
+
+    function ensureLabelsOverlay(map) {
+      const container = map.getContainer();
+      let overlay = container.querySelector(".printLabelsOverlay");
+      if (!overlay) {
+        overlay = document.createElement("div");
+        overlay.className = "printLabelsOverlay";
+        overlay.innerHTML = '<svg class="printLabelsSvg" aria-hidden="true" focusable="false"></svg><div class="printLabelsHtml"></div>';
+        container.appendChild(overlay);
+      }
+      const svg = overlay.querySelector(".printLabelsSvg");
+      const html = overlay.querySelector(".printLabelsHtml");
+      const size = map.getSize();
+      svg.setAttribute("width", String(size.x));
+      svg.setAttribute("height", String(size.y));
+      svg.setAttribute("viewBox", `0 0 ${size.x} ${size.y}`);
+      svg.replaceChildren();
+      html.innerHTML = "";
+      return { overlay, svg, html, width: size.x, height: size.y };
+    }
+
+    function appendLeaderLine(svg, anchorPoint, labelRect) {
+      const labelEdgeX = Math.max(labelRect.left, Math.min(anchorPoint.x, labelRect.right));
+      const labelEdgeY = Math.max(labelRect.top, Math.min(anchorPoint.y, labelRect.bottom));
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", String(Math.round(anchorPoint.x)));
+      line.setAttribute("y1", String(Math.round(anchorPoint.y)));
+      line.setAttribute("x2", String(Math.round(labelEdgeX)));
+      line.setAttribute("y2", String(Math.round(labelEdgeY)));
+      svg.appendChild(line);
+    }
+
+    function buildLabelCandidates(labelWidth, labelHeight, kind = "city") {
+      const halfW = Math.round(labelWidth / 2);
+      const halfH = Math.round(labelHeight / 2);
+      const pinGap = kind === "project" ? 17 : 18;
+      const aboveY = -(halfH + pinGap);
+      const belowY = halfH + pinGap;
+      const sideX = halfW + pinGap;
+
+      const direct = [
+        [0, aboveY],
+        [Math.round(halfW * 0.25), aboveY],
+        [-Math.round(halfW * 0.25), aboveY],
+        [Math.round(halfW * 0.55), aboveY - 2],
+        [-Math.round(halfW * 0.55), aboveY - 2],
+        [sideX, 0],
+        [-sideX, 0],
+        [sideX, -Math.round(halfH * 0.65)],
+        [-sideX, -Math.round(halfH * 0.65)],
+        [0, belowY],
+        [Math.round(halfW * 0.35), belowY],
+        [-Math.round(halfW * 0.35), belowY]
+      ];
+
+      const nearby = [
+        [Math.round(halfW * 0.78), aboveY - 8],
+        [-Math.round(halfW * 0.78), aboveY - 8],
+        [sideX + 18, -Math.round(halfH * 0.25)],
+        [-(sideX + 18), -Math.round(halfH * 0.25)],
+        [sideX + 18, Math.round(halfH * 0.75)],
+        [-(sideX + 18), Math.round(halfH * 0.75)],
+        [0, aboveY - 22],
+        [0, belowY + 22],
+        [Math.round(halfW * 0.65), belowY + 8],
+        [-Math.round(halfW * 0.65), belowY + 8]
+      ];
+
+      const fallback = [];
+      for (let radius = kind === "project" ? 72 : 85; radius <= 190; radius += 24) {
+        for (let angle = -160; angle <= 160; angle += 20) {
+          const rad = angle * Math.PI / 180;
+          fallback.push([Math.cos(rad) * radius, Math.sin(rad) * radius]);
+        }
+      }
+
+      return [
+        ...direct.map((offset) => ({ offset, leader: false })),
+        ...nearby.map((offset) => ({ offset, leader: true })),
+        ...fallback.map((offset) => ({ offset, leader: true }))
+      ];
+    }
+
+    function placeLabel({ map, svg, html, placedRects, blockedRects, entry, text, className, kind }) {
+      const anchorPoint = map.latLngToContainerPoint([entry.lat, entry.lon]);
+      const el = document.createElement("div");
+      el.className = className;
+      el.textContent = text;
+      el.style.visibility = "hidden";
+      el.style.left = "-9999px";
+      el.style.top = "-9999px";
+      html.appendChild(el);
+
+      const measured = el.getBoundingClientRect();
+      const labelWidth = Math.ceil(Math.min(measured.width || 90, kind === "project" ? 180 : 220));
+      const labelHeight = Math.ceil(measured.height || 22);
+      const mapSize = map.getSize();
+
+      let best = null;
+      for (const candidate of buildLabelCandidates(labelWidth, labelHeight, kind)) {
+        const [dx, dy] = candidate.offset;
+        const centerX = anchorPoint.x + dx;
+        const centerY = anchorPoint.y + dy;
+        const rect = makeRect(centerX - labelWidth / 2, centerY - labelHeight / 2, labelWidth, labelHeight);
+        if (!rectInsideMap(rect, mapSize.x, mapSize.y, 5)) continue;
+        if (placedRects.some((placed) => rectsOverlap(rect, placed, 3))) continue;
+        if (blockedRects.some((blocked) => rectsOverlap(rect, blocked, 2))) continue;
+        best = { rect, leader: candidate.leader };
+        break;
+      }
+
+      if (!best) {
+        el.remove();
+        return false;
+      }
+
+      placedRects.push(best.rect);
+      el.style.visibility = "visible";
+      el.style.left = `${Math.round(best.rect.left)}px`;
+      el.style.top = `${Math.round(best.rect.top)}px`;
+      el.style.width = `${Math.ceil(labelWidth)}px`;
+      if (best.leader) appendLeaderLine(svg, anchorPoint, best.rect);
+      return true;
+    }
+
+    function renderMapLabels(map) {
+      if (!payload.printState?.cityLabelsVisible && !payload.printState?.projectLabelsVisible) return;
+      const { svg, html } = ensureLabelsOverlay(map);
+      const placedRects = [];
+      const blockedRects = [];
+      const mapContainer = map.getContainer();
+
       for (const project of payload.projects || []) {
-        if (!project.name || !Number.isFinite(project.lat) || !Number.isFinite(project.lon)) continue;
-        L.marker([project.lat, project.lon], {
-          interactive: false,
-          icon: L.divIcon({
-            className: "printLabel printLabel--project",
-            html: escapeHtml(project.name),
-            iconSize: null,
-            iconAnchor: [0, 0]
+        if (!Number.isFinite(project.lat) || !Number.isFinite(project.lon)) continue;
+        const pt = map.latLngToContainerPoint([project.lat, project.lon]);
+        const pinRadius = Math.max(11, Math.round(projectPinSize(22) / 2) + 4);
+        blockedRects.push(makeRect(pt.x - pinRadius, pt.y - pinRadius, pinRadius * 2, pinRadius * 2));
+      }
+
+      for (const selector of [".printLegend:not([hidden])", ".printMapTitle"]) {
+        const rect = rectFromElementInMap(document.querySelector(selector), mapContainer);
+        if (rect) blockedRects.push(rect);
+      }
+
+      if (payload.printState?.cityLabelsVisible) {
+        const groups = new Map();
+        for (const project of payload.projects || []) {
+          if (!project.city || !Number.isFinite(project.lat) || !Number.isFinite(project.lon)) continue;
+          const key = normalizeForLookup(project.city);
+          if (!key) continue;
+          if (!groups.has(key)) {
+            groups.set(key, { city: project.city, lat: project.lat, lon: project.lon });
+            continue;
+          }
+          const current = groups.get(key);
+          const currentPoint = map.latLngToContainerPoint([current.lat, current.lon]);
+          const candidatePoint = map.latLngToContainerPoint([project.lat, project.lon]);
+          if (candidatePoint.y < currentPoint.y) groups.set(key, { city: project.city, lat: project.lat, lon: project.lon });
+        }
+
+        Array.from(groups.values())
+          .sort((a, b) => {
+            const pa = map.latLngToContainerPoint([a.lat, a.lon]);
+            const pb = map.latLngToContainerPoint([b.lat, b.lon]);
+            return pa.y - pb.y || String(a.city).localeCompare(String(b.city), "fr", { sensitivity: "base", numeric: true });
           })
-        }).addTo(labelLayer);
+          .forEach((entry) => {
+            placeLabel({ map, svg, html, placedRects, blockedRects, entry, text: entry.city, className: "printLabel", kind: "city" });
+          });
+      }
+
+      if (payload.printState?.projectLabelsVisible) {
+        (payload.projects || [])
+          .filter((project) => project.name && Number.isFinite(project.lat) && Number.isFinite(project.lon))
+          .sort((a, b) => String(a.name).localeCompare(String(b.name), "fr", { sensitivity: "base", numeric: true }))
+          .forEach((entry) => {
+            placeLabel({ map, svg, html, placedRects, blockedRects, entry, text: entry.name, className: "printLabel printLabel--project", kind: "project" });
+          });
       }
     }
 
@@ -5036,6 +5209,13 @@ clusters.on("clustermouseout", (a) => {
         preferCanvas: true,
         zoomControl: false,
         attributionControl: false,
+        dragging: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        boxZoom: false,
+        keyboard: false,
+        touchZoom: false,
+        tap: false,
         zoomSnap: 0.1,
         zoomDelta: 0.25,
         wheelPxPerZoomLevel: 120
@@ -5069,7 +5249,7 @@ clusters.on("clustermouseout", (a) => {
 
       for (const project of payload.projects || []) {
         if (!Number.isFinite(project.lat) || !Number.isFinite(project.lon)) continue;
-        const marker = L.marker([project.lat, project.lon], { icon: makeProjectIcon(project) });
+        const marker = L.marker([project.lat, project.lon], { icon: makeProjectIcon(project), interactive: false, keyboard: false });
         marker.options.__bimoTypeKey = project.typeKey || "mom";
         clusterLayer.addLayer(marker);
       }
@@ -5093,19 +5273,16 @@ clusters.on("clustermouseout", (a) => {
         : getFranceBounds();
 
       if (bounds?.isValid?.()) {
-        map.fitBounds(bounds, { padding: [18, 18], animate: false });
+        const padding = payload.scope === "antenna" ? [2, 2] : [10, 10];
+        map.fitBounds(bounds, { padding, animate: false });
       }
 
       await wait(350);
       map.invalidateSize(true);
-
-      const labelLayer = L.layerGroup().addTo(map);
-      renderCityLabels(map, labelLayer);
-      renderProjectLabels(map, labelLayer);
-
       await waitForTiles(tileLayer, 5200);
       await wait(450);
       map.invalidateSize(true);
+      renderMapLabels(map);
 
       const projectCount = (payload.projects || []).length;
       const scopeLabel = payload.scope === "antenna" && payload.scopeAntenna
@@ -5127,7 +5304,7 @@ clusters.on("clustermouseout", (a) => {
     });
   }
 
-  console.info("[BIMO] module impression carte actuelle v2 chargé");
+  console.info("[BIMO] module impression carte actuelle v3 chargé");
   initMapPrintModule();
   // ---- FIN MODULE IMPRESSION A4 - CARTE ACTUELLE ----
 
