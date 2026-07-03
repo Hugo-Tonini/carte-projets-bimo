@@ -4455,8 +4455,15 @@ clusters.on("clustermouseout", (a) => {
     cancelBtn?.addEventListener("click", closeMapPrintScopeDialog);
     primaryBtn?.addEventListener("click", () => {
       const value = String(backdrop.querySelector('input[name="mapPrintScope"]:checked')?.value || "__france__");
+
+      // Important : la fenêtre doit être ouverte directement pendant le clic utilisateur.
+      // Si on attend la fin de la préparation de la carte, Chrome/Edge peuvent ouvrir
+      // un onglet about:blank impossible à remplir ensuite.
+      const printWin = openMapPrintPlaceholderWindow();
+      if (!printWin) return;
+
       closeMapPrintScopeDialog();
-      prepareMapPrintFromCurrentState(value);
+      prepareMapPrintFromCurrentState(value, printWin);
     });
 
     dialog?.querySelector('input[name="mapPrintScope"]:checked')?.focus?.();
@@ -4580,24 +4587,65 @@ clusters.on("clustermouseout", (a) => {
     };
   }
 
-  function prepareMapPrintFromCurrentState(scopeValue) {
+  function prepareMapPrintFromCurrentState(scopeValue, printWin) {
     try {
       applyMapPrintScope(scopeValue);
       window.setTimeout(() => {
-        const payload = buildMapPrintPayload(scopeValue);
-        openMapPrintWindow(payload);
-      }, 180);
+        try {
+          const payload = buildMapPrintPayload(scopeValue);
+          openMapPrintWindow(payload, printWin);
+        } catch (err) {
+          console.error("[BIMO] Préparation impression impossible", err);
+          writeMapPrintWindowError(printWin, "L’impression n’a pas pu être préparée. Consultez la console pour le détail technique.");
+        }
+      }, 260);
     } catch (err) {
       console.error("[BIMO] Préparation impression impossible", err);
-      window.alert("L’impression n’a pas pu être préparée. Consultez la console pour le détail technique.");
+      writeMapPrintWindowError(printWin, "L’impression n’a pas pu être préparée. Consultez la console pour le détail technique.");
     }
   }
 
-  function openMapPrintWindow(payload) {
-    const printWin = window.open("", "_blank", "noopener,noreferrer,width=1300,height=900");
+  function openMapPrintPlaceholderWindow() {
+    // Pas de noopener/noreferrer ici : le script doit garder accès au document
+    // de la fenêtre about:blank pour y écrire la carte une fois prête.
+    const printWin = window.open("", "_blank", "width=1300,height=900");
     if (!printWin) {
       window.alert("La fenêtre d’impression a été bloquée par le navigateur. Autorisez les pop-ups pour ce site puis réessayez.");
+      return null;
+    }
+
+    try {
+      printWin.document.open();
+      printWin.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Préparation impression</title><style>html,body{margin:0;height:100%;font-family:Arial,system-ui,sans-serif;background:#f3f4f6;color:#111}.wrap{height:100%;display:flex;align-items:center;justify-content:center;text-align:center}.box{padding:22px 26px;border:1px solid #d0d0d0;border-radius:14px;background:#fff;box-shadow:0 12px 34px rgba(0,0,0,.14)}strong{display:block;margin-bottom:6px;font-size:18px}</style></head><body><div class="wrap"><div class="box"><strong>Préparation de la carte…</strong><span>La fenêtre va se remplir automatiquement.</span></div></div></body></html>`);
+      printWin.document.close();
+      printWin.focus();
+    } catch (err) {
+      console.warn("[BIMO] Impossible d’écrire le placeholder d’impression", err);
+    }
+
+    return printWin;
+  }
+
+  function writeMapPrintWindowError(printWin, message) {
+    if (!printWin || printWin.closed) {
+      window.alert(message);
       return;
+    }
+
+    try {
+      printWin.document.open();
+      printWin.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Erreur impression</title><style>html,body{margin:0;height:100%;font-family:Arial,system-ui,sans-serif;background:#fff;color:#111}.wrap{height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px}.box{max-width:560px;padding:22px 26px;border:1px solid #f0bcbc;border-radius:14px;background:#fff5f5;color:#8a1f1f;box-shadow:0 12px 34px rgba(0,0,0,.12)}strong{display:block;margin-bottom:8px;font-size:18px}</style></head><body><div class="wrap"><div class="box"><strong>Erreur de préparation</strong><span>${escapeHtml(message)}</span></div></div></body></html>`);
+      printWin.document.close();
+      printWin.focus();
+    } catch {
+      window.alert(message);
+    }
+  }
+
+  function openMapPrintWindow(payload, printWin) {
+    if (!printWin || printWin.closed) {
+      printWin = openMapPrintPlaceholderWindow();
+      if (!printWin) return;
     }
 
     const payloadJson = JSON.stringify(payload)
@@ -5079,6 +5127,7 @@ clusters.on("clustermouseout", (a) => {
     });
   }
 
+  console.info("[BIMO] module impression carte actuelle v2 chargé");
   initMapPrintModule();
   // ---- FIN MODULE IMPRESSION A4 - CARTE ACTUELLE ----
 
