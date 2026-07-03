@@ -1927,11 +1927,67 @@ clusters.on("clustermouseout", (a) => {
       }
 
       body.bimo-print-mode {
-        background: #fff;
+        background: #fff !important;
+        overflow: hidden !important;
+      }
+
+      body.bimo-print-mode .topbar,
+      body.bimo-print-mode #panel,
+      body.bimo-print-mode .panel,
+      body.bimo-print-mode .bimoPrintModalBackdrop,
+      body.bimo-print-mode .leaflet-control-container,
+      body.bimo-print-mode .leaflet-control-attribution,
+      body.bimo-print-mode .bimoZoomSlider {
+        display: none !important;
+        visibility: hidden !important;
+      }
+
+      body.bimo-print-mode .layout {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        background: #fff !important;
+        z-index: 9990 !important;
       }
 
       body.bimo-print-mode #map {
-        background: #fff;
+        position: fixed !important;
+        left: 50% !important;
+        top: 50% !important;
+        width: 285mm !important;
+        height: 198mm !important;
+        min-height: 198mm !important;
+        transform: translate(-50%, -50%) !important;
+        z-index: 9991 !important;
+        background: #e5e7eb !important;
+        overflow: hidden !important;
+        visibility: visible !important;
+      }
+
+      body.bimo-print-mode #map,
+      body.bimo-print-mode #map * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+
+      body.bimo-print-mode .leaflet-pane,
+      body.bimo-print-mode .leaflet-tile-pane,
+      body.bimo-print-mode .leaflet-overlay-pane,
+      body.bimo-print-mode .leaflet-marker-pane,
+      body.bimo-print-mode .leaflet-tile-container,
+      body.bimo-print-mode .leaflet-tile,
+      body.bimo-print-mode .leaflet-marker-icon,
+      body.bimo-print-mode .leaflet-interactive,
+      body.bimo-print-mode svg,
+      body.bimo-print-mode path,
+      body.bimo-print-mode .pin-dot {
+        visibility: visible !important;
+        opacity: 1 !important;
       }
 
       @media print {
@@ -1965,12 +2021,36 @@ clusters.on("clustermouseout", (a) => {
 
         body.bimo-print-mode #map {
           position: fixed !important;
-          inset: 0 !important;
-          width: 100vw !important;
-          height: 100vh !important;
-          min-height: 0 !important;
+          left: 6mm !important;
+          top: 6mm !important;
+          right: auto !important;
+          bottom: auto !important;
+          width: 285mm !important;
+          height: 198mm !important;
+          min-height: 198mm !important;
+          transform: none !important;
           z-index: 1 !important;
-          background: #fff !important;
+          background: #e5e7eb !important;
+          overflow: hidden !important;
+        }
+
+        body.bimo-print-mode .leaflet-pane,
+        body.bimo-print-mode .leaflet-tile-pane,
+        body.bimo-print-mode .leaflet-overlay-pane,
+        body.bimo-print-mode .leaflet-marker-pane,
+        body.bimo-print-mode .leaflet-tile-container,
+        body.bimo-print-mode .leaflet-tile,
+        body.bimo-print-mode .leaflet-marker-icon,
+        body.bimo-print-mode .leaflet-interactive,
+        body.bimo-print-mode svg,
+        body.bimo-print-mode path,
+        body.bimo-print-mode .pin-dot {
+          display: block !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
         }
 
         body.bimo-print-mode .leaflet-control-container,
@@ -2499,6 +2579,36 @@ clusters.on("clustermouseout", (a) => {
     });
   }
 
+  function waitForAnimationFrames(count = 2) {
+    return new Promise((resolve) => {
+      const step = (remaining) => {
+        if (remaining <= 0) {
+          resolve();
+          return;
+        }
+        window.requestAnimationFrame(() => step(remaining - 1));
+      };
+      step(Math.max(1, Number(count) || 1));
+    });
+  }
+
+  function waitForLeafletTiles(timeoutMs = 2500) {
+    const start = Date.now();
+    return new Promise((resolve) => {
+      const check = () => {
+        const tiles = Array.from(mapEl.querySelectorAll(".leaflet-tile"));
+        const visibleTiles = tiles.filter((tile) => tile instanceof HTMLImageElement && tile.style.display !== "none");
+        const loaded = visibleTiles.length > 0 && visibleTiles.every((tile) => tile.complete && tile.naturalWidth > 0);
+        if (loaded || Date.now() - start >= timeoutMs) {
+          resolve();
+          return;
+        }
+        window.setTimeout(check, 120);
+      };
+      check();
+    });
+  }
+
   async function prepareAndPrintMap(options) {
     try {
       // Les réglages choisis servent maintenant aussi de réglages de carte.
@@ -2508,13 +2618,18 @@ clusters.on("clustermouseout", (a) => {
       applyPrintState(options);
       const bounds = options.scope === "antenna" ? antennaBounds(options.antenna) : FRANCE_BOUNDS;
 
+      await waitForAnimationFrames(3);
       map.invalidateSize(true);
+      await waitForAnimationFrames(2);
       if (bounds?.isValid?.()) {
-        map.fitBounds(bounds, { padding: [8, 8], animate: false });
+        map.fitBounds(bounds, { padding: [10, 10], animate: false });
       }
-      await waitForMapIdle();
+      await waitForMapIdle(900);
+      await waitForAnimationFrames(2);
       map.invalidateSize(true);
       renderMapLabels();
+      await waitForLeafletTiles(2800);
+      await waitForAnimationFrames(2);
       updateClearButtonState();
 
       window.print();
@@ -4338,6 +4453,17 @@ clusters.on("clustermouseout", (a) => {
       map.invalidateSize(true);
       renderMapLabels();
     }
+  });
+
+  window.addEventListener("afterprint", () => {
+    if (!document.body.classList.contains("bimo-print-mode")) return;
+    document.body.classList.remove("bimo-print-mode", "bimo-print-no-legend");
+    window.setTimeout(() => {
+      map.invalidateSize(true);
+      renderOffices();
+      renderMarkers();
+      scheduleCityLabelsRender();
+    }, 120);
   });
 
   function openPanel(html) {
