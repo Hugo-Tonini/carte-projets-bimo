@@ -4676,16 +4676,16 @@ clusters.on("clustermouseout", (a) => {
     .printToolbar button.primary{ background:#000091; border-color:#000091; color:#fff; }
     .printToolbar button:disabled{ opacity:.55; cursor:not-allowed; }
     .printStatus{ font-size:13px; color:#555; font-weight:700; }
-    .sheetWrap{ min-height:calc(100vh - 58px); display:flex; align-items:center; justify-content:center; padding:18px; }
+    .sheetWrap{ min-height:calc(100vh - 58px); display:flex; align-items:center; justify-content:center; padding:10px; }
     .sheet{ position:relative; width:297mm; height:210mm; max-width:calc(100vw - 36px); max-height:calc((100vw - 36px) * 210 / 297); aspect-ratio:297/210; background:#fff; box-shadow:0 12px 34px rgba(0,0,0,.24); overflow:hidden; }
-    #printMap{ position:absolute; inset:8mm; background:#fff; }
-    .printLegend{ position:absolute; left:11mm; bottom:11mm; z-index:1500; max-width:72mm; max-height:86mm; overflow:hidden; padding:8px 10px; border:1px solid #d0d0d0; border-radius:10px; background:rgba(255,255,255,.96); box-shadow:0 6px 18px rgba(0,0,0,.14); font-size:11px; line-height:1.25; }
+    #printMap{ position:absolute; inset:2mm; background:#fff; }
+    .printLegend{ position:absolute; left:5mm; bottom:5mm; z-index:1500; max-width:72mm; max-height:86mm; overflow:hidden; padding:8px 10px; border:1px solid #d0d0d0; border-radius:10px; background:rgba(255,255,255,.96); box-shadow:0 6px 18px rgba(0,0,0,.14); font-size:11px; line-height:1.25; }
     .printLegendTitle,.printLegendSubtitle{ font-weight:800; margin-bottom:6px; }
     .printLegendSubtitle{ margin-top:8px; }
     .printLegendRow{ display:flex; align-items:center; gap:7px; margin:3px 0; white-space:nowrap; }
     .printLegendSwatch{ width:16px; height:10px; border:1px solid #d0d0d0; border-radius:4px; flex:0 0 auto; }
     .printLegendPin{ width:13px; height:13px; border-radius:999px; border:4px solid blue; background:rgba(0,0,0,.05); flex:0 0 auto; }
-    .printMapTitle{ position:absolute; top:11mm; left:11mm; z-index:1400; padding:5px 8px; border-radius:8px; background:rgba(255,255,255,.92); border:1px solid rgba(0,0,0,.10); font-size:12px; font-weight:800; box-shadow:0 4px 14px rgba(0,0,0,.10); }
+    .printMapTitle{ position:absolute; top:5mm; left:5mm; z-index:1400; padding:5px 8px; border-radius:8px; background:rgba(255,255,255,.92); border:1px solid rgba(0,0,0,.10); font-size:12px; font-weight:800; box-shadow:0 4px 14px rgba(0,0,0,.10); }
     .pin-dot{ background:transparent; border:0; }
     .pin-dot-inner{ width:18px; height:18px; border-radius:50%; background:rgba(0,0,0,.05); border:4px solid blue; box-sizing:border-box; }
     .pin-dot-cluster-wrap{ background:transparent; border:0; }
@@ -4704,7 +4704,7 @@ clusters.on("clustermouseout", (a) => {
     .printLabelsHtml{ position:absolute; inset:0; pointer-events:none; }
     .printLabel{ position:absolute; background:rgba(255,255,255,.94); border:1px solid rgba(0,0,0,.16); border-radius:999px; box-shadow:0 3px 9px rgba(0,0,0,.12); color:#111; font-size:11px; font-weight:800; line-height:1.15; padding:3px 7px; white-space:nowrap; pointer-events:none; overflow:hidden; text-overflow:ellipsis; }
     .printLabel--project{ border-radius:8px; font-size:10.5px; max-width:180px; }
-    .leaflet-container{ font-family:"Marianne", Arial, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    .leaflet-container{ font-family:"Marianne", Arial, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; touch-action:none!important; overscroll-behavior:contain; cursor:default!important; }
     .leaflet-control-container{ display:none!important; }
     .leaflet-interactive,.printLegend,.printMapTitle,.pin-dot-inner,.pin-office-wrap,.pin-office-badge,.printLabel{ -webkit-print-color-adjust:exact; print-color-adjust:exact; color-adjust:exact; }
     @media print{
@@ -4712,7 +4712,7 @@ clusters.on("clustermouseout", (a) => {
       .printToolbar{ display:none!important; }
       .sheetWrap{ display:block; padding:0; min-height:0; }
       .sheet{ width:297mm!important; height:210mm!important; max-width:none!important; max-height:none!important; box-shadow:none!important; margin:0!important; page-break-after:avoid; overflow:hidden!important; }
-      #printMap{ inset:8mm!important; }
+      #printMap{ inset:2mm!important; }
     }
   </style>
 </head>
@@ -5056,6 +5056,8 @@ clusters.on("clustermouseout", (a) => {
 
     function placeLabel({ map, svg, html, placedRects, blockedRects, entry, text, className, kind }) {
       const anchorPoint = map.latLngToContainerPoint([entry.lat, entry.lon]);
+      const mapContainer = map.getContainer();
+      const mapSize = map.getSize();
       const el = document.createElement("div");
       el.className = className;
       el.textContent = text;
@@ -5067,18 +5069,26 @@ clusters.on("clustermouseout", (a) => {
       const measured = el.getBoundingClientRect();
       const labelWidth = Math.ceil(Math.min(measured.width || 90, kind === "project" ? 180 : 220));
       const labelHeight = Math.ceil(measured.height || 22);
-      const mapSize = map.getSize();
+      const separation = kind === "project" ? 8 : 10;
+      const blockedMargin = 5;
 
       let best = null;
       for (const candidate of buildLabelCandidates(labelWidth, labelHeight, kind)) {
         const [dx, dy] = candidate.offset;
         const centerX = anchorPoint.x + dx;
         const centerY = anchorPoint.y + dy;
-        const rect = makeRect(centerX - labelWidth / 2, centerY - labelHeight / 2, labelWidth, labelHeight);
-        if (!rectInsideMap(rect, mapSize.x, mapSize.y, 5)) continue;
-        if (placedRects.some((placed) => rectsOverlap(rect, placed, 3))) continue;
-        if (blockedRects.some((blocked) => rectsOverlap(rect, blocked, 2))) continue;
-        best = { rect, leader: candidate.leader };
+        const theoreticalRect = makeRect(centerX - labelWidth / 2, centerY - labelHeight / 2, labelWidth, labelHeight);
+
+        el.style.left = `${Math.round(theoreticalRect.left)}px`;
+        el.style.top = `${Math.round(theoreticalRect.top)}px`;
+        el.style.width = `${Math.ceil(labelWidth)}px`;
+
+        const actualRect = rectFromElementInMap(el, mapContainer) || theoreticalRect;
+        if (!rectInsideMap(actualRect, mapSize.x, mapSize.y, 5)) continue;
+        if (placedRects.some((placed) => rectsOverlap(actualRect, placed, separation))) continue;
+        if (blockedRects.some((blocked) => rectsOverlap(actualRect, blocked, blockedMargin))) continue;
+
+        best = { rect: actualRect, leader: candidate.leader };
         break;
       }
 
@@ -5089,9 +5099,6 @@ clusters.on("clustermouseout", (a) => {
 
       placedRects.push(best.rect);
       el.style.visibility = "visible";
-      el.style.left = `${Math.round(best.rect.left)}px`;
-      el.style.top = `${Math.round(best.rect.top)}px`;
-      el.style.width = `${Math.ceil(labelWidth)}px`;
       if (best.leader) appendLeaderLine(svg, anchorPoint, best.rect);
       return true;
     }
@@ -5198,6 +5205,53 @@ clusters.on("clustermouseout", (a) => {
       });
     }
 
+    function disablePrintMapInteractions(map) {
+      const handlers = ["dragging", "touchZoom", "doubleClickZoom", "scrollWheelZoom", "boxZoom", "keyboard", "tap"];
+      handlers.forEach((handlerName) => {
+        try { map?.[handlerName]?.disable?.(); } catch {}
+      });
+
+      const container = map?.getContainer?.();
+      if (!container || container.__bimoPrintInteractionsLocked) return;
+      container.__bimoPrintInteractionsLocked = true;
+
+      const stopMapInteraction = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+      };
+
+      ["wheel", "mousewheel", "DOMMouseScroll", "dblclick", "mousedown", "pointerdown", "touchstart", "touchmove"].forEach((eventName) => {
+        container.addEventListener(eventName, stopMapInteraction, { passive: false, capture: true });
+      });
+    }
+
+    function lockPrintMapZoom(map) {
+      if (!map) return;
+      disablePrintMapInteractions(map);
+      const lockedZoom = map.getZoom();
+      if (Number.isFinite(lockedZoom)) {
+        try { map.setMinZoom(lockedZoom); } catch {}
+        try { map.setMaxZoom(lockedZoom); } catch {}
+      }
+    }
+
+    function fitPrintMapToBounds(map, bounds) {
+      if (!map || !bounds?.isValid?.()) return;
+      const isAntennaScope = payload.scope === "antenna";
+      const padding = isAntennaScope ? [0, 0] : [4, 4];
+      map.fitBounds(bounds, { padding, animate: false });
+
+      // En mode antenne, on resserre légèrement le cadrage pour utiliser au maximum
+      // la surface A4. Le gain reste faible afin de ne pas couper fortement les limites.
+      if (isAntennaScope) {
+        const currentZoom = map.getZoom();
+        if (Number.isFinite(currentZoom)) {
+          const boostedZoom = Math.min(19, currentZoom + 0.18);
+          map.setView(bounds.getCenter(), boostedZoom, { animate: false });
+        }
+      }
+    }
+
     async function boot() {
       if (!window.L || typeof L.map !== "function") {
         setStatus("Erreur");
@@ -5216,10 +5270,13 @@ clusters.on("clustermouseout", (a) => {
         keyboard: false,
         touchZoom: false,
         tap: false,
+        inertia: false,
         zoomSnap: 0.1,
         zoomDelta: 0.25,
         wheelPxPerZoomLevel: 120
       }).setView([46.8, 2.5], 6);
+
+      disablePrintMapInteractions(map);
 
       const tileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "© OpenStreetMap",
@@ -5273,8 +5330,7 @@ clusters.on("clustermouseout", (a) => {
         : getFranceBounds();
 
       if (bounds?.isValid?.()) {
-        const padding = payload.scope === "antenna" ? [2, 2] : [10, 10];
-        map.fitBounds(bounds, { padding, animate: false });
+        fitPrintMapToBounds(map, bounds);
       }
 
       await wait(350);
@@ -5282,6 +5338,7 @@ clusters.on("clustermouseout", (a) => {
       await waitForTiles(tileLayer, 5200);
       await wait(450);
       map.invalidateSize(true);
+      lockPrintMapZoom(map);
       renderMapLabels(map);
 
       const projectCount = (payload.projects || []).length;
@@ -5304,7 +5361,7 @@ clusters.on("clustermouseout", (a) => {
     });
   }
 
-  console.info("[BIMO] module impression carte actuelle v3 chargé");
+  console.info("[BIMO] module impression carte actuelle v4 chargé");
   initMapPrintModule();
   // ---- FIN MODULE IMPRESSION A4 - CARTE ACTUELLE ----
 
