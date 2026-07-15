@@ -11,7 +11,7 @@
   <link rel="preload" href="assets/fonts/Marianne-Regular.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/fonts/Marianne-Bold.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/fonts/Marianne-ExtraBold.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="stylesheet" href="style.css?v=2026-07-02c" />
+  <link rel="stylesheet" href="style.css?v=2026-07-15a" />
 </head>
 <body>
   <header class="topbar">
@@ -30,12 +30,17 @@
       </div>
     </div>
     <div id="toolbar" class="toolbar" role="region" aria-label="Filtres">
-      <fieldset class="types" aria-label="Type de projet">
-        <legend class="sr-only">Type de projet</legend>
-        <label><input class="typeFilter" type="checkbox" value="MOM" checked /> MOM</label>
-        <label><input class="typeFilter" type="checkbox" value="AMO" checked /> AMO</label>
-        <label><input class="typeFilter" type="checkbox" value="EXP" checked /> EXP</label>
-      </fieldset>
+      <button id="filterBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="filterMenu">Filtre</button>
+      <div id="filterMenu" class="filterMenu" hidden role="region" aria-label="Filtres d’affichage">
+        <div class="filterMenuTitle">Filtres d’affichage</div>
+        <fieldset class="types" aria-label="Type de projet">
+          <legend>Types de projet</legend>
+          <label><input class="typeFilter" type="checkbox" value="MOM" checked /> MOM</label>
+          <label><input class="typeFilter" type="checkbox" value="AMO" checked /> AMO</label>
+          <label><input class="typeFilter" type="checkbox" value="EXP" checked /> EXP</label>
+        </fieldset>
+        <div id="displayFiltersHost" class="displayFiltersHost" aria-label="Options d’affichage"></div>
+      </div>
       <button id="clear" type="button">Réinitialiser</button>
       <button id="antennaSummaryBtn" type="button" aria-pressed="false" aria-controls="antennaSummaryOverlay">Synthèse</button>
       <button id="projListBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="projListMenu">Liste projets</button>
@@ -123,6 +128,6 @@
   </main>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin="anonymous"></script>
-  <script src="script.js?v=2026-07-02c"></script>
+  <script src="script.js?v=2026-07-15a"></script>
 </body>
 </html>
