@@ -1082,9 +1082,16 @@
 
   function initProjectPinSizeControls(afterElement) {
     if (document.getElementById("projectPinSizeControls")) {
-      initProjectClusterDistanceControls(document.getElementById("projectPinSizeControls"));
+      initProjectClusterDistanceControls(document.getElementById("projectPinSizeControls")?.closest(".displayFilterControlRow"));
       return;
     }
+
+    const row = document.createElement("div");
+    row.className = "displayFilterControlRow";
+
+    const label = document.createElement("span");
+    label.className = "displayFilterControlLabel";
+    label.textContent = "Taille des pins";
 
     const wrap = document.createElement("span");
     wrap.id = "projectPinSizeControls";
@@ -1112,6 +1119,8 @@
     wrap.appendChild(btnMinus);
     wrap.appendChild(btnReset);
     wrap.appendChild(btnPlus);
+    row.appendChild(label);
+    row.appendChild(wrap);
 
     const sync = () => {
       const pct = Math.round(projectPinSizeScale * 100);
@@ -1139,13 +1148,14 @@
     btnReset.addEventListener("click", () => setScale(1));
     btnPlus.addEventListener("click", () => setScale(projectPinSizeScale + 0.1));
 
-    if (afterElement?.insertAdjacentElement) {
-      afterElement.insertAdjacentElement("afterend", wrap);
+    const insertionAnchor = afterElement?.closest?.(".displayFilterControlRow") || afterElement;
+    if (insertionAnchor?.insertAdjacentElement) {
+      insertionAnchor.insertAdjacentElement("afterend", row);
     } else {
       const target = document.getElementById("projectLabelsToggle")?.closest("label")
         || document.getElementById("cityLabelsToggle")?.closest("label")
         || document.getElementById("officesToggle")?.closest("label");
-      if (target?.insertAdjacentElement) target.insertAdjacentElement("afterend", wrap);
+      if (target?.insertAdjacentElement) target.insertAdjacentElement("afterend", row);
     }
 
     sync();
@@ -1154,6 +1164,13 @@
 
   function initProjectClusterDistanceControls(afterElement) {
     if (document.getElementById("projectClusterDistanceControls")) return;
+
+    const row = document.createElement("div");
+    row.className = "displayFilterControlRow";
+
+    const label = document.createElement("span");
+    label.className = "displayFilterControlLabel";
+    label.textContent = "Regroupement des pins";
 
     const wrap = document.createElement("span");
     wrap.id = "projectClusterDistanceControls";
@@ -1182,6 +1199,8 @@
     wrap.appendChild(btnMinus);
     wrap.appendChild(btnReset);
     wrap.appendChild(btnPlus);
+    row.appendChild(label);
+    row.appendChild(wrap);
 
     const sync = () => {
       const pct = Math.round(projectClusterDistanceScale * 100);
@@ -1209,14 +1228,15 @@
     btnReset.addEventListener("click", () => setScale(1));
     btnPlus.addEventListener("click", () => setScale(projectClusterDistanceScale + 0.1));
 
-    if (afterElement?.insertAdjacentElement) {
-      afterElement.insertAdjacentElement("afterend", wrap);
+    const insertionAnchor = afterElement?.closest?.(".displayFilterControlRow") || afterElement;
+    if (insertionAnchor?.insertAdjacentElement) {
+      insertionAnchor.insertAdjacentElement("afterend", row);
     } else {
-      const target = document.getElementById("projectPinSizeControls")
+      const target = document.getElementById("projectPinSizeControls")?.closest(".displayFilterControlRow")
         || document.getElementById("projectLabelsToggle")?.closest("label")
         || document.getElementById("cityLabelsToggle")?.closest("label")
         || document.getElementById("officesToggle")?.closest("label");
-      if (target?.insertAdjacentElement) target.insertAdjacentElement("afterend", wrap);
+      if (target?.insertAdjacentElement) target.insertAdjacentElement("afterend", row);
     }
 
     sync();
