@@ -71,6 +71,9 @@
   const elStatLocated = document.getElementById("statLocated");
   const elStatDept = document.getElementById("statDept");
   const elProjListBtn = document.getElementById("projListBtn");
+  const elFilterBtn = document.getElementById("filterBtn");
+  const elFilterMenu = document.getElementById("filterMenu");
+  const elDisplayFiltersHost = document.getElementById("displayFiltersHost");
   const elProjectModeSwitch = document.getElementById("projectModeSwitch");
   const elProjectModeButtons = Array.from(document.querySelectorAll("[data-project-mode]"));
   const elProjListMenu = document.getElementById("projListMenu");
@@ -1642,15 +1645,19 @@ clusters.on("clustermouseout", (a) => {
   }
 
   function initOfficesToggle() {
-    // On insère un toggle à côté des filtres de type (MOM/AMO/EXP) si possible
+    // Les options d’affichage sont regroupées dans le menu principal « Filtre ».
     const typeFilters = Array.from(document.querySelectorAll(".typeFilter"));
-    if (!typeFilters.length) {
+    const last = typeFilters[typeFilters.length - 1] || null;
+    const host = elDisplayFiltersHost
+      || last?.closest("label")?.parentElement
+      || last?.parentElement
+      || last;
+
+    if (!host) {
       initCityLabelsToggle(null);
       renderOffices();
       return;
     }
-    const last = typeFilters[typeFilters.length - 1];
-    const host = last.closest("label")?.parentElement || last.parentElement || last;
 
     // Eviter de doubler si le script est chargé deux fois
     if (document.getElementById("officesToggle")) {
@@ -1672,7 +1679,8 @@ clusters.on("clustermouseout", (a) => {
 
     wrap.appendChild(cb);
     wrap.appendChild(span);
-    host.insertAdjacentElement("afterend", wrap);
+    if (host === elDisplayFiltersHost) host.appendChild(wrap);
+    else host.insertAdjacentElement("afterend", wrap);
     initCityLabelsToggle(wrap);
 
     cb.addEventListener("change", () => {
@@ -3075,6 +3083,37 @@ clusters.on("clustermouseout", (a) => {
     elAdvancedFiltersBtn.setAttribute("aria-expanded", open ? "true" : "false");
   }
 
+  function syncFilterButtonState() {
+    if (!elFilterBtn) return;
+
+    const hasTypeFilter = Array.from(document.querySelectorAll(".typeFilter"))
+      .some((checkbox) => !checkbox.checked);
+    const officesToggle = document.getElementById("officesToggle");
+    const cityLabelsToggle = document.getElementById("cityLabelsToggle");
+    const projectLabelsToggle = document.getElementById("projectLabelsToggle");
+    const hasDisplayOption =
+      (officesToggle && !officesToggle.checked) ||
+      (cityLabelsToggle && cityLabelsToggle.checked) ||
+      (projectLabelsToggle && projectLabelsToggle.checked);
+
+    const active = Boolean(hasTypeFilter || hasDisplayOption);
+    elFilterBtn.classList.toggle("is-active", active);
+    elFilterBtn.setAttribute("aria-pressed", active ? "true" : "false");
+    elFilterBtn.title = active ? "Des filtres d’affichage sont actifs" : "Afficher les filtres";
+  }
+
+  function setFilterMenuOpen(open) {
+    if (!elFilterMenu || !elFilterBtn) return;
+    const isOpen = Boolean(open);
+    elFilterMenu.hidden = !isOpen;
+    elFilterBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+
+    if (isOpen) {
+      setAdvancedFiltersOpen(false);
+      setProjectListOpen(false);
+    }
+  }
+
   function uniqueSortedValues(projects, getter) {
     const map = new Map();
     for (const project of projects) {
@@ -4162,10 +4201,16 @@ clusters.on("clustermouseout", (a) => {
   });
   document.querySelectorAll(".typeFilter").forEach((cb) => cb.addEventListener("change", () => {
     updateClearButtonState();
+    syncFilterButtonState();
     renderMarkers();
   }));
   initOfficesToggle();
   normalizeToolbarCheckboxes();
+  syncFilterButtonState();
+
+  elFilterMenu?.addEventListener("change", () => {
+    syncFilterButtonState();
+  });
   window.setTimeout(() => {
     initProjectClusterDistanceControls(
       document.getElementById("projectPinSizeControls")
@@ -4198,6 +4243,23 @@ clusters.on("clustermouseout", (a) => {
     elClear.addEventListener("click", () => {
       if (elQ) elQ.value = "";
       document.querySelectorAll(".typeFilter").forEach((cb) => (cb.checked = true));
+
+      const officesToggle = document.getElementById("officesToggle");
+      if (officesToggle) {
+        officesToggle.checked = true;
+        officesEnabled = true;
+        renderOffices();
+      }
+
+      const cityLabelsToggle = document.getElementById("cityLabelsToggle");
+      if (cityLabelsToggle) cityLabelsToggle.checked = false;
+      cityLabelsEnabled = false;
+
+      const projectLabelsToggle = document.getElementById("projectLabelsToggle");
+      if (projectLabelsToggle) projectLabelsToggle.checked = false;
+      projectLabelsEnabled = false;
+      scheduleCityLabelsRender();
+
       clearAdvancedFilters();
       selectedAntenna = null;
       stopCompletedYearPlayback();
@@ -4207,8 +4269,18 @@ clusters.on("clustermouseout", (a) => {
       closePanel();
       updateDeptSelectedStat();
       updateClearButtonState();
+      syncFilterButtonState();
       renderMarkers();
     });
+  }
+
+  if (elFilterBtn && elFilterMenu) {
+    elFilterBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      setFilterMenuOpen(elFilterMenu.hidden);
+    });
+
+    elFilterMenu.addEventListener("click", (event) => event.stopPropagation());
   }
 
   if (elProjectModeSwitch) {
@@ -4221,6 +4293,8 @@ clusters.on("clustermouseout", (a) => {
 
   if (elAdvancedFiltersBtn && elAdvancedFiltersPanel) {
     elAdvancedFiltersBtn.addEventListener("click", () => {
+      setFilterMenuOpen(false);
+      setProjectListOpen(false);
       setAdvancedFiltersOpen(elAdvancedFiltersPanel.hidden);
     });
   }
@@ -4244,6 +4318,8 @@ clusters.on("clustermouseout", (a) => {
 
     elProjListBtn.addEventListener("click", (e) => {
       e.stopPropagation();
+      setFilterMenuOpen(false);
+      setAdvancedFiltersOpen(false);
       setProjectListOpen(elProjListMenu.hidden, { focusSearch: true });
     });
 
@@ -4266,12 +4342,18 @@ clusters.on("clustermouseout", (a) => {
     });
 
     document.addEventListener("click", (event) => {
-      if (elProjListMenu.hidden) return;
-      if (elProjListMenu.contains(event.target) || elProjListBtn.contains(event.target)) return;
-      setProjectListOpen(false);
+      if (!elProjListMenu.hidden && !elProjListMenu.contains(event.target) && !elProjListBtn.contains(event.target)) {
+        setProjectListOpen(false);
+      }
+      if (elFilterMenu && !elFilterMenu.hidden && !elFilterMenu.contains(event.target) && !elFilterBtn?.contains(event.target)) {
+        setFilterMenuOpen(false);
+      }
     });
     document.addEventListener("keydown", (ev) => {
-      if (ev.key === "Escape") setProjectListOpen(false);
+      if (ev.key !== "Escape") return;
+      setProjectListOpen(false);
+      setFilterMenuOpen(false);
+      setAdvancedFiltersOpen(false);
     });
     elProjListMenu.addEventListener("click", (e) => e.stopPropagation());
   }
