@@ -3351,3 +3351,111 @@ body{
   text-align: center;
   text-transform: none;
 }
+
+/* ===== Menu principal Filtre ===== */
+#filterBtn{
+  cursor:pointer;
+  border:var(--bimo-button-border);
+  background:var(--bimo-button-bg);
+  border-radius:var(--bimo-button-radius);
+  padding:3px 10px;
+  min-height:26px;
+  height:26px;
+  line-height:1;
+  font:inherit;
+  color:inherit;
+}
+#filterBtn:hover{ filter:var(--bimo-button-hover-filter); }
+#filterBtn.is-active{
+  border-color:var(--accent);
+  color:var(--accent);
+  font-weight:700;
+}
+.filterMenu{
+  position:absolute;
+  z-index:2100;
+  top:calc(100% - 4px);
+  left:var(--bimo-header-side-padding);
+  width:min(390px, calc(100vw - 28px));
+  padding:14px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:#fff;
+  box-shadow:0 12px 34px rgba(0,0,0,0.16);
+}
+.filterMenuTitle{
+  margin:0 0 12px;
+  font-size:15px;
+  font-weight:800;
+}
+.filterMenu .types{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:8px;
+  width:100%;
+  margin:0;
+  padding:0 0 12px;
+  border:0;
+  border-bottom:1px solid rgba(0,0,0,0.10);
+}
+.filterMenu .types legend{
+  grid-column:1 / -1;
+  width:100%;
+  margin:0 0 2px;
+  padding:0;
+  font-size:11px;
+  font-weight:800;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.filterMenu .types label,
+.displayFiltersHost > .toolbarCheckboxLabel{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-height:36px;
+  padding:7px 9px !important;
+  border:1px solid rgba(15,23,42,.14) !important;
+  border-radius:9px !important;
+  background:#fff !important;
+  box-shadow:none !important;
+  font-size:13px;
+  font-weight:600;
+  color:#111;
+  cursor:pointer;
+  white-space:normal;
+}
+.filterMenu .types label{ justify-content:center; }
+.displayFiltersHost{
+  display:grid;
+  gap:7px;
+  margin-top:10px;
+}
+.displayFiltersHost > .toolbarCheckboxLabel{
+  width:100%;
+  margin:0;
+}
+.filterMenu input[type="checkbox"]{
+  flex:0 0 auto;
+  margin:0;
+  accent-color:var(--accent);
+}
+.filterMenu .toolbarCheckboxText{
+  min-width:0;
+  line-height:1.2;
+}
+.displayFiltersHost .projectPinSizeControls,
+.displayFiltersHost .projectClusterDistanceControls{
+  margin:0;
+}
+@media (max-width:720px){
+  .filterMenu{
+    left:10px;
+    right:10px;
+    width:auto;
+  }
+}
+@media print{
+  #filterMenu{ display:none !important; }
+}
