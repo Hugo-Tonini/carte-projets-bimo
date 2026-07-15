@@ -3368,8 +3368,7 @@ body{
 #filterBtn:hover{
   filter:var(--bimo-button-hover-filter);
 }
-#filterBtn.is-active,
-#filterBtn[aria-expanded="true"]{
+#filterBtn.is-active{
   border-color:var(--accent);
   color:var(--accent);
   font-weight:700;
@@ -3379,8 +3378,8 @@ body{
   position:absolute;
   z-index:2100;
   top:calc(100% - 4px);
-  left:var(--bimo-header-side-padding);
-  width:min(330px, calc(100vw - 28px));
+  left:58px;
+  width:min(330px, calc(100vw - 70px));
   padding:10px;
   border:1px solid var(--border);
   border-radius:var(--bimo-button-radius);
@@ -3491,9 +3490,27 @@ body{
   transform:none;
 }
 
+.displayFilterControlRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  width:100%;
+  min-height:30px;
+  padding:2px 0;
+}
+
+.displayFilterControlLabel{
+  min-width:0;
+  color:#111;
+  font-size:13px;
+  font-weight:600;
+  line-height:1.15;
+}
+
 .displayFiltersHost .projectPinSizeControls,
 .displayFiltersHost .projectClusterDistanceControls{
-  justify-self:start;
+  flex:0 0 68px;
   margin:0;
 }
 
@@ -3508,4 +3525,3 @@ body{
 @media print{
   #filterMenu{ display:none !important; }
 }
-
