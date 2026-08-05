@@ -1062,11 +1062,21 @@
   function clampProjectClusterDistanceScale(value) {
     const n = Number(value);
     if (!Number.isFinite(n)) return 1;
-    return Math.max(0.4, Math.min(2.5, Math.round(n * 10) / 10));
+    return Math.max(0.4, Math.min(5, Math.round(n * 10) / 10));
   }
 
-  function projectClusterMaxRadius() {
-    return Math.max(1, Math.round(10 * projectClusterDistanceScale));
+  function projectClusterMaxRadius(zoom = map?.getZoom?.() ?? 6) {
+    const z = Number.isFinite(Number(zoom)) ? Number(zoom) : 6;
+
+    let baseRadius = 18;
+    if (z <= 5) baseRadius = 48;
+    else if (z <= 6) baseRadius = 42;
+    else if (z <= 7) baseRadius = 36;
+    else if (z <= 8) baseRadius = 30;
+    else if (z <= 9) baseRadius = 25;
+    else if (z <= 10) baseRadius = 21;
+
+    return Math.max(1, Math.round(baseRadius * projectClusterDistanceScale));
   }
 
   function rerenderProjectClustersAfterDistanceChange() {
@@ -1205,7 +1215,7 @@
     const sync = () => {
       const pct = Math.round(projectClusterDistanceScale * 100);
       btnMinus.disabled = projectClusterDistanceScale <= 0.4;
-      btnPlus.disabled = projectClusterDistanceScale >= 2.5;
+      btnPlus.disabled = projectClusterDistanceScale >= 5;
       btnReset.disabled = projectClusterDistanceScale === 1;
       btnReset.classList.toggle("is-active", projectClusterDistanceScale === 1);
       btnMinus.title = `Distance clusters : ${pct} %`;
@@ -1224,9 +1234,9 @@
       rerenderProjectClustersAfterDistanceChange();
     };
 
-    btnMinus.addEventListener("click", () => setScale(projectClusterDistanceScale - 0.1));
+    btnMinus.addEventListener("click", () => setScale(projectClusterDistanceScale - 0.2));
     btnReset.addEventListener("click", () => setScale(1));
-    btnPlus.addEventListener("click", () => setScale(projectClusterDistanceScale + 0.1));
+    btnPlus.addEventListener("click", () => setScale(projectClusterDistanceScale + 0.2));
 
     const insertionAnchor = afterElement?.closest?.(".displayFilterControlRow") || afterElement;
     if (insertionAnchor?.insertAdjacentElement) {
@@ -1249,13 +1259,21 @@
     chunkedLoading: true,
     chunkInterval: 10,
     spiderfyOnMaxZoom: true,
-    maxClusterRadius: () => projectClusterMaxRadius(),
+    maxClusterRadius: (zoom) => projectClusterMaxRadius(zoom),
     spiderfyDistanceMultiplier: 3.5,
     showCoverageOnHover: false,
     zoomToBoundsOnClick: true,
     iconCreateFunction: (cluster) => {
       const children = cluster.getAllChildMarkers();
       const count = cluster.getChildCount();
+      const clusterSizeClass =
+        count >= 1000 ? "pin-dot-cluster--xl" :
+        count >= 100 ? "pin-dot-cluster--lg" :
+        "";
+      const clusterIconBox =
+        count >= 1000 ? 44 :
+        count >= 100 ? 38 :
+        32;
       const colorCounts = new Map();
 
       for (const marker of children) {
@@ -1324,9 +1342,9 @@
 
       return L.divIcon({
         className: "pin-dot pin-dot-cluster-wrap",
-        html: `<div class="projectPinScaleWrap"><div class="pin-dot-inner pin-dot-cluster" style="${projectPinTransformStyle()}">${clusterSvg}<span class="pin-dot-count">${count}</span></div></div>`,
-        iconSize: [projectPinSize(32), projectPinSize(32)],
-        iconAnchor: [projectPinSize(16), projectPinSize(16)]
+        html: `<div class="projectPinScaleWrap"><div class="pin-dot-inner pin-dot-cluster ${clusterSizeClass}" style="${projectPinTransformStyle()}">${clusterSvg}<span class="pin-dot-count">${count}</span></div></div>`,
+        iconSize: [projectPinSize(clusterIconBox), projectPinSize(clusterIconBox)],
+        iconAnchor: [projectPinSize(clusterIconBox / 2), projectPinSize(clusterIconBox / 2)]
       });
     }
   });
