@@ -1062,7 +1062,7 @@
   function clampProjectClusterDistanceScale(value) {
     const n = Number(value);
     if (!Number.isFinite(n)) return 1;
-    return Math.max(0.4, Math.min(2.5, Math.round(n * 10) / 10));
+    return Math.max(0.4, Math.min(4, Math.round(n * 10) / 10));
   }
 
   function projectClusterMaxRadius() {
@@ -1205,7 +1205,7 @@
     const sync = () => {
       const pct = Math.round(projectClusterDistanceScale * 100);
       btnMinus.disabled = projectClusterDistanceScale <= 0.4;
-      btnPlus.disabled = projectClusterDistanceScale >= 2.5;
+      btnPlus.disabled = projectClusterDistanceScale >= 4;
       btnReset.disabled = projectClusterDistanceScale === 1;
       btnReset.classList.toggle("is-active", projectClusterDistanceScale === 1);
       btnMinus.title = `Distance clusters : ${pct} %`;
