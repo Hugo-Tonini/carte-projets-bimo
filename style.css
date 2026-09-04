@@ -3526,3 +3526,63 @@ body{
   #filterMenu{ display:none !important; }
 }
 
+
+/* ===== Filtre multi-antennes ===== */
+.filterMenu .antennaFilters{
+  grid-template-columns:1fr;
+  gap:4px;
+  margin-top:9px;
+  padding-bottom:9px;
+}
+
+.filterMenu .antennaFilters legend{
+  position:static;
+  width:auto;
+  height:auto;
+  margin:0 0 6px;
+  padding:0;
+  overflow:visible;
+  clip:auto;
+  white-space:normal;
+  border:0;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+  line-height:1.2;
+}
+
+.filterMenu .antennaFilters label,
+.filterMenu .antennaFilters label:has(input:checked){
+  justify-content:flex-start;
+  min-height:26px;
+  padding:2px 4px !important;
+  border:0 !important;
+  border-radius:4px !important;
+  background:transparent !important;
+  color:#111;
+  font-weight:600;
+}
+
+.filterMenu .antennaFilters label:hover{
+  background:rgba(0,0,145,.05) !important;
+  filter:none;
+}
+
+.filterMenu .antennaFilters input[type="checkbox"]{
+  position:static;
+  width:16px;
+  height:16px;
+  margin:0 7px 0 0;
+  padding:0;
+  overflow:visible;
+  clip:auto;
+  white-space:normal;
+  flex:0 0 auto;
+  accent-color:var(--accent) !important;
+}
+
+.filterMenu .antennaFilters span{
+  min-width:0;
+  white-space:normal;
+  line-height:1.2;
+}
