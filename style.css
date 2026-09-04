@@ -3586,3 +3586,48 @@ body{
   white-space:normal;
   line-height:1.2;
 }
+
+/* ===== Uniformisation des boutons de la barre d'outils ===== */
+#toolbar > #filterBtn,
+#toolbar > #clear,
+#toolbar > #antennaSummaryBtn,
+#toolbar > #projListBtn,
+#toolbar > #advancedFiltersBtn,
+#toolbar > #mapPrintBtn,
+#toolbar .projectModeBtn{
+  box-sizing:border-box !important;
+  font-family:"Marianne", Arial, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif !important;
+  font-size:14px !important;
+  line-height:1 !important;
+  text-align:center !important;
+  vertical-align:middle !important;
+}
+
+#toolbar > #filterBtn,
+#toolbar > #clear,
+#toolbar > #antennaSummaryBtn,
+#toolbar > #projListBtn,
+#toolbar > #advancedFiltersBtn,
+#toolbar > #mapPrintBtn{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  height:26px !important;
+  min-height:26px !important;
+  padding:0 10px !important;
+}
+
+#toolbar .projectModeSwitch{
+  height:26px !important;
+  min-height:26px !important;
+  padding:1px !important;
+}
+
+#toolbar .projectModeBtn{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  height:22px !important;
+  min-height:22px !important;
+  padding:0 16px !important;
+}
