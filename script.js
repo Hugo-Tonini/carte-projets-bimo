@@ -120,6 +120,7 @@
   let projectLabelsEnabled = false;
   let projectPinSizeScale = 1;
   let projectClusterDistanceScale = 1;
+  let selectedAntennaFilters = null;
 
   // Focus antenne (pour foncer les départements de l’antenne sélectionnée)
   let selectedAntenna = null;
@@ -174,7 +175,7 @@
     const hasSearch = !!(elQ && elQ.value.trim());
     const typeFilters = Array.from(document.querySelectorAll(".typeFilter"));
     const hasTypeFilter = typeFilters.some((cb) => !cb.checked);
-    const hasAntennaFilter = !!selectedAntenna;
+    const hasAntennaFilter = !!selectedAntenna || hasAntennaMultiFilter();
     const hasAdvancedFilter = hasActiveAdvancedFilters();
     const hasCompletedYearFilter = currentProjectMode === PROJECT_MODES.completed.key && !showAllCompletedProjects && completedYearFilter !== COMPLETED_YEAR_MIN;
     return hasSearch || hasTypeFilter || hasAntennaFilter || hasAdvancedFilter || hasCompletedYearFilter;
@@ -658,6 +659,78 @@
 
   const ANTENNA_KEYS = Object.freeze(Object.keys(ANTENNA_CONFIG));
   const ANTENNA_LEGEND_ORDER = Object.freeze(ANTENNA_KEYS.filter((antenna) => ANTENNA_CONFIG[antenna]?.includeInLegend !== false));
+  const ANTENNA_FILTER_KEYS = Object.freeze(ANTENNA_LEGEND_ORDER.slice());
+
+  function activeAntennaFilterSet() {
+    return selectedAntennaFilters instanceof Set
+      ? selectedAntennaFilters
+      : new Set(ANTENNA_FILTER_KEYS);
+  }
+
+  function hasAntennaMultiFilter() {
+    return activeAntennaFilterSet().size !== ANTENNA_FILTER_KEYS.length;
+  }
+
+  function matchesAntennaMultiFilter(project) {
+    const active = activeAntennaFilterSet();
+    if (!active.size) return false;
+
+    const antenna = antennaKeyFromText(project?.["Antenne"] ?? project?.antenne);
+    return !!antenna && active.has(antenna);
+  }
+
+  function resetAntennaFilters() {
+    selectedAntennaFilters = new Set(ANTENNA_FILTER_KEYS);
+    document.querySelectorAll(".antennaFilter").forEach((checkbox) => {
+      checkbox.checked = true;
+    });
+  }
+
+  function createAntennaFiltersUi() {
+    if (!elFilterMenu || document.getElementById("antennaFiltersFieldset")) return;
+
+    const typeFieldset = elFilterMenu.querySelector("fieldset.types");
+    if (!typeFieldset) return;
+
+    selectedAntennaFilters = new Set(ANTENNA_FILTER_KEYS);
+
+    const fieldset = document.createElement("fieldset");
+    fieldset.id = "antennaFiltersFieldset";
+    fieldset.className = "types antennaFilters";
+    fieldset.setAttribute("aria-label", "Antennes");
+
+    const legend = document.createElement("legend");
+    legend.textContent = "Antennes";
+    fieldset.appendChild(legend);
+
+    ANTENNA_FILTER_KEYS.forEach((antenna) => {
+      const label = document.createElement("label");
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.className = "antennaFilter";
+      checkbox.value = antenna;
+      checkbox.checked = true;
+
+      const text = document.createElement("span");
+      text.textContent = antennaDisplayLabel(antenna);
+
+      label.appendChild(checkbox);
+      label.appendChild(text);
+      fieldset.appendChild(label);
+
+      checkbox.addEventListener("change", () => {
+        if (checkbox.checked) selectedAntennaFilters.add(antenna);
+        else selectedAntennaFilters.delete(antenna);
+
+        closePanel();
+        updateClearButtonState();
+        syncFilterButtonState();
+        renderMarkers();
+      });
+    });
+
+    typeFieldset.insertAdjacentElement("afterend", fieldset);
+  }
 
   function antennaKeyFromText(value) {
     const text = normalizeForLookup(value);
@@ -2957,6 +3030,7 @@ clusters.on("clustermouseout", (a) => {
     const types = getActiveTypes();
     const t = projectTypeKey(p);
 
+    if (!matchesAntennaMultiFilter(p)) return false;
     if (types.length && !types.includes(t)) return false;
 
     if (q) {
@@ -3108,6 +3182,7 @@ clusters.on("clustermouseout", (a) => {
 
     const hasTypeFilter = Array.from(document.querySelectorAll(".typeFilter"))
       .some((checkbox) => !checkbox.checked);
+    const hasAntennaFilter = hasAntennaMultiFilter();
     const officesToggle = document.getElementById("officesToggle");
     const cityLabelsToggle = document.getElementById("cityLabelsToggle");
     const projectLabelsToggle = document.getElementById("projectLabelsToggle");
@@ -3116,7 +3191,7 @@ clusters.on("clustermouseout", (a) => {
       (cityLabelsToggle && cityLabelsToggle.checked) ||
       (projectLabelsToggle && projectLabelsToggle.checked);
 
-    const active = Boolean(hasTypeFilter || hasDisplayOption);
+    const active = Boolean(hasTypeFilter || hasAntennaFilter || hasDisplayOption);
     elFilterBtn.classList.toggle("is-active", active);
     elFilterBtn.setAttribute("aria-pressed", active ? "true" : "false");
     elFilterBtn.title = active ? "Des filtres d’affichage sont actifs" : "Afficher les filtres";
@@ -4201,6 +4276,7 @@ clusters.on("clustermouseout", (a) => {
 
   // ---- 19. Initialisation UI et événements ----
   renderLegendAntennas();
+  createAntennaFiltersUi();
   syncProjectTypeLegendColors();
   createCompletedYearFilterUi();
   updateCompletedYearFilterUi();
@@ -4263,6 +4339,7 @@ clusters.on("clustermouseout", (a) => {
     elClear.addEventListener("click", () => {
       if (elQ) elQ.value = "";
       document.querySelectorAll(".typeFilter").forEach((cb) => (cb.checked = true));
+      resetAntennaFilters();
 
       const officesToggle = document.getElementById("officesToggle");
       if (officesToggle) {
