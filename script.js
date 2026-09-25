@@ -1991,7 +1991,8 @@ clusters.on("clustermouseout", (a) => {
     for (const antenna of ANTENNA_LEGEND_ORDER) {
       summaries.set(antenna, {
         ...Object.fromEntries(PROJECT_TYPE_FILTER_KEYS.map((key) => [key, 0])),
-        momAmount: 0
+        momAmount: 0,
+        amoAmount: 0
       });
     }
 
@@ -2004,9 +2005,12 @@ clusters.on("clustermouseout", (a) => {
 
       const summary = summaries.get(antenna);
       summary[typeKey] += 1;
-      if (typeKey === "mom") {
+      if (typeKey === "mom" || typeKey === "amo") {
         const amount = amountNumber(project["Montant"] ?? project.montant);
-        if (Number.isFinite(amount)) summary.momAmount += amount;
+        if (Number.isFinite(amount)) {
+          if (typeKey === "mom") summary.momAmount += amount;
+          else summary.amoAmount += amount;
+        }
       }
     }
 
@@ -2018,11 +2022,13 @@ clusters.on("clustermouseout", (a) => {
         .map((typeKey) => {
           const count = summary[typeKey] || 0;
           if (!count) return "";
-          if (typeKey === "mom") {
-            const amount = formatMillionEuro(summary.momAmount);
+          if (typeKey === "mom" || typeKey === "amo") {
+            const amountValue = typeKey === "mom" ? summary.momAmount : summary.amoAmount;
+            const amount = formatMillionEuro(amountValue);
+            const label = projectTypeLabelByKey(typeKey);
             return amount
-              ? `${count} MOM pour ${escapeHtml(amount)}`
-              : `${count} MOM`;
+              ? `${count} ${label} pour ${escapeHtml(amount)}`
+              : `${count} ${label}`;
           }
           return `${count} ${projectTypeLabelByKey(typeKey)}`;
         })
