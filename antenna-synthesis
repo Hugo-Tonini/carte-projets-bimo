@@ -1,0 +1,443 @@
+(() => {
+  "use strict";
+
+  const CURRENT_PROJECTS_URL = "export_projets_web.json";
+  const COMPLETED_PROJECTS_URL = "export_projets_finis_web.json";
+  const BUTTON_ID = "panelAntennaSynthesis";
+  const PANEL_ID = "panel";
+
+  const dataCache = new Map();
+  let syncFrame = 0;
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function normalize(value) {
+    return String(value ?? "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[’']/g, " ")
+      .replace(/-/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function textValue(value, fallback = "—") {
+    const text = String(value ?? "").trim();
+    return text || fallback;
+  }
+
+  function amountNumber(value) {
+    if (value == null || value === "") return NaN;
+    if (typeof value === "number") return Number.isFinite(value) ? value : NaN;
+
+    let text = String(value).trim();
+    if (!text) return NaN;
+
+    text = text
+      .replace(/[\s\u00A0\u202F]/g, "")
+      .replace(/€/g, "")
+      .replace(/[^0-9,.-]/g, "");
+
+    const lastComma = text.lastIndexOf(",");
+    const lastDot = text.lastIndexOf(".");
+    if (lastComma > lastDot) {
+      text = text.replace(/\./g, "").replace(",", ".");
+    } else if (lastDot > lastComma && lastComma >= 0) {
+      text = text.replace(/,/g, "");
+    } else {
+      text = text.replace(",", ".");
+    }
+
+    const number = Number(text);
+    return Number.isFinite(number) ? number : NaN;
+  }
+
+  function formatEuro(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return "—";
+    return new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency: "EUR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(number);
+  }
+
+  function formatCompactEuro(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return "—";
+    if (Math.abs(number) >= 1000000) {
+      return `${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 }).format(number / 1000000)} M€`;
+    }
+    if (Math.abs(number) >= 1000) {
+      return `${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(number / 1000)} k€`;
+    }
+    return formatEuro(number);
+  }
+
+  function projectName(project) {
+    return textValue(project?.["Nom de projet"] ?? project?.nom ?? project?.Nom ?? project?.name, "Projet sans nom");
+  }
+
+  function projectType(project) {
+    return textValue(project?.["Type de projet"] ?? project?.type, "Non renseigné").toUpperCase();
+  }
+
+  function projectCity(project) {
+    return textValue(project?.Ville ?? project?.ville ?? project?.Adresse ?? project?.adresse, "Non renseigné");
+  }
+
+  function projectYear(project, field) {
+    const raw = String(project?.[field] ?? project?.[field.toLowerCase()] ?? "").trim();
+    const match = raw.match(/\b(19|20)\d{2}\b/);
+    return match ? Number(match[0]) : null;
+  }
+
+  function isPresentInYear(project, year) {
+    if (!Number.isFinite(year)) return true;
+    const start = projectYear(project, "Début");
+    const end = projectYear(project, "Fin");
+    if (!Number.isFinite(start) && !Number.isFinite(end)) return true;
+    const from = Number.isFinite(start) ? start : end;
+    const to = Number.isFinite(end) ? end : start;
+    return year >= Math.min(from, to) && year <= Math.max(from, to);
+  }
+
+  function currentMode() {
+    const completedBtn = document.getElementById("completedProjectsBtn");
+    const completed = completedBtn?.getAttribute("aria-pressed") === "true" || completedBtn?.classList.contains("is-active");
+    return completed ? "completed" : "current";
+  }
+
+  function completedTimelineScope() {
+    if (currentMode() !== "completed") return { showAll: true, year: null };
+    const showAll = !!document.getElementById("completedShowAll")?.checked;
+    const year = Number(document.getElementById("completedYearValue")?.textContent?.trim());
+    return { showAll, year: Number.isFinite(year) ? year : null };
+  }
+
+  function extractOfficeInfo(panel) {
+    if (!panel?.querySelector(".panelHeader--office")) return null;
+
+    const fields = {};
+    panel.querySelectorAll(".kvRow").forEach((row) => {
+      const key = String(row.querySelector(".kvKey")?.textContent || "").replace(/\s*:\s*$/, "").trim();
+      const value = String(row.querySelector(".kvVal")?.textContent || "").trim();
+      if (key) fields[normalize(key)] = value;
+    });
+
+    if (normalize(fields.type) !== "antenne") return null;
+    const antenna = String(fields.antenne || panel.querySelector(".panelTitle--office")?.textContent || "").trim();
+    if (!antenna) return null;
+
+    return {
+      antenna,
+      address: String(fields.adresse || "").trim()
+    };
+  }
+
+  function scheduleButtonSync() {
+    if (syncFrame) cancelAnimationFrame(syncFrame);
+    syncFrame = requestAnimationFrame(() => {
+      syncFrame = 0;
+      syncSynthesisButton();
+    });
+  }
+
+  function syncSynthesisButton() {
+    const panel = document.getElementById(PANEL_ID);
+    if (!panel) return;
+
+    const existing = panel.querySelector(`#${BUTTON_ID}`);
+    const office = extractOfficeInfo(panel);
+
+    if (!office) {
+      existing?.remove();
+      return;
+    }
+
+    if (existing) {
+      existing.dataset.antenna = office.antenna;
+      existing.dataset.address = office.address;
+      return;
+    }
+
+    const actions = panel.querySelector(".panelActions");
+    if (!actions) return;
+
+    const button = document.createElement("button");
+    button.id = BUTTON_ID;
+    button.type = "button";
+    button.className = "panelPrint antennaSynthesisButton";
+    button.textContent = "Synthèse";
+    button.dataset.antenna = office.antenna;
+    button.dataset.address = office.address;
+    button.setAttribute("aria-label", `Ouvrir la synthèse de l’antenne ${office.antenna}`);
+
+    button.addEventListener("click", () => {
+      const antenna = String(button.dataset.antenna || "").trim();
+      if (!antenna) return;
+      openAntennaSynthesis(antenna, String(button.dataset.address || "").trim());
+    });
+
+    const printButton = actions.querySelector("#panelPrint");
+    if (printButton) actions.insertBefore(button, printButton);
+    else actions.prepend(button);
+  }
+
+  async function loadProjects(mode) {
+    if (dataCache.has(mode)) return dataCache.get(mode);
+    const url = mode === "completed" ? COMPLETED_PROJECTS_URL : CURRENT_PROJECTS_URL;
+    const promise = fetch(url, { cache: "no-cache" })
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
+      .then((payload) => {
+        const projects = Array.isArray(payload) ? payload : payload?.projets;
+        if (!Array.isArray(projects)) throw new Error("Format JSON inattendu");
+        return projects;
+      })
+      .catch((error) => {
+        dataCache.delete(mode);
+        throw error;
+      });
+
+    dataCache.set(mode, promise);
+    return promise;
+  }
+
+  function openPlaceholderWindow(antenna) {
+    const popup = window.open("", "_blank", "width=1320,height=920");
+    if (!popup) {
+      window.alert("La fenêtre de synthèse a été bloquée par le navigateur. Autorisez les pop-ups pour ce site puis réessayez.");
+      return null;
+    }
+
+    try {
+      popup.document.open();
+      popup.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Synthèse — ${escapeHtml(antenna)}</title><style>*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Arial,system-ui,sans-serif;background:#f3f4f6;color:#161616}.loading{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}.card{max-width:560px;padding:24px 28px;border:1px solid #ddd;border-radius:16px;background:#fff;box-shadow:0 16px 42px rgba(0,0,0,.14);text-align:center}.card strong{display:block;font-size:20px;margin-bottom:8px}.card span{color:#666}</style></head><body><main class="loading"><div class="card"><strong>Préparation de la synthèse…</strong><span>${escapeHtml(antenna)}</span></div></main></body></html>`);
+      popup.document.close();
+      popup.focus();
+    } catch (error) {
+      console.warn("[BIMO] Impossible d’écrire la fenêtre de synthèse", error);
+    }
+    return popup;
+  }
+
+  function writePopupError(popup, message) {
+    if (!popup || popup.closed) {
+      window.alert(message);
+      return;
+    }
+    try {
+      popup.document.open();
+      popup.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Erreur synthèse</title><style>*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Arial,system-ui,sans-serif;background:#f3f4f6;color:#161616}.wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}.box{max-width:620px;padding:24px 28px;border:1px solid #f0bcbc;border-radius:16px;background:#fff5f5;color:#8a1f1f;box-shadow:0 16px 42px rgba(0,0,0,.12)}strong{display:block;font-size:20px;margin-bottom:8px}</style></head><body><main class="wrap"><div class="box"><strong>Synthèse indisponible</strong><span>${escapeHtml(message)}</span></div></main></body></html>`);
+      popup.document.close();
+    } catch (error) {
+      console.error("[BIMO] Impossible d’afficher l’erreur de synthèse", error);
+      window.alert(message);
+    }
+  }
+
+  function tally(projects, getter) {
+    const counts = new Map();
+    for (const project of projects) {
+      const raw = String(getter(project) ?? "").trim();
+      const label = raw || "Non renseigné";
+      counts.set(label, (counts.get(label) || 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, "fr", { sensitivity: "base" }));
+  }
+
+  function topRowsHtml(items, total, maxRows = 7) {
+    if (!items.length) return '<div class="empty">Aucune donnée.</div>';
+    return items.slice(0, maxRows).map((item) => {
+      const percentage = total > 0 ? Math.round((item.count / total) * 100) : 0;
+      return `<div class="rankRow"><div class="rankLabel" title="${escapeHtml(item.label)}">${escapeHtml(item.label)}</div><div class="rankBar"><span style="width:${Math.max(3, percentage)}%"></span></div><div class="rankValue">${item.count}</div></div>`;
+    }).join("");
+  }
+
+  function buildTypeCards(projects) {
+    const preferredOrder = ["MOM", "AMO", "EXP"];
+    const types = tally(projects, projectType);
+    const map = new Map(types.map((item) => [item.label.toUpperCase(), item]));
+    const ordered = preferredOrder.map((type) => map.get(type) || { label: type, count: 0 });
+    for (const item of types) {
+      if (!preferredOrder.includes(item.label.toUpperCase())) ordered.push(item);
+    }
+
+    return ordered.map((item) => {
+      const typeProjects = projects.filter((project) => projectType(project) === item.label.toUpperCase());
+      let amount = 0;
+      let amountCount = 0;
+      for (const project of typeProjects) {
+        const value = amountNumber(project?.Montant ?? project?.montant);
+        if (!Number.isFinite(value)) continue;
+        amount += value;
+        amountCount += 1;
+      }
+      return `<article class="typeCard typeCard--${escapeHtml(item.label.toLowerCase())}"><div class="typeName">${escapeHtml(item.label)}</div><div class="typeCount">${item.count}</div><div class="typeAmount">${amountCount ? escapeHtml(formatCompactEuro(amount)) : "Montant non renseigné"}</div></article>`;
+    }).join("");
+  }
+
+  function buildProjectsTable(projects, mode) {
+    if (!projects.length) return '<div class="empty empty--large">Aucun projet à afficher pour ce périmètre.</div>';
+
+    const sorted = projects.slice().sort((a, b) => projectName(a).localeCompare(projectName(b), "fr", { sensitivity: "base" }));
+    return `<div class="tableWrap"><table><thead><tr><th>Projet</th><th>Type</th><th>Ville / site</th><th>Client</th><th>${mode === "completed" ? "Période" : "Phase"}</th><th class="num">Montant</th></tr></thead><tbody>${sorted.map((project) => {
+      const amount = amountNumber(project?.Montant ?? project?.montant);
+      const periodOrPhase = mode === "completed"
+        ? [textValue(project?.["Début"] ?? project?.debut, ""), textValue(project?.["Fin"] ?? project?.fin, "")].filter(Boolean).join(" → ") || "—"
+        : textValue(project?.["Phase projet"] ?? project?.phase);
+      return `<tr><td class="projectName">${escapeHtml(projectName(project))}</td><td><span class="badge badge--${escapeHtml(projectType(project).toLowerCase())}">${escapeHtml(projectType(project))}</span></td><td>${escapeHtml(projectCity(project))}</td><td>${escapeHtml(textValue(project?.Client ?? project?.client))}</td><td>${escapeHtml(periodOrPhase)}</td><td class="num">${Number.isFinite(amount) ? escapeHtml(formatEuro(amount)) : "—"}</td></tr>`;
+    }).join("")}</tbody></table></div>`;
+  }
+
+  function buildSynthesisHtml({ antenna, address, mode, projects, timeline }) {
+    const modeLabel = mode === "completed" ? "Projets finis" : "Projets en cours";
+    const filteredProjects = mode === "completed" && !timeline.showAll && Number.isFinite(timeline.year)
+      ? projects.filter((project) => isPresentInYear(project, timeline.year))
+      : projects;
+
+    let totalAmount = 0;
+    let amountCount = 0;
+    for (const project of filteredProjects) {
+      const value = amountNumber(project?.Montant ?? project?.montant);
+      if (!Number.isFinite(value)) continue;
+      totalAmount += value;
+      amountCount += 1;
+    }
+
+    const clientRows = tally(filteredProjects, (project) => project?.Client ?? project?.client);
+    const themeRows = tally(filteredProjects, (project) => project?.["Thématique"] ?? project?.thematique);
+    const cityRows = tally(filteredProjects, projectCity);
+    const phaseRows = mode === "current"
+      ? tally(filteredProjects, (project) => project?.["Phase projet"] ?? project?.phase)
+      : tally(filteredProjects, (project) => project?.Programme ?? project?.programme);
+
+    const dates = [];
+    filteredProjects.forEach((project) => {
+      const start = projectYear(project, "Début");
+      const end = projectYear(project, "Fin");
+      if (Number.isFinite(start)) dates.push(start);
+      if (Number.isFinite(end)) dates.push(end);
+    });
+    const yearRange = dates.length ? `${Math.min(...dates)} – ${Math.max(...dates)}` : "—";
+    const generationDate = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long", timeStyle: "short" }).format(new Date());
+    const scopeText = mode === "completed" && !timeline.showAll && Number.isFinite(timeline.year)
+      ? `${modeLabel} présents en ${timeline.year}`
+      : modeLabel;
+    const logoUrl = new URL("assets/logo-ministere.png", window.location.href).href;
+
+    return `<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Synthèse — ${escapeHtml(antenna)}</title>
+  <style>
+    @page{size:A4 landscape;margin:9mm}
+    *{box-sizing:border-box}
+    :root{--accent:#000091;--ink:#161616;--muted:#666;--border:#ddd;--paper:#fff;--bg:#f3f4f6}
+    html,body{margin:0;min-height:100%;font-family:"Marianne",Arial,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+    body{padding:0 0 36px}
+    .toolbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 18px;background:#fff;border-bottom:1px solid #d7d7d7;box-shadow:0 2px 12px rgba(0,0,0,.07)}
+    .toolbarTitle{font-weight:800}.toolbarMeta{margin-top:2px;font-size:12px;color:var(--muted)}
+    .toolbarActions{display:flex;gap:9px}.toolbar button{cursor:pointer;border:1px solid #c9c9c9;border-radius:9px;background:#fff;padding:8px 12px;font:inherit;font-weight:700}.toolbar button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+    .page{width:min(1280px,calc(100vw - 28px));margin:18px auto;background:var(--paper);border:1px solid #ddd;border-radius:18px;box-shadow:0 16px 42px rgba(0,0,0,.10);overflow:hidden}
+    .hero{display:grid;grid-template-columns:1fr auto;gap:24px;padding:26px 28px 22px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,#fff 0%,#f6f6fe 100%)}
+    .eyebrow{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-bottom:7px}.hero h1{margin:0;font-size:30px;line-height:1.08}.hero p{margin:8px 0 0;color:#555;font-size:14px}.logo{width:190px;max-height:76px;object-fit:contain;align-self:center}
+    .content{padding:22px 28px 30px}.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}.kpi{border:1px solid var(--border);border-radius:14px;padding:15px;background:#fff}.kpiLabel{font-size:12px;color:var(--muted);font-weight:700}.kpiValue{margin-top:4px;font-size:26px;font-weight:800;line-height:1.05}.kpiNote{margin-top:5px;font-size:11px;color:#777}
+    .typeGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:22px}.typeCard{position:relative;overflow:hidden;border:1px solid var(--border);border-radius:14px;padding:15px;background:#fff}.typeCard:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:#999}.typeCard--mom:before{background:#0000ff}.typeCard--amo:before{background:#e1000f}.typeCard--exp:before{background:#00a95f}.typeName{font-size:12px;font-weight:800}.typeCount{font-size:25px;font-weight:800;margin-top:2px}.typeAmount{font-size:12px;color:#666;margin-top:3px}
+    .sectionTitle{margin:24px 0 10px;font-size:18px}.breakdowns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.box{border:1px solid var(--border);border-radius:14px;padding:14px;background:#fff}.box h3{margin:0 0 11px;font-size:14px}.rankRow{display:grid;grid-template-columns:minmax(105px,1.5fr) minmax(90px,2fr) 34px;align-items:center;gap:9px;margin:8px 0;font-size:12px}.rankLabel{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rankBar{height:7px;border-radius:999px;background:#ececf4;overflow:hidden}.rankBar span{display:block;height:100%;border-radius:inherit;background:var(--accent)}.rankValue{text-align:right;font-weight:800}.empty{color:#777;font-size:13px;padding:8px 0}.empty--large{padding:22px;text-align:center;border:1px dashed #ccc;border-radius:12px}
+    .tableWrap{overflow:auto;border:1px solid var(--border);border-radius:14px}table{width:100%;border-collapse:collapse;font-size:12px}thead th{position:sticky;top:0;background:#f7f7fb;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:#555}th,td{padding:9px 10px;border-bottom:1px solid #eee;vertical-align:top}tbody tr:last-child td{border-bottom:0}.projectName{font-weight:700}.num{text-align:right;white-space:nowrap}.badge{display:inline-block;border-radius:999px;padding:3px 7px;font-size:10px;font-weight:800;background:#eee}.badge--mom{color:#000091;background:#ececff}.badge--amo{color:#b6000c;background:#ffe9ea}.badge--exp{color:#18753c;background:#e7f6ec}
+    .foot{margin-top:18px;padding-top:12px;border-top:1px solid #e7e7e7;color:#777;font-size:11px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    @media(max-width:820px){.hero{grid-template-columns:1fr}.logo{display:none}.kpis{grid-template-columns:repeat(2,1fr)}.typeGrid{grid-template-columns:1fr}.breakdowns{grid-template-columns:1fr}.toolbar{align-items:flex-start}.toolbarActions{flex-wrap:wrap;justify-content:flex-end}}
+    @media print{html,body{background:#fff!important}.toolbar{display:none!important}body{padding:0}.page{width:auto;margin:0;border:0;border-radius:0;box-shadow:none}.hero{padding:0 0 5mm;border-bottom:1px solid #bbb;background:#fff}.content{padding:5mm 0 0}.kpis,.typeGrid,.breakdowns,.box,.kpi,.typeCard,.tableWrap{break-inside:avoid}.sectionTitle{break-after:avoid}.rankBar span,.typeCard:before,.badge{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}thead{display:table-header-group}tr{break-inside:avoid}.tableWrap{overflow:visible}.foot{margin-top:5mm}}
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <div><div class="toolbarTitle">Synthèse d’antenne</div><div class="toolbarMeta">${escapeHtml(scopeText)}</div></div>
+    <div class="toolbarActions"><button class="primary" type="button" onclick="window.print()">Imprimer</button><button type="button" onclick="window.close()">Fermer</button></div>
+  </div>
+  <main class="page">
+    <header class="hero">
+      <div><div class="eyebrow">BIMO · Synthèse d’antenne</div><h1>${escapeHtml(antenna)}</h1><p>${escapeHtml(address || "Adresse non renseignée")} · ${escapeHtml(scopeText)}</p></div>
+      <img class="logo" src="${escapeHtml(logoUrl)}" alt="Ministères économiques et financiers – Secrétariat général">
+    </header>
+    <div class="content">
+      <section class="kpis" aria-label="Chiffres clés">
+        <article class="kpi"><div class="kpiLabel">Projets</div><div class="kpiValue">${filteredProjects.length}</div><div class="kpiNote">sur le périmètre sélectionné</div></article>
+        <article class="kpi"><div class="kpiLabel">Montant renseigné</div><div class="kpiValue">${amountCount ? escapeHtml(formatCompactEuro(totalAmount)) : "—"}</div><div class="kpiNote">${amountCount} projet(s) avec montant</div></article>
+        <article class="kpi"><div class="kpiLabel">Clients</div><div class="kpiValue">${clientRows.filter((item) => item.label !== "Non renseigné").length}</div><div class="kpiNote">clients distincts renseignés</div></article>
+        <article class="kpi"><div class="kpiLabel">Période couverte</div><div class="kpiValue">${escapeHtml(yearRange)}</div><div class="kpiNote">d’après les années disponibles</div></article>
+      </section>
+      <section class="typeGrid" aria-label="Répartition par type">${buildTypeCards(filteredProjects)}</section>
+      <h2 class="sectionTitle">Répartition du portefeuille</h2>
+      <section class="breakdowns">
+        <article class="box"><h3>${mode === "current" ? "Phases projet" : "Programmes"}</h3>${topRowsHtml(phaseRows, filteredProjects.length)}</article>
+        <article class="box"><h3>Principaux clients</h3>${topRowsHtml(clientRows, filteredProjects.length)}</article>
+        <article class="box"><h3>Thématiques</h3>${topRowsHtml(themeRows, filteredProjects.length)}</article>
+        <article class="box"><h3>Villes / sites</h3>${topRowsHtml(cityRows, filteredProjects.length)}</article>
+      </section>
+      <h2 class="sectionTitle">Détail des projets</h2>
+      ${buildProjectsTable(filteredProjects, mode)}
+      <footer class="foot"><span>Synthèse générée le ${escapeHtml(generationDate)}</span><span>Les montants correspondent uniquement aux valeurs renseignées dans les données source.</span></footer>
+    </div>
+  </main>
+</body>
+</html>`;
+  }
+
+  async function openAntennaSynthesis(antenna, address) {
+    const popup = openPlaceholderWindow(antenna);
+    if (!popup) return;
+
+    const mode = currentMode();
+    const timeline = completedTimelineScope();
+
+    try {
+      const allProjects = await loadProjects(mode);
+      const antennaKey = normalize(antenna);
+      const antennaProjects = allProjects.filter((project) => normalize(project?.Antenne ?? project?.antenne) === antennaKey);
+
+      if (popup.closed) return;
+      const html = buildSynthesisHtml({ antenna, address, mode, projects: antennaProjects, timeline });
+      popup.document.open();
+      popup.document.write(html);
+      popup.document.close();
+      popup.focus();
+    } catch (error) {
+      console.error("[BIMO] Synthèse antenne impossible", error);
+      writePopupError(popup, "La synthèse n’a pas pu être chargée. Vérifiez les fichiers de données puis réessayez.");
+    }
+  }
+
+  function init() {
+    const panel = document.getElementById(PANEL_ID);
+    if (!panel) return;
+
+    const observer = new MutationObserver(scheduleButtonSync);
+    observer.observe(panel, { childList: true, subtree: true, characterData: true });
+    scheduleButtonSync();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init, { once: true });
+  } else {
+    init();
+  }
+})();
